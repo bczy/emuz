@@ -3,14 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { 
-  themes, 
-  darkTheme, 
-  lightTheme,
-  getTheme,
-  isValidThemeName,
-  defaultTheme
-} from '../themes';
+import { themes, darkTheme, lightTheme, getTheme, isValidThemeName, defaultTheme } from '../themes';
 
 describe('Theme Objects', () => {
   it('should export darkTheme', () => {
@@ -51,8 +44,8 @@ describe('Theme Structure', () => {
   });
 
   it('should have primary color in both themes', () => {
-    expect(darkTheme.colors.primary).toBeDefined();
-    expect(lightTheme.colors.primary).toBeDefined();
+    expect(darkTheme.colors.brand.primary).toBeDefined();
+    expect(lightTheme.colors.brand.primary).toBeDefined();
   });
 
   it('should have background colors in both themes', () => {
@@ -61,8 +54,8 @@ describe('Theme Structure', () => {
   });
 
   it('should have text colors in both themes', () => {
-    expect(darkTheme.colors.textPrimary).toBeDefined();
-    expect(lightTheme.colors.textPrimary).toBeDefined();
+    expect(darkTheme.colors.text.primary).toBeDefined();
+    expect(lightTheme.colors.text.primary).toBeDefined();
   });
 });
 
@@ -70,7 +63,7 @@ describe('Theme Helpers', () => {
   it('should get theme by name', () => {
     const dark = getTheme('dark');
     const light = getTheme('light');
-    
+
     expect(dark).toBe(darkTheme);
     expect(light).toBe(lightTheme);
   });
@@ -86,7 +79,7 @@ describe('Theme Helpers', () => {
 describe('Color Tokens', () => {
   it('should have emerald green as primary (Daijishou style)', () => {
     // Primary should be emerald green (#10B981)
-    expect(darkTheme.colors.primary).toContain('10B981');
+    expect(darkTheme.colors.brand.primary).toContain('10B981');
   });
 
   it('should have consistent spacing values', () => {

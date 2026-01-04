@@ -7,73 +7,85 @@ import { colors, shadows, borderRadius, spacing, fontSizes } from './tokens';
 
 export const lightTheme = {
   name: 'light' as const,
-  
+
   // Base colors
   colors: {
     // Background
-    background: colors.slate[50],
-    backgroundSecondary: colors.white,
-    backgroundTertiary: colors.slate[100],
-    
+    background: {
+      primary: colors.slate[50],
+      secondary: colors.white,
+      tertiary: colors.slate[100],
+    },
+
     // Surface
-    surface: colors.white,
-    surfaceHover: colors.slate[50],
-    surfaceActive: colors.slate[100],
-    
-    // Primary (Emerald Green)
-    primary: colors.primary[500],
-    primaryHover: colors.primary[600],
-    primaryActive: colors.primary[700],
-    primaryMuted: colors.primary[500] + '15',
-    
-    // Accent
-    accent: colors.primary[500],
-    accentHover: colors.primary[600],
-    
+    surface: {
+      default: colors.white,
+      hover: colors.slate[50],
+      active: colors.slate[100],
+    },
+
+    // Brand colors
+    brand: {
+      primary: colors.primary[500],
+      secondary: colors.primary[600],
+      accent: colors.primary[500],
+      hover: colors.primary[600],
+      active: colors.primary[700],
+      muted: colors.primary[500] + '15',
+    },
+
     // Text
-    textPrimary: colors.slate[900],
-    textSecondary: colors.slate[700],
-    textTertiary: colors.slate[500],
-    textMuted: colors.slate[400],
-    textInverse: colors.white,
-    textOnPrimary: colors.white,
-    
+    text: {
+      primary: colors.slate[900],
+      secondary: colors.slate[700],
+      tertiary: colors.slate[500],
+      muted: colors.slate[400],
+      inverse: colors.white,
+      onPrimary: colors.white,
+    },
+
     // Border
-    border: colors.slate[200],
-    borderHover: colors.slate[300],
-    borderFocus: colors.primary[500],
-    
-    // Semantic
-    success: colors.success,
-    successMuted: colors.success + '15',
-    warning: colors.warning,
-    warningMuted: colors.warning + '15',
-    error: colors.error,
-    errorMuted: colors.error + '15',
-    info: colors.info,
-    infoMuted: colors.info + '15',
-    
+    border: {
+      default: colors.slate[200],
+      light: colors.slate[300],
+      focus: colors.primary[500],
+    },
+
+    // Status colors
+    status: {
+      success: colors.success,
+      successMuted: colors.success + '15',
+      warning: colors.warning,
+      warningMuted: colors.warning + '15',
+      error: colors.error,
+      errorMuted: colors.error + '15',
+      info: colors.info,
+      infoMuted: colors.info + '15',
+    },
+
     // Overlay
-    overlay: 'rgba(0, 0, 0, 0.4)',
-    overlayLight: 'rgba(0, 0, 0, 0.2)',
-    
-    // Skeleton/Loading
-    skeleton: colors.slate[200],
-    skeletonHighlight: colors.slate[100],
-    
+    overlay: {
+      default: 'rgba(0, 0, 0, 0.4)',
+      light: 'rgba(0, 0, 0, 0.2)',
+    },
+
     // Scrollbar
-    scrollbar: colors.slate[300],
-    scrollbarHover: colors.slate[400],
-    
+    scrollbar: {
+      default: colors.slate[300],
+      hover: colors.slate[400],
+    },
+
     // Platform specific
-    platformNintendo: '#E60012',
-    platformSony: '#003087',
-    platformSega: '#0060A8',
-    platformMicrosoft: '#107C10',
-    platformAtari: '#E40000',
-    platformNeoGeo: '#FFD700',
+    platforms: {
+      nintendo: '#E60012',
+      sony: '#003087',
+      sega: '#0060A8',
+      microsoft: '#107C10',
+      atari: '#E40000',
+      neoGeo: '#FFD700',
+    },
   },
-  
+
   // Typography
   typography: {
     fontFamily: {
@@ -86,23 +98,17 @@ export const lightTheme = {
         'Arial',
         'sans-serif',
       ].join(', '),
-      mono: [
-        'SF Mono',
-        'Consolas',
-        'Liberation Mono',
-        'Menlo',
-        'monospace',
-      ].join(', '),
+      mono: ['SF Mono', 'Consolas', 'Liberation Mono', 'Menlo', 'monospace'].join(', '),
     },
     sizes: fontSizes,
   },
-  
+
   // Spacing
   spacing,
-  
+
   // Border radius
   borderRadius,
-  
+
   // Shadows (lighter for light theme)
   shadows: {
     ...shadows,
@@ -135,9 +141,10 @@ export const lightTheme = {
       elevation: 6,
     },
   },
-  
+
   // Component specific
   components: {
+    skeleton: colors.slate[200],
     button: {
       primary: {
         background: colors.primary[500],
@@ -204,7 +211,7 @@ export const lightTheme = {
       border: colors.slate[200],
     },
     searchBar: {
-      background: colors.slate[100],
+      background: colors.white,
       text: colors.slate[900],
       placeholder: colors.slate[400],
       icon: colors.slate[500],
