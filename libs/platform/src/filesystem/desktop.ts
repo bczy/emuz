@@ -13,12 +13,12 @@ import {
 
 /**
  * Desktop file system adapter using Node.js fs module
- * 
+ *
  * Features:
  * - Full POSIX file system access
  * - Recursive directory operations
  * - ROM file scanning
- * 
+ *
  * @example
  * ```typescript
  * const adapter = new DesktopFileSystemAdapter();
@@ -123,7 +123,7 @@ export class DesktopFileSystemAdapter extends BaseFileSystemAdapter {
 
     for (const dirent of dirents) {
       const fullPath = this.path!.join(dirPath, dirent.name);
-      
+
       try {
         const stats = await this.fs!.stat(fullPath);
         entries.push({
@@ -169,33 +169,36 @@ export class DesktopFileSystemAdapter extends BaseFileSystemAdapter {
   async getDocumentsPath(): Promise<string> {
     await this.ensureModules();
     const home = this.os!.homedir();
-    
+
     switch (process.platform) {
       case 'darwin':
         return this.path!.join(home, 'Documents', 'EmuZ');
       case 'win32':
         return this.path!.join(home, 'Documents', 'EmuZ');
-      default:
+      default: {
         // Linux and others follow XDG
         const xdgData = process.env['XDG_DATA_HOME'] || this.path!.join(home, '.local', 'share');
         return this.path!.join(xdgData, 'emuz');
+      }
     }
   }
 
   async getCachePath(): Promise<string> {
     await this.ensureModules();
     const home = this.os!.homedir();
-    
+
     switch (process.platform) {
       case 'darwin':
         return this.path!.join(home, 'Library', 'Caches', 'EmuZ');
-      case 'win32':
+      case 'win32': {
         const appData = process.env['LOCALAPPDATA'] || this.path!.join(home, 'AppData', 'Local');
         return this.path!.join(appData, 'EmuZ', 'Cache');
-      default:
+      }
+      default: {
         // Linux and others follow XDG
         const xdgCache = process.env['XDG_CACHE_HOME'] || this.path!.join(home, '.cache');
         return this.path!.join(xdgCache, 'emuz');
+      }
     }
   }
 }

@@ -32,23 +32,24 @@ export type MainTabParamList = {
 /**
  * Root Stack Screen Props
  */
-export type RootStackScreenProps<T extends keyof RootStackParamList> =
-  NativeStackScreenProps<RootStackParamList, T>;
+export type RootStackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<
+  RootStackParamList,
+  T
+>;
 
 /**
  * Tab Screen Props - Composite for nested navigation
  */
-export type MainTabScreenProps<T extends keyof MainTabParamList> =
-  CompositeScreenProps<
-    BottomTabScreenProps<MainTabParamList, T>,
-    NativeStackScreenProps<RootStackParamList>
-  >;
+export type MainTabScreenProps<T extends keyof MainTabParamList> = CompositeScreenProps<
+  BottomTabScreenProps<MainTabParamList, T>,
+  NativeStackScreenProps<RootStackParamList>
+>;
 
 /**
  * Type declaration for useNavigation hook
  */
-declare global {
-  namespace ReactNavigation {
-    interface RootParamList extends RootStackParamList {}
+declare module '@react-navigation/native' {
+  export interface ReactNavigation {
+    RootParamList: RootStackParamList;
   }
 }

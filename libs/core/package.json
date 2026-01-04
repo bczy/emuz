@@ -7,7 +7,9 @@
   "types": "./index.d.ts",
   "dependencies": {
     "uuid": "^11.1.0",
-    "zustand": "^5.0.0"
+    "zustand": "^5.0.0",
+    "@emuz/database": "0.0.1",
+    "@emuz/platform": "0.0.1"
   },
   "peerDependencies": {
     "react": ">=18.0.0",

@@ -28,7 +28,7 @@ type FilterOption = 'all' | 'favorites' | string; // string for platform ID
 export default function LibraryScreen() {
   const navigation = useNavigation();
   const { games, platforms } = useLibraryStore();
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('title');
   const [filterBy, setFilterBy] = useState<FilterOption>('all');
@@ -41,9 +41,7 @@ export default function LibraryScreen() {
     // Apply search
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      result = result.filter((g: Game) => 
-        g.title.toLowerCase().includes(query)
-      );
+      result = result.filter((g: Game) => g.title.toLowerCase().includes(query));
     }
 
     // Apply filter
@@ -56,10 +54,11 @@ export default function LibraryScreen() {
     // Apply sort
     result.sort((a: Game, b: Game) => {
       switch (sortBy) {
-        case 'lastPlayed':
+        case 'lastPlayed': {
           const dateA = a.lastPlayedAt ? new Date(a.lastPlayedAt).getTime() : 0;
           const dateB = b.lastPlayedAt ? new Date(b.lastPlayedAt).getTime() : 0;
           return dateB - dateA;
+        }
         case 'playTime':
           return (b.playTime || 0) - (a.playTime || 0);
         case 'dateAdded':
@@ -103,9 +102,7 @@ export default function LibraryScreen() {
       <Text style={styles.gameTitle} numberOfLines={2}>
         {item.title}
       </Text>
-      <Text style={styles.platformBadge}>
-        {getPlatformName(item.platformId)}
-      </Text>
+      <Text style={styles.platformBadge}>{getPlatformName(item.platformId)}</Text>
     </TouchableOpacity>
   );
 
@@ -122,9 +119,7 @@ export default function LibraryScreen() {
       <Text style={styles.emptyEmoji}>🔍</Text>
       <Text style={styles.emptyTitle}>No games found</Text>
       <Text style={styles.emptyText}>
-        {searchQuery 
-          ? 'Try a different search term'
-          : 'Add some games to get started'}
+        {searchQuery ? 'Try a different search term' : 'Add some games to get started'}
       </Text>
     </View>
   );
@@ -134,10 +129,7 @@ export default function LibraryScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Library</Text>
-        <TouchableOpacity 
-          style={styles.filterButton}
-          onPress={() => setShowFilters(!showFilters)}
-        >
+        <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilters(!showFilters)}>
           <Text style={styles.filterIcon}>⚡</Text>
         </TouchableOpacity>
       </View>
@@ -152,10 +144,7 @@ export default function LibraryScreen() {
           onChangeText={setSearchQuery}
         />
         {searchQuery.length > 0 && (
-          <TouchableOpacity 
-            style={styles.clearButton}
-            onPress={() => setSearchQuery('')}
-          >
+          <TouchableOpacity style={styles.clearButton} onPress={() => setSearchQuery('')}>
             <Text style={styles.clearIcon}>✕</Text>
           </TouchableOpacity>
         )}
@@ -176,10 +165,7 @@ export default function LibraryScreen() {
               ].map((option) => (
                 <TouchableOpacity
                   key={option.value}
-                  style={[
-                    styles.filterChip,
-                    sortBy === option.value && styles.filterChipActive,
-                  ]}
+                  style={[styles.filterChip, sortBy === option.value && styles.filterChipActive]}
                   onPress={() => setSortBy(option.value as SortOption)}
                 >
                   <Text
@@ -200,26 +186,17 @@ export default function LibraryScreen() {
             <Text style={styles.filterLabel}>Filter by</Text>
             <View style={styles.filterOptions}>
               <TouchableOpacity
-                style={[
-                  styles.filterChip,
-                  filterBy === 'all' && styles.filterChipActive,
-                ]}
+                style={[styles.filterChip, filterBy === 'all' && styles.filterChipActive]}
                 onPress={() => setFilterBy('all')}
               >
                 <Text
-                  style={[
-                    styles.filterChipText,
-                    filterBy === 'all' && styles.filterChipTextActive,
-                  ]}
+                  style={[styles.filterChipText, filterBy === 'all' && styles.filterChipTextActive]}
                 >
                   All
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[
-                  styles.filterChip,
-                  filterBy === 'favorites' && styles.filterChipActive,
-                ]}
+                style={[styles.filterChip, filterBy === 'favorites' && styles.filterChipActive]}
                 onPress={() => setFilterBy('favorites')}
               >
                 <Text
