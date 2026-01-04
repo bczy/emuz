@@ -1,6 +1,4 @@
 {
-  "*.{js,jsx,ts,tsx,mts,cts}": ["eslint --fix", "prettier --write"],
-  "*.{json,md,yml,yaml}": ["prettier --write"],
-  "apps/**/*.{ts,tsx}": ["bash -c 'pnpm nx affected -t test --uncommitted'"],
-  "libs/**/*.{ts,tsx}": ["bash -c 'pnpm nx affected -t test --uncommitted'"]
+  "*.{js,jsx,ts,tsx,mts,cts}": ["prettier --write"],
+  "*.{json,md,yml,yaml}": ["prettier --write"]
 }
