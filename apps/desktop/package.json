@@ -6,8 +6,11 @@
   "main": "dist/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
+    "dev:web": "vite",
     "build": "electron-vite build",
+    "build:web": "vite build",
     "preview": "electron-vite preview",
+    "preview:web": "vite preview",
     "start": "electron .",
     "package": "pnpm build && electron-builder",
     "package:mac": "pnpm build && electron-builder --mac",
