@@ -1,0 +1,63 @@
+{
+  "app": {
+    "name": "EmuZ",
+    "slogan": "又一个模拟器和ROM管理前端"
+  },
+  "navigation": {
+    "home": "首页",
+    "library": "游戏库",
+    "platforms": "平台",
+    "genres": "类型",
+    "collections": "收藏",
+    "settings": "设置",
+    "search": "搜索"
+  },
+  "actions": {
+    "play": "开始游戏",
+    "add": "添加",
+    "edit": "编辑",
+    "delete": "删除",
+    "cancel": "取消",
+    "save": "保存",
+    "confirm": "确认",
+    "close": "关闭",
+    "back": "返回",
+    "next": "下一步",
+    "refresh": "刷新",
+    "scan": "扫描",
+    "import": "导入",
+    "export": "导出",
+    "search": "搜索",
+    "filter": "筛选",
+    "sort": "排序",
+    "select": "选择",
+    "selectAll": "全选",
+    "deselectAll": "取消全选"
+  },
+  "status": {
+    "loading": "加载中...",
+    "saving": "保存中...",
+    "scanning": "扫描中...",
+    "noResults": "未找到结果",
+    "empty": "无内容",
+    "error": "发生错误",
+    "success": "成功",
+    "warning": "警告"
+  },
+  "time": {
+    "justNow": "刚刚",
+    "minutesAgo": "{{count}}分钟前",
+    "minutesAgo_other": "{{count}}分钟前",
+    "hoursAgo": "{{count}}小时前",
+    "hoursAgo_other": "{{count}}小时前",
+    "daysAgo": "{{count}}天前",
+    "daysAgo_other": "{{count}}天前",
+    "never": "从未"
+  },
+  "errors": {
+    "generic": "出了点问题，请重试。",
+    "network": "网络错误，请检查您的连接。",
+    "notFound": "未找到请求的项目。",
+    "unauthorized": "您无权执行此操作。"
+  }
+}

@@ -1,0 +1,92 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.cache/
+
+# Nx
+.nx/
+nx-cloud.env
+
+# Testing
+coverage/
+.nyc_output/
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+*.tmp
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.env
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# React Native
+# Android
+apps/mobile/android/.gradle/
+apps/mobile/android/app/build/
+apps/mobile/android/build/
+apps/mobile/android/local.properties
+apps/mobile/android/*.iml
+apps/mobile/android/.idea/
+
+# iOS
+apps/mobile/ios/Pods/
+apps/mobile/ios/build/
+apps/mobile/ios/*.xcworkspace
+apps/mobile/ios/*.xcuserdata/
+apps/mobile/ios/DerivedData/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Metro
+.metro-health-check*
+
+# Electron
+apps/desktop/dist/
+apps/desktop/release/
+apps/desktop/out/
+
+# TypeScript
+*.tsbuildinfo
+
+# Turborepo (legacy, using Nx)
+.turbo/
+
+# Misc
+*.local
+.temp/
+tmp/
+
+vite.config.*.timestamp*
+vitest.config.*.timestamp*

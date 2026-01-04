@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "allowSyntheticDefaultImports": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@emuz/core": ["libs/core/src/index.ts"],
+      "@emuz/database": ["libs/database/src/index.ts"],
+      "@emuz/platform": ["libs/platform/src/index.ts"],
+      "@emuz/ui": ["libs/ui/src/index.ts"],
+      "@emuz/emulators": ["libs/emulators/src/index.ts"],
+      "@emuz/i18n": ["libs/i18n/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "build", "tmp"]
+}

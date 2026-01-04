@@ -1,0 +1,63 @@
+{
+  "app": {
+    "name": "EmuZ",
+    "slogan": "Yet another emulators and ROMs management front-end"
+  },
+  "navigation": {
+    "home": "Home",
+    "library": "Library",
+    "platforms": "Platforms",
+    "genres": "Genres",
+    "collections": "Collections",
+    "settings": "Settings",
+    "search": "Search"
+  },
+  "actions": {
+    "play": "Play",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "save": "Save",
+    "confirm": "Confirm",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "refresh": "Refresh",
+    "scan": "Scan",
+    "import": "Import",
+    "export": "Export",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "select": "Select",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All"
+  },
+  "status": {
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "scanning": "Scanning...",
+    "noResults": "No results found",
+    "empty": "No items",
+    "error": "An error occurred",
+    "success": "Success",
+    "warning": "Warning"
+  },
+  "time": {
+    "justNow": "Just now",
+    "minutesAgo": "{{count}} minute ago",
+    "minutesAgo_other": "{{count}} minutes ago",
+    "hoursAgo": "{{count}} hour ago",
+    "hoursAgo_other": "{{count}} hours ago",
+    "daysAgo": "{{count}} day ago",
+    "daysAgo_other": "{{count}} days ago",
+    "never": "Never"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "Network error. Please check your connection.",
+    "notFound": "The requested item was not found.",
+    "unauthorized": "You are not authorized to perform this action."
+  }
+}
