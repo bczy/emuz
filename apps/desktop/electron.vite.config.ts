@@ -27,6 +27,14 @@ export default defineConfig({
         input: {
           index: resolve(__dirname, 'src/renderer/index.html'),
         },
+        external: [
+          '@emuz/core',
+          '@emuz/database', 
+          '@emuz/emulators',
+          '@emuz/i18n',
+          '@emuz/platform',
+          '@emuz/ui',
+        ],
       },
     },
     resolve: {
