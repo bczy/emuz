@@ -1,23 +1,25 @@
 # EmuZ - Technical Implementation Plan
 
-> *Inspired by Daijishou - Cross-platform emulator frontend*
+> _Inspired by Daijishou - Cross-platform emulator frontend_
 
 ## Feature: 001-emuz-core
+
 ## Created: 2026-01-04
+
 ## Status: Clarified
 
 ---
 
 ## Branding & Theme
 
-| Element | Value |
-|---------|-------|
-| **Name** | EmuZ |
-| **Slogan** | "Yet another emulators and ROMs management front-end" |
-| **Primary Color** | #10B981 (Emerald Green) |
-| **Secondary Color** | #059669 (Dark Green) |
-| **Background** | #0F172A (Slate 900) |
-| **Accent** | #34D399 (Light Green) |
+| Element             | Value                                                 |
+| ------------------- | ----------------------------------------------------- |
+| **Name**            | EmuZ                                                  |
+| **Slogan**          | "Yet another emulators and ROMs management front-end" |
+| **Primary Color**   | #10B981 (Emerald Green)                               |
+| **Secondary Color** | #059669 (Dark Green)                                  |
+| **Background**      | #0F172A (Slate 900)                                   |
+| **Accent**          | #34D399 (Light Green)                                 |
 
 ---
 
@@ -25,104 +27,105 @@
 
 ### Core Technologies
 
-| Layer | Technology | Version | Purpose |
-|-------|------------|---------|---------|
-| Language | TypeScript | 5.7+ | Type-safe development |
-| Runtime | Node.js | 22 LTS | JavaScript runtime |
-| Mobile Framework | React Native | 0.76+ | iOS & Android apps (Bare Workflow) |
-| Desktop Framework | Electron | 33+ | macOS, Linux, Windows |
-| UI Library | React | 19+ | Shared components |
-| Styling | NativeWind | 4.x | Tailwind CSS for React Native |
-| State Management | Zustand | 5.0+ | Lightweight, performant state |
-| Database | SQLite | 3.x | Local data storage |
-| Monorepo Tool | Nx | 20.x | Monorepo management, caching, generators |
-| Package Manager | pnpm | 9.x | Fast, efficient dependencies (node-linker=hoisted) |
-| License | GPL-3.0 | - | Open source copyleft |
+| Layer             | Technology   | Version | Purpose                                            |
+| ----------------- | ------------ | ------- | -------------------------------------------------- |
+| Language          | TypeScript   | 5.7+    | Type-safe development                              |
+| Runtime           | Node.js      | 22 LTS  | JavaScript runtime                                 |
+| Mobile Framework  | React Native | 0.76+   | iOS & Android apps (Bare Workflow)                 |
+| Desktop Framework | Electron     | 33+     | macOS, Linux, Windows                              |
+| UI Library        | React        | 19+     | Shared components                                  |
+| Styling           | NativeWind   | 4.x     | Tailwind CSS for React Native                      |
+| State Management  | Zustand      | 5.0+    | Lightweight, performant state                      |
+| Database          | SQLite       | 3.x     | Local data storage                                 |
+| Monorepo Tool     | Nx           | 20.x    | Monorepo management, caching, generators           |
+| Package Manager   | pnpm         | 9.x     | Fast, efficient dependencies (node-linker=hoisted) |
+| License           | GPL-3.0      | -       | Open source copyleft                               |
 
 ### Nx Plugins
 
-| Plugin | Purpose |
-|--------|---------|
-| @nx/react-native | React Native app support |
-| @nx/react | React components for desktop |
-| @nx/js | Shared TypeScript libraries |
-| @nx/vite | Vite bundling for Electron renderer |
-| @nx/eslint | Linting configuration |
-| nx-electron (community) | Electron app support |
+| Plugin                  | Purpose                             |
+| ----------------------- | ----------------------------------- |
+| @nx/react-native        | React Native app support            |
+| @nx/react               | React components for desktop        |
+| @nx/js                  | Shared TypeScript libraries         |
+| @nx/vite                | Vite bundling for Electron renderer |
+| @nx/eslint              | Linting configuration               |
+| nx-electron (community) | Electron app support                |
 
 ### React Native Specific
 
-| Package | Purpose |
-|---------|---------|
-| nativewind | Tailwind CSS styling |
-| react-native-sqlite-storage | SQLite for mobile |
-| react-native-fs | File system access |
-| react-native-fast-image | Optimized image loading |
-| react-native-gesture-handler | Touch interactions |
-| react-native-reanimated | Smooth animations |
-| @react-navigation/native | Navigation |
+| Package                      | Purpose                 |
+| ---------------------------- | ----------------------- |
+| nativewind                   | Tailwind CSS styling    |
+| react-native-sqlite-storage  | SQLite for mobile       |
+| react-native-fs              | File system access      |
+| react-native-fast-image      | Optimized image loading |
+| react-native-gesture-handler | Touch interactions      |
+| react-native-reanimated      | Smooth animations       |
+| @react-navigation/native     | Navigation              |
 
 ### Testing Stack
 
-| Tool | Purpose |
-|------|---------|
-| Vitest | Unit & integration tests |
-| @testing-library/react-native | React Native component testing |
-| Detox | E2E mobile testing (iOS/Android) |
-| Playwright | E2E desktop testing (Electron) |
+| Tool                          | Purpose                          |
+| ----------------------------- | -------------------------------- |
+| Vitest                        | Unit & integration tests         |
+| @testing-library/react-native | React Native component testing   |
+| Detox                         | E2E mobile testing (iOS/Android) |
+| Playwright                    | E2E desktop testing (Electron)   |
 
 ### CI/CD
 
-| Tool | Purpose |
-|------|---------|
-| GitHub Actions | Automated builds on PR/push |
-| GitHub Releases | Metadata database hosting |
+| Tool            | Purpose                     |
+| --------------- | --------------------------- |
+| GitHub Actions  | Automated builds on PR/push |
+| GitHub Releases | Metadata database hosting   |
 
 ### Electron Specific
 
-| Package | Purpose |
-|---------|---------|
-| better-sqlite3 | SQLite for desktop |
-| electron-store | Preferences storage |
-| electron-builder | App packaging |
-| electron-updater | Auto-updates |
+| Package          | Purpose             |
+| ---------------- | ------------------- |
+| better-sqlite3   | SQLite for desktop  |
+| electron-store   | Preferences storage |
+| electron-builder | App packaging       |
+| electron-updater | Auto-updates        |
 
 ### Shared Packages
 
-| Package | Purpose |
-|---------|---------|
-| @tanstack/react-query | Data fetching & caching |
-| zod | Schema validation |
-| date-fns | Date manipulation |
-| fuse.js | Fuzzy search |
-| react-native-web | Share RN components on web/desktop |
-| react-native-document-picker | SAF file picker (Android) |
-| react-i18next | Internationalization |
-| i18next | i18n core library |
+| Package                      | Purpose                            |
+| ---------------------------- | ---------------------------------- |
+| @tanstack/react-query        | Data fetching & caching            |
+| zod                          | Schema validation                  |
+| date-fns                     | Date manipulation                  |
+| fuse.js                      | Fuzzy search                       |
+| react-native-web             | Share RN components on web/desktop |
+| react-native-document-picker | SAF file picker (Android)          |
+| react-i18next                | Internationalization               |
+| i18next                      | i18n core library                  |
 
 ### Mobile Platform-Specific
 
-| Package | Platform | Purpose |
-|---------|----------|---------|
-| react-native-saf-x | Android | Storage Access Framework |
-| expo-linking | Both | URL schemes for launching |
-| expo-file-system | Both | File operations |
+| Package            | Platform | Purpose                   |
+| ------------------ | -------- | ------------------------- |
+| react-native-saf-x | Android  | Storage Access Framework  |
+| expo-linking       | Both     | URL schemes for launching |
+| expo-file-system   | Both     | File operations           |
 
 ### Minimum OS Versions
 
-| Platform | Minimum Version | Notes |
-|----------|-----------------|-------|
-| iOS | 15.0+ | ~95% device coverage |
-| Android | API 28 (9.0 Pie)+ | ~95% device coverage |
-| macOS | 12.0 (Monterey)+ | Intel & Apple Silicon |
-| Windows | 10 (21H2)+ | x64 only |
-| Linux | Ubuntu 22.04 LTS+ | x64, AppImage/Flatpak |
+| Platform | Minimum Version   | Notes                 |
+| -------- | ----------------- | --------------------- |
+| iOS      | 15.0+             | ~95% device coverage  |
+| Android  | API 28 (9.0 Pie)+ | ~95% device coverage  |
+| macOS    | 12.0 (Monterey)+  | Intel & Apple Silicon |
+| Windows  | 10 (21H2)+        | x64 only              |
+| Linux    | Ubuntu 22.04 LTS+ | x64, AppImage/Flatpak |
 
 ---
 
 ## Emulator Launch Strategy
 
 ### Android - Intent System
+
 ```typescript
 // RetroArch intent
 Linking.openURL('retroarch://run?rom=' + encodeURIComponent(romPath));
@@ -132,11 +135,12 @@ NativeModules.EmulatorLauncher.launch({
   package: 'com.retroarch',
   action: 'android.intent.action.VIEW',
   data: romPath,
-  extras: { LIBRETRO: corePath }
+  extras: { LIBRETRO: corePath },
 });
 ```
 
 ### iOS - URL Schemes
+
 ```typescript
 // RetroArch
 Linking.openURL('retroarch://run?rom=' + romPath);
@@ -149,13 +153,14 @@ Linking.openURL('provenance://play?file=' + romPath);
 ```
 
 ### Desktop - Process Spawn
+
 ```typescript
 // Direct execution
 import { spawn } from 'child_process';
 
 spawn(emulatorPath, ['-L', corePath, romPath], {
   detached: true,
-  stdio: 'ignore'
+  stdio: 'ignore',
 });
 ```
 
@@ -351,7 +356,7 @@ nx affected -t build
 # Run mobile app
 nx run mobile:start
 
-# Run desktop app  
+# Run desktop app
 nx run desktop:serve
 
 # Generate a new library
@@ -487,13 +492,13 @@ interface LibraryService {
   searchGames(query: string): Promise<Game[]>;
   updateGame(id: string, data: Partial<Game>): Promise<void>;
   deleteGame(id: string): Promise<void>;
-  
+
   // Collections
   getCollections(): Promise<Collection[]>;
   createCollection(data: CreateCollectionInput): Promise<Collection>;
   addToCollection(gameId: string, collectionId: string): Promise<void>;
   removeFromCollection(gameId: string, collectionId: string): Promise<void>;
-  
+
   // Favorites
   toggleFavorite(gameId: string): Promise<void>;
   getFavorites(): Promise<Game[]>;
@@ -510,12 +515,12 @@ interface ScannerService {
   addDirectory(path: string, options?: ScanOptions): Promise<void>;
   removeDirectory(path: string): Promise<void>;
   getDirectories(): Promise<RomDirectory[]>;
-  
+
   // Scanning
   scanDirectory(path: string): AsyncGenerator<ScanProgress>;
   scanAllDirectories(): AsyncGenerator<ScanProgress>;
   cancelScan(): void;
-  
+
   // ROM detection
   detectPlatform(filePath: string): Platform | null;
   calculateHash(filePath: string): Promise<string>;
@@ -531,11 +536,11 @@ interface MetadataService {
   // Identification
   identifyGame(game: Game): Promise<GameMetadata | null>;
   searchMetadata(query: string, platformId?: string): Promise<GameMetadata[]>;
-  
+
   // Artwork
   downloadCover(gameId: string, url: string): Promise<string>;
   getCoverPath(gameId: string): string;
-  
+
   // Batch operations
   refreshMetadata(gameIds: string[]): AsyncGenerator<MetadataProgress>;
 }
@@ -552,12 +557,12 @@ interface LaunchService {
   detectEmulators(): Promise<Emulator[]>;
   addEmulator(data: CreateEmulatorInput): Promise<Emulator>;
   setDefaultEmulator(platformId: string, emulatorId: string): Promise<void>;
-  
+
   // Launching
   launchGame(gameId: string, emulatorId?: string): Promise<void>;
   getDefaultEmulator(platformId: string): Promise<Emulator | null>;
   buildLaunchCommand(game: Game, emulator: Emulator): string;
-  
+
   // Tracking
   recordPlaySession(gameId: string, duration: number): Promise<void>;
 }
@@ -675,13 +680,13 @@ interface LaunchService {
 
 ## Risk Assessment
 
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|------------|
-| React Native/Electron code sharing complexity | Medium | High | Clear abstraction layers, platform adapters |
-| SQLite performance with large libraries | Low | Medium | Proper indexing, query optimization |
-| Cross-platform emulator path handling | High | Medium | Path normalization utilities |
-| App store rejection (iOS) | Medium | High | Follow guidelines, no ROM downloading |
-| Metadata service rate limits | Medium | Low | Caching, local database fallback |
+| Risk                                          | Probability | Impact | Mitigation                                  |
+| --------------------------------------------- | ----------- | ------ | ------------------------------------------- |
+| React Native/Electron code sharing complexity | Medium      | High   | Clear abstraction layers, platform adapters |
+| SQLite performance with large libraries       | Low         | Medium | Proper indexing, query optimization         |
+| Cross-platform emulator path handling         | High        | Medium | Path normalization utilities                |
+| App store rejection (iOS)                     | Medium      | High   | Follow guidelines, no ROM downloading       |
+| Metadata service rate limits                  | Medium      | Low    | Caching, local database fallback            |
 
 ---
 
@@ -700,31 +705,32 @@ interface LaunchService {
 
 ### Repository
 
-| Item | Value |
-|------|-------|
-| **Name** | emuz |
-| **License** | GPL-3.0 |
-| **Package Scope** | @emuz/* |
+| Item              | Value    |
+| ----------------- | -------- |
+| **Name**          | emuz     |
+| **License**       | GPL-3.0  |
+| **Package Scope** | @emuz/\* |
 
 ### Metadata Distribution
 
-| Item | Value |
-|------|-------|
-| **Repository** | emuz-metadata |
-| **Hosting** | GitHub Releases |
-| **Format** | SQLite .db.gz (~50-100MB) |
-| **Update Frequency** | Monthly |
-| **Download URL** | `github.com/<owner>/emuz-metadata/releases/latest/download/metadata.db.gz` |
+| Item                 | Value                                                                      |
+| -------------------- | -------------------------------------------------------------------------- |
+| **Repository**       | emuz-metadata                                                              |
+| **Hosting**          | GitHub Releases                                                            |
+| **Format**           | SQLite .db.gz (~50-100MB)                                                  |
+| **Update Frequency** | Monthly                                                                    |
+| **Download URL**     | `github.com/<owner>/emuz-metadata/releases/latest/download/metadata.db.gz` |
 
 ### Development Environment
 
-| Tool | Version |
-|------|---------|
-| Node.js | 22 LTS |
-| pnpm | 9.x |
-| Xcode | 15+ (for iOS) |
+| Tool           | Version              |
+| -------------- | -------------------- |
+| Node.js        | 22 LTS               |
+| pnpm           | 9.x                  |
+| Xcode          | 15+ (for iOS)        |
 | Android Studio | Latest (for Android) |
-| VS Code | Recommended IDE |
+| VS Code        | Recommended IDE      |
+
 - [ ] Documentation complete for all public APIs
 
 ---
@@ -749,6 +755,7 @@ The recommended approach is to use a monorepo with shared packages. Key consider
 ### Emulator Launch Commands
 
 Common patterns:
+
 - RetroArch: `retroarch -L <core> "<rom_path>"`
 - Dolphin: `dolphin-emu -e "<rom_path>"`
 - PCSX2: `pcsx2 "<rom_path>"`

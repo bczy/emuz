@@ -100,23 +100,23 @@ All platforms from Daijishou (100+ systems):
 
 ```css
 /* Primary - Emerald Green */
---color-primary: #10B981;
---color-primary-light: #34D399;
+--color-primary: #10b981;
+--color-primary-light: #34d399;
 --color-primary-dark: #059669;
 
 /* Background - Slate Dark */
---color-bg-primary: #0F172A;
---color-bg-secondary: #1E293B;
+--color-bg-primary: #0f172a;
+--color-bg-secondary: #1e293b;
 --color-bg-tertiary: #334155;
 
 /* Text */
---color-text-primary: #F8FAFC;
---color-text-secondary: #94A3B8;
+--color-text-primary: #f8fafc;
+--color-text-secondary: #94a3b8;
 
 /* Borders & States */
 --color-border: #334155;
---color-success: #22C55E;
---color-error: #EF4444;
+--color-success: #22c55e;
+--color-error: #ef4444;
 ```
 
 ---
@@ -147,6 +147,7 @@ When making technical decisions, prioritize in this order:
 ## Governance
 
 Constitution supersedes all other practices. Amendments require:
+
 - Documentation of the change
 - Team approval
 - Migration plan for existing code

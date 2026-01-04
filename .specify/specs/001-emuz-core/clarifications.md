@@ -1,44 +1,46 @@
 # EmuZ - Clarifications Document
 
 ## Feature: 001-emuz-core
+
 ## Created: 2026-01-04
+
 ## Status: Clarified
 
 ---
 
 ## Summary of Decisions
 
-| # | Question | Decision |
-|---|----------|----------|
-| 1 | Metadata source | **E - Hybrid** (local + online) |
-| 2 | Priority emulators | **RetroArch cores** (like Daijishou) |
-| 3 | Priority platform | **D - All platforms in parallel** |
-| 4 | Mobile ROM access | **B - External folder selection** |
-| 5 | UI Style | **Daijishou Style** (Media Center gaming) |
-| 6 | Mobile launching | **URL Schemes** |
-| 7 | V1.0 Scope | **No additional features** |
-| 8 | Branding | **EmuZ** - Green - "Yet another emulators and ROMs management front-end" |
+| #   | Question           | Decision                                                                 |
+| --- | ------------------ | ------------------------------------------------------------------------ |
+| 1   | Metadata source    | **E - Hybrid** (local + online)                                          |
+| 2   | Priority emulators | **RetroArch cores** (like Daijishou)                                     |
+| 3   | Priority platform  | **D - All platforms in parallel**                                        |
+| 4   | Mobile ROM access  | **B - External folder selection**                                        |
+| 5   | UI Style           | **Daijishou Style** (Media Center gaming)                                |
+| 6   | Mobile launching   | **URL Schemes**                                                          |
+| 7   | V1.0 Scope         | **No additional features**                                               |
+| 8   | Branding           | **EmuZ** - Green - "Yet another emulators and ROMs management front-end" |
 
 ### Technical Clarifications (Implementation Phase)
 
-| # | Question | Decision |
-|---|----------|----------|
-| 9 | React Native Workflow | **Bare Workflow** (full control, native modules) |
-| 10 | Package naming | `@emuz/core`, `@emuz/database`, `@emuz/mobile`, `@emuz/desktop`, `@emuz/ui` |
-| 11 | UI Framework | **NativeWind** (Tailwind CSS for React Native) |
-| 12 | Minimum OS versions | **LTS - 2 major versions** (see details) |
-| 13 | Testing framework | **Vitest** + RNTL + **Detox** (mobile E2E) + **Playwright** (desktop E2E) |
-| 14 | CI/CD | **GitHub Actions** - Automated builds |
-| 15 | Emulator config | **Economic solution** (embedded JSON files) |
-| 16 | Offline metadata | **Download on first launch** |
-| 17 | Node.js Version | **Node 22 LTS** |
-| 18 | GitHub repo name | **emuz** |
-| 19 | License | **GPL-3.0** (copyleft) |
-| 20 | Metadata hosting | **GitHub Releases** |
-| 21 | Monorepo Tool | **Nx** (existing experience) |
-| 22 | Package Manager | **pnpm** (with node-linker=hoisted) |
-| 23 | Documentation language | **English** (all docs, code, tests, comments) |
-| 24 | i18n Framework | **react-i18next** (UI default: English) |
+| #   | Question               | Decision                                                                    |
+| --- | ---------------------- | --------------------------------------------------------------------------- |
+| 9   | React Native Workflow  | **Bare Workflow** (full control, native modules)                            |
+| 10  | Package naming         | `@emuz/core`, `@emuz/database`, `@emuz/mobile`, `@emuz/desktop`, `@emuz/ui` |
+| 11  | UI Framework           | **NativeWind** (Tailwind CSS for React Native)                              |
+| 12  | Minimum OS versions    | **LTS - 2 major versions** (see details)                                    |
+| 13  | Testing framework      | **Vitest** + RNTL + **Detox** (mobile E2E) + **Playwright** (desktop E2E)   |
+| 14  | CI/CD                  | **GitHub Actions** - Automated builds                                       |
+| 15  | Emulator config        | **Economic solution** (embedded JSON files)                                 |
+| 16  | Offline metadata       | **Download on first launch**                                                |
+| 17  | Node.js Version        | **Node 22 LTS**                                                             |
+| 18  | GitHub repo name       | **emuz**                                                                    |
+| 19  | License                | **GPL-3.0** (copyleft)                                                      |
+| 20  | Metadata hosting       | **GitHub Releases**                                                         |
+| 21  | Monorepo Tool          | **Nx** (existing experience)                                                |
+| 22  | Package Manager        | **pnpm** (with node-linker=hoisted)                                         |
+| 23  | Documentation language | **English** (all docs, code, tests, comments)                               |
+| 24  | i18n Framework         | **react-i18next** (UI default: English)                                     |
 
 ---
 
@@ -59,24 +61,25 @@
 
 #### Priority Platforms (categories)
 
-| Category | Systems |
-|----------|---------|
+| Category               | Systems                                                               |
+| ---------------------- | --------------------------------------------------------------------- |
 | **Nintendo Portables** | Game Boy, Game Boy Color, Game Boy Advance, Nintendo DS, Nintendo 3DS |
-| **Nintendo Consoles** | NES, SNES, Nintendo 64, GameCube, Wii, Wii U, Switch |
-| **Sony Portables** | PSP, PS Vita |
-| **Sony Consoles** | PlayStation, PlayStation 2, PlayStation 3 |
-| **Sega Portables** | Game Gear |
-| **Sega Consoles** | Master System, Genesis/Mega Drive, Saturn, Dreamcast, 32X, Sega CD |
-| **Atari** | 2600, 5200, 7800, Lynx, Jaguar |
-| **NEC** | TurboGrafx-16, PC Engine, PC-FX |
-| **SNK** | Neo Geo, Neo Geo Pocket, Neo Geo CD |
-| **Arcade** | MAME, FinalBurn Neo, CPS1/2/3, Atomiswave, NAOMI |
-| **Computers** | DOS, Amiga, Commodore 64, MSX, Amstrad CPC, ZX Spectrum |
-| **Other** | WonderSwan, Vectrex, 3DO, Virtual Boy, etc. |
+| **Nintendo Consoles**  | NES, SNES, Nintendo 64, GameCube, Wii, Wii U, Switch                  |
+| **Sony Portables**     | PSP, PS Vita                                                          |
+| **Sony Consoles**      | PlayStation, PlayStation 2, PlayStation 3                             |
+| **Sega Portables**     | Game Gear                                                             |
+| **Sega Consoles**      | Master System, Genesis/Mega Drive, Saturn, Dreamcast, 32X, Sega CD    |
+| **Atari**              | 2600, 5200, 7800, Lynx, Jaguar                                        |
+| **NEC**                | TurboGrafx-16, PC Engine, PC-FX                                       |
+| **SNK**                | Neo Geo, Neo Geo Pocket, Neo Geo CD                                   |
+| **Arcade**             | MAME, FinalBurn Neo, CPS1/2/3, Atomiswave, NAOMI                      |
+| **Computers**          | DOS, Amiga, Commodore 64, MSX, Amstrad CPC, ZX Spectrum               |
+| **Other**              | WonderSwan, Vectrex, 3DO, Virtual Boy, etc.                           |
 
 #### Player Configuration (like Daijishou)
 
 Each platform defines:
+
 - Supported file extensions (regex)
 - Launch commands (templates)
 - Default arguments
@@ -87,6 +90,7 @@ Each platform defines:
 **Decision**: All platforms in parallel
 
 **Architecture to support this**:
+
 ```
 libs/
 ├── core/          # 100% shared
@@ -101,11 +105,13 @@ libs/
 **Decision**: External folder selection
 
 **Android**:
+
 - Use Storage Access Framework (SAF)
 - Allow selecting any folder
 - Persist URI permissions
 
 **iOS**:
+
 - Access to app's Documents folder
 - Import from Files app
 - Sandboxing limitations accepted
@@ -116,15 +122,15 @@ libs/
 
 #### Key UI Features:
 
-| Feature | Description |
-|---------|-------------|
-| **Widget Page** | Customizable home page with widgets (recent, favorites, RSS, stats) |
-| **Platform View** | System list with custom wallpapers |
-| **Library** | Game grid with box arts, sorting/filters |
-| **Detail View** | Full game info (screenshots, description, stats) |
-| **Genres** | Genre-based navigation |
-| **Global Search** | Instant search across entire library |
-| **Themes** | Customizable colors, wallpaper packs |
+| Feature           | Description                                                         |
+| ----------------- | ------------------------------------------------------------------- |
+| **Widget Page**   | Customizable home page with widgets (recent, favorites, RSS, stats) |
+| **Platform View** | System list with custom wallpapers                                  |
+| **Library**       | Game grid with box arts, sorting/filters                            |
+| **Detail View**   | Full game info (screenshots, description, stats)                    |
+| **Genres**        | Genre-based navigation                                              |
+| **Global Search** | Instant search across entire library                                |
+| **Themes**        | Customizable colors, wallpaper packs                                |
 
 #### Main Layout:
 
@@ -157,6 +163,7 @@ libs/
 **Decision**: URL Schemes / Intent
 
 #### Android
+
 ```kotlin
 // Intent for RetroArch
 Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -169,6 +176,7 @@ intent.putExtra("LIBRETRO", corePath);
 ```
 
 #### iOS
+
 ```
 retroarch://run?rom=<path>&core=<core>
 delta://game/<rom_path>
@@ -176,6 +184,7 @@ provenance://play?file=<path>
 ```
 
 #### Desktop (macOS/Linux/Windows)
+
 ```bash
 # Direct execution
 /path/to/retroarch -L /cores/nestopia.so "/roms/game.nes"
@@ -187,6 +196,7 @@ provenance://play?file=<path>
 **Features confirmed for V1.0**:
 
 ✅ Included:
+
 - Library management (scan, organization, collections)
 - Metadata scraping (hybrid)
 - Emulator launching (URL schemes + direct)
@@ -197,6 +207,7 @@ provenance://play?file=<path>
 - Full offline mode
 
 ❌ Excluded (future):
+
 - Cloud synchronization
 - Achievements/RetroAchievements
 - Netplay/Multiplayer
@@ -206,33 +217,33 @@ provenance://play?file=<path>
 
 ### 8. Branding
 
-| Element | Value |
-|---------|-------|
-| **Name** | EmuZ |
-| **Slogan** | "Yet another emulators and ROMs management front-end" |
-| **Primary Color** | Green (#10B981 - Emerald 500) |
-| **Secondary Color** | Dark Green (#059669 - Emerald 600) |
-| **Background** | Dark (#0F172A - Slate 900) |
-| **Accent** | Light Green (#34D399 - Emerald 400) |
+| Element             | Value                                                 |
+| ------------------- | ----------------------------------------------------- |
+| **Name**            | EmuZ                                                  |
+| **Slogan**          | "Yet another emulators and ROMs management front-end" |
+| **Primary Color**   | Green (#10B981 - Emerald 500)                         |
+| **Secondary Color** | Dark Green (#059669 - Emerald 600)                    |
+| **Background**      | Dark (#0F172A - Slate 900)                            |
+| **Accent**          | Light Green (#34D399 - Emerald 400)                   |
 
 #### Complete Palette
 
 ```css
 :root {
-  --color-primary: #10B981;      /* Primary green */
-  --color-primary-light: #34D399; /* Light green (hover) */
-  --color-primary-dark: #059669;  /* Dark green */
-  
-  --color-bg-primary: #0F172A;   /* Primary background */
-  --color-bg-secondary: #1E293B; /* Card background */
-  --color-bg-tertiary: #334155;  /* Hover background */
-  
-  --color-text-primary: #F8FAFC;  /* Primary text */
-  --color-text-secondary: #94A3B8; /* Secondary text */
-  
-  --color-border: #334155;        /* Borders */
-  --color-success: #22C55E;       /* Success */
-  --color-error: #EF4444;         /* Error */
+  --color-primary: #10b981; /* Primary green */
+  --color-primary-light: #34d399; /* Light green (hover) */
+  --color-primary-dark: #059669; /* Dark green */
+
+  --color-bg-primary: #0f172a; /* Primary background */
+  --color-bg-secondary: #1e293b; /* Card background */
+  --color-bg-tertiary: #334155; /* Hover background */
+
+  --color-text-primary: #f8fafc; /* Primary text */
+  --color-text-secondary: #94a3b8; /* Secondary text */
+
+  --color-border: #334155; /* Borders */
+  --color-success: #22c55e; /* Success */
+  --color-error: #ef4444; /* Error */
 }
 ```
 
@@ -245,12 +256,14 @@ provenance://play?file=<path>
 **Decision**: Bare Workflow (non-Expo)
 
 **Justification**:
+
 - Full access to native modules (SQLite, SAF, URL Schemes)
 - Complete control over Gradle/Xcode configuration
 - Better integration with native emulators
 - No Expo limitations for deep links
 
 **Implications**:
+
 - Requires Xcode for iOS
 - Manual native module configuration
 - More flexibility for optimizations
@@ -262,7 +275,7 @@ provenance://play?file=<path>
 ```
 libs/
 ├── core/          → @emuz/core
-├── database/      → @emuz/database  
+├── database/      → @emuz/database
 ├── ui/            → @emuz/ui
 ├── platform/      → @emuz/platform
 ├── emulators/     → @emuz/emulators
@@ -276,6 +289,7 @@ apps/
 **Decision**: NativeWind v4+
 
 **Advantages**:
+
 - Familiar Tailwind CSS syntax
 - Theming via CSS variables
 - Native dark mode support
@@ -283,13 +297,11 @@ apps/
 - Optimal performance (static compilation)
 
 **Configuration**:
+
 ```js
 // tailwind.config.js
 module.exports = {
-  content: [
-    "./apps/**/*.{js,jsx,ts,tsx}",
-    "./libs/ui/**/*.{js,jsx,ts,tsx}"
-  ],
+  content: ['./apps/**/*.{js,jsx,ts,tsx}', './libs/ui/**/*.{js,jsx,ts,tsx}'],
   theme: {
     extend: {
       colors: {
@@ -302,26 +314,27 @@ module.exports = {
           primary: '#0F172A',
           secondary: '#1E293B',
           tertiary: '#334155',
-        }
-      }
-    }
-  }
-}
+        },
+      },
+    },
+  },
+};
 ```
 
 ### 12. Minimum OS Versions
 
 **Rule**: LTS - 2 major versions (as of January 2026)
 
-| Platform | Minimum Version | Justification |
-|----------|-----------------|---------------|
-| **iOS** | 15.0+ | iOS 17 current → -2 = iOS 15 |
-| **Android** | API 28 (9.0)+ | Android 14 current → -2 ≈ Android 9 |
-| **macOS** | 12.0 (Monterey)+ | macOS 15 current → -2 = macOS 12 |
-| **Windows** | 10 (21H2)+ | Windows 11 current → -1 = Win 10 |
-| **Linux** | Ubuntu 22.04 LTS+ | Two recent LTS versions |
+| Platform    | Minimum Version   | Justification                       |
+| ----------- | ----------------- | ----------------------------------- |
+| **iOS**     | 15.0+             | iOS 17 current → -2 = iOS 15        |
+| **Android** | API 28 (9.0)+     | Android 14 current → -2 ≈ Android 9 |
+| **macOS**   | 12.0 (Monterey)+  | macOS 15 current → -2 = macOS 12    |
+| **Windows** | 10 (21H2)+        | Windows 11 current → -1 = Win 10    |
+| **Linux**   | Ubuntu 22.04 LTS+ | Two recent LTS versions             |
 
 **Technical Implications**:
+
 - Android: `minSdkVersion = 28`
 - iOS: `IPHONEOS_DEPLOYMENT_TARGET = 15.0`
 - Electron: Chromium compatible with these OS
@@ -330,14 +343,15 @@ module.exports = {
 
 **Testing Stack**:
 
-| Level | Tool | Usage |
-|-------|------|-------|
-| **Unit** | Vitest | Fast unit tests |
-| **Integration** | Vitest + RNTL | React Native components |
-| **E2E Mobile** | Detox | Automated iOS/Android tests |
-| **E2E Desktop** | Playwright | Automated Electron tests |
+| Level           | Tool          | Usage                       |
+| --------------- | ------------- | --------------------------- |
+| **Unit**        | Vitest        | Fast unit tests             |
+| **Integration** | Vitest + RNTL | React Native components     |
+| **E2E Mobile**  | Detox         | Automated iOS/Android tests |
+| **E2E Desktop** | Playwright    | Automated Electron tests    |
 
 **Vitest Configuration**:
+
 ```ts
 // vitest.config.ts
 export default defineConfig({
@@ -349,10 +363,10 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
-      threshold: { lines: 80 }
-    }
-  }
-})
+      threshold: { lines: 80 },
+    },
+  },
+});
 ```
 
 ### 14. CI/CD - GitHub Actions
@@ -403,12 +417,14 @@ jobs:
 **Decision**: JSON files embedded in the app
 
 **Approach**:
+
 1. Manually create config files for 100+ platforms
 2. Use Daijishou configs as inspiration (open source)
 3. Store in `@emuz/emulators/data/platforms/`
 4. Allow community contributions via GitHub
 
 **Structure**:
+
 ```json
 // platforms/nintendo/nes.json
 {
@@ -449,6 +465,7 @@ jobs:
 **Decision**: Database downloaded on first launch
 
 **Implementation**:
+
 ```
 1. First launch → "Downloading metadata..." screen
 2. Download metadata.db.gz (~50-100 MB compressed)
@@ -457,11 +474,13 @@ jobs:
 ```
 
 **Advantages**:
+
 - Lightweight app download
 - Always up-to-date database
 - Skip option (offline mode)
 
 **Metadata Source**:
+
 - Generate from public dumps (ScreenScraper, No-Intro DATs)
 - Host on GitHub Releases (free)
 - Alternative: Free CDN (Cloudflare R2 free tier)
@@ -491,12 +510,14 @@ jobs:
 **Decision**: GPL-3.0
 
 **Justification**:
+
 - Consistent with RetroArch ecosystem (GPL)
 - Ensures derivatives remain open source
 - Protection against commercial appropriation
 - Emulation community is mostly GPL
 
 **Implications**:
+
 - All forks must remain GPL-3.0
 - Source code must be distributed with binaries
 - Compatible with most libraries (verify Electron)
@@ -506,6 +527,7 @@ jobs:
 **Decision**: GitHub Releases
 
 **Implementation**:
+
 ```
 Repository: github.com/<username>/emuz-metadata
 Releases:
@@ -515,12 +537,14 @@ Releases:
 ```
 
 **Advantages**:
+
 - Free (2GB per release, unlimited releases)
 - GitHub global CDN
 - Natural versioning
 - No server maintenance
 
 **Download URL**:
+
 ```
 https://github.com/<username>/emuz-metadata/releases/latest/download/metadata.db.gz
 ```
@@ -530,6 +554,7 @@ https://github.com/<username>/emuz-metadata/releases/latest/download/metadata.db
 **Decision**: Nx
 
 **Justification**:
+
 - User's existing experience with Nx
 - Official React Native plugins (`@nx/react-native`)
 - Excellent integration with pnpm
@@ -539,16 +564,17 @@ https://github.com/<username>/emuz-metadata/releases/latest/download/metadata.db
 
 **Plugins Used**:
 
-| Plugin | Usage |
-|--------|-------|
-| `@nx/react-native` | Mobile app |
-| `@nx/react` | Desktop components (Electron renderer) |
-| `@nx/js` | Shared TypeScript libraries |
-| `@nx/vite` | Electron renderer build |
-| `@nx/eslint` | Linting configuration |
-| `nx-electron` (community) | Electron support |
+| Plugin                    | Usage                                  |
+| ------------------------- | -------------------------------------- |
+| `@nx/react-native`        | Mobile app                             |
+| `@nx/react`               | Desktop components (Electron renderer) |
+| `@nx/js`                  | Shared TypeScript libraries            |
+| `@nx/vite`                | Electron renderer build                |
+| `@nx/eslint`              | Linting configuration                  |
+| `nx-electron` (community) | Electron support                       |
 
 **Nx Cloud Configuration** (optional):
+
 ```bash
 # Enable remote caching (free for open source projects)
 npx nx connect
@@ -559,18 +585,21 @@ npx nx connect
 **Decision**: pnpm with `node-linker=hoisted`
 
 **Required Configuration** (`.npmrc`):
+
 ```ini
 node-linker=hoisted
 shamefully-hoist=true
 ```
 
 **Justification**:
+
 - Significant disk space savings
 - Compatible with React Native when hoisted
 - Nx handles dependency resolution
 - Faster commands than npm/yarn
 
 **Key Commands**:
+
 ```bash
 # Installation
 pnpm install
@@ -587,6 +616,7 @@ pnpm update -r
 **Decision**: All English
 
 **Scope**:
+
 - All documentation (README, docs/, .specify/)
 - Code comments
 - Variable/function names
@@ -595,6 +625,7 @@ pnpm update -r
 - Error messages
 
 **Rationale**:
+
 - Universal accessibility
 - Open source best practices
 - Easier contributions from global community
@@ -604,26 +635,26 @@ pnpm update -r
 **Decision**: react-i18next
 
 **Configuration**:
+
 ```typescript
 // libs/i18n/src/index.ts
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-i18n
-  .use(initReactI18next)
-  .init({
-    fallbackLng: 'en',
-    defaultNS: 'common',
-    ns: ['common', 'games', 'settings', 'platforms'],
-    interpolation: {
-      escapeValue: false,
-    },
-  });
+i18n.use(initReactI18next).init({
+  fallbackLng: 'en',
+  defaultNS: 'common',
+  ns: ['common', 'games', 'settings', 'platforms'],
+  interpolation: {
+    escapeValue: false,
+  },
+});
 
 export default i18n;
 ```
 
 **Structure**:
+
 ```
 libs/
 └── i18n/
@@ -643,12 +674,13 @@ libs/
 ```
 
 **Usage**:
+
 ```tsx
 import { useTranslation } from 'react-i18next';
 
 function GameCard({ game }) {
   const { t } = useTranslation('games');
-  
+
   return (
     <View>
       <Text>{t('playCount', { count: game.playCount })}</Text>
@@ -661,6 +693,7 @@ function GameCard({ game }) {
 **Default Language**: English (en)
 
 **Initial Languages for V1.0**:
+
 - English (en) - Default
 - French (fr)
 - Spanish (es)
@@ -673,35 +706,41 @@ function GameCard({ game }) {
 ## Updated User Stories
 
 ### US-6.1: Widget System
+
 **As a** user  
 **I want to** customize my home screen with widgets  
 **So that** I can have quick access to my favorite content
 
 **Acceptance Criteria:**
+
 - [ ] Recent games widget
-- [ ] Favorites widget  
+- [ ] Favorites widget
 - [ ] Statistics widget (time played, games count)
 - [ ] Platform shortcuts widget
 - [ ] Widgets are draggable/reorderable
 - [ ] Widget size options
 
 ### US-6.2: Platform Wallpapers
+
 **As a** user  
 **I want to** have custom wallpapers for each platform  
 **So that** the interface reflects the aesthetic of each console
 
 **Acceptance Criteria:**
+
 - [ ] Default wallpaper per platform
 - [ ] User can set custom wallpaper
 - [ ] Wallpaper packs downloadable
 - [ ] Blur/overlay options
 
 ### US-6.3: Genre Navigation
+
 **As a** user  
 **I want to** browse games by genre  
 **So that** I can discover games based on my mood
 
 **Acceptance Criteria:**
+
 - [ ] Genre list with game counts
 - [ ] Genre assigned from metadata
 - [ ] Manual genre override
