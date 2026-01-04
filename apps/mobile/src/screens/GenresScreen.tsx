@@ -45,7 +45,12 @@ export default function GenresScreen() {
 
   // Get game count per genre
   const getGameCount = (genreId: string): number => {
-    return games.filter((g: Game) => g.genreId === genreId).length;
+    const genre = genres.find((g: Genre) => g.id === genreId);
+    if (!genre || !('slug' in genre)) {
+      return 0;
+    }
+    const genreSlug = (genre as Genre & { slug: string }).slug;
+    return games.filter((g: Game) => g.genre === genreSlug).length;
   };
 
   // Get icon for genre
