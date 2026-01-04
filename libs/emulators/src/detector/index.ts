@@ -61,6 +61,11 @@ export class DesktopEmulatorDetector {
   async detectEmulator(emulator: EmulatorDefinition): Promise<DetectedEmulator | null> {
     if (!emulator.desktop) return null;
 
+    // Only check desktop platforms
+    if (this.hostPlatform !== 'windows' && this.hostPlatform !== 'macos' && this.hostPlatform !== 'linux') {
+      return null;
+    }
+
     const executables = emulator.desktop.executables[this.hostPlatform] ?? [];
     const installPaths = emulator.desktop.installPaths?.[this.hostPlatform] ?? [];
 
@@ -83,8 +88,8 @@ export class DesktopEmulatorDetector {
 
     // Check if executable is in PATH
     for (const executable of executables) {
-      // Strip any path components for PATH check
-      const baseName = executable.split('/').pop() ?? executable;
+      // Strip any path components for PATH check - would be used for which/where command
+      // const baseName = executable.split('/').pop() ?? executable;
       
       // This would be done via which/where command in real implementation
       // For now, just return null if not found in standard paths
