@@ -57,8 +57,8 @@ export default function LibraryScreen() {
     result.sort((a: Game, b: Game) => {
       switch (sortBy) {
         case 'lastPlayed':
-          const dateA = a.lastPlayed ? new Date(a.lastPlayed).getTime() : 0;
-          const dateB = b.lastPlayed ? new Date(b.lastPlayed).getTime() : 0;
+          const dateA = a.lastPlayedAt ? new Date(a.lastPlayedAt).getTime() : 0;
+          const dateB = b.lastPlayedAt ? new Date(b.lastPlayedAt).getTime() : 0;
           return dateB - dateA;
         case 'playTime':
           return (b.playTime || 0) - (a.playTime || 0);
