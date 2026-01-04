@@ -17,10 +17,18 @@ export default defineConfig(() => ({
       pathsToAliases: false,
     }),
   ],
-  // Uncomment this if you are using workers.
-  // worker: {
-  //   plugins: () => [ nxViteTsPaths() ],
-  // },
+  // Test configuration
+  test: {
+    watch: false,
+    globals: true,
+    environment: 'node',
+    include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    reporters: ['default'],
+    coverage: {
+      reportsDirectory: '../../coverage/libs/i18n',
+      provider: 'v8' as const,
+    },
+  },
   // Configuration for building your library.
   // See: https://vite.dev/guide/build.html#library-mode
   build: {
