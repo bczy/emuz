@@ -21,26 +21,26 @@
 
 ## 📱 Platforms
 
-| Platform | Status |
-|----------|--------|
+| Platform   | Status   |
+| ---------- | -------- |
 | 🖥️ Windows | ✅ Ready |
-| 🍎 macOS | ✅ Ready |
-| 🐧 Linux | ✅ Ready |
+| 🍎 macOS   | ✅ Ready |
+| 🐧 Linux   | ✅ Ready |
 | 🤖 Android | ✅ Ready |
-| 📱 iOS | ✅ Ready |
+| 📱 iOS     | ✅ Ready |
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Monorepo | Nx 20.x + pnpm 9.x |
-| Desktop | Electron 33.x + Vite |
-| Mobile | React Native 0.76+ (Bare Workflow) |
-| UI | React 19.x + TailwindCSS 4.x / NativeWind 4.x |
-| State | Zustand 5.x + React Query 5.x |
+| Layer    | Technology                                            |
+| -------- | ----------------------------------------------------- |
+| Monorepo | Nx 20.x + pnpm 9.x                                    |
+| Desktop  | Electron 33.x + Vite                                  |
+| Mobile   | React Native 0.76+ (Bare Workflow)                    |
+| UI       | React 19.x + TailwindCSS 4.x / NativeWind 4.x         |
+| State    | Zustand 5.x + React Query 5.x                         |
 | Database | SQLite (better-sqlite3 / react-native-sqlite-storage) |
-| i18n | react-i18next |
-| Testing | Vitest |
+| i18n     | react-i18next                                         |
+| Testing  | Vitest                                                |
 
 ## 📁 Project Structure
 
@@ -121,30 +121,66 @@ pnpm nx run-android mobile
 
 ## 🎮 Supported Emulators
 
-| Emulator | Platforms | Desktop | Mobile |
-|----------|-----------|---------|--------|
-| RetroArch | 100+ systems | ✅ | ✅ |
-| Dolphin | GameCube, Wii | ✅ | ✅ Android |
-| PCSX2 | PlayStation 2 | ✅ | ❌ |
-| PPSSPP | PSP | ✅ | ✅ |
-| mGBA | GBA, GB, GBC | ✅ | ❌ |
-| DuckStation | PS1 | ✅ | ✅ Android |
-| melonDS | Nintendo DS | ✅ | ✅ Android |
-| Citra/Lime3DS | 3DS | ✅ | ✅ Android |
+| Emulator      | Platforms     | Desktop | Mobile     |
+| ------------- | ------------- | ------- | ---------- |
+| RetroArch     | 100+ systems  | ✅      | ✅         |
+| Dolphin       | GameCube, Wii | ✅      | ✅ Android |
+| PCSX2         | PlayStation 2 | ✅      | ❌         |
+| PPSSPP        | PSP           | ✅      | ✅         |
+| mGBA          | GBA, GB, GBC  | ✅      | ❌         |
+| DuckStation   | PS1           | ✅      | ✅ Android |
+| melonDS       | Nintendo DS   | ✅      | ✅ Android |
+| Citra/Lime3DS | 3DS           | ✅      | ✅ Android |
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please read our [Contributing Guide](docs/contributing.md) before submitting a PR.
 
+### Development Commands
+
 ```bash
-# Run tests
-pnpm nx run-many -t test
+# Install dependencies
+pnpm install
 
-# Run linting
-pnpm nx run-many -t lint
+# Build all projects
+pnpm build
 
-# Format code
-pnpm prettier --write .
+# Run all tests
+pnpm test
+
+# Run linting on all projects
+pnpm lint
+
+# Fix linting issues and format code
+pnpm fix
+
+# Format code with Prettier
+pnpm format
+
+# Check code formatting
+pnpm format:check
+
+# Run affected tests (only changed files)
+pnpm affected:test
+
+# Run affected builds
+pnpm affected:build
+```
+
+### Git Hooks
+
+This project uses Husky and lint-staged for pre-commit hooks:
+
+- **Pre-commit**: Automatically runs ESLint, Prettier, and tests on staged files
+- Ensures code quality before commits
+- Only runs on changed files for performance
+
+```bash
+# The pre-commit hook will run automatically on git commit
+git commit -m "your message"
+
+# To bypass hooks (not recommended)
+git commit --no-verify -m "your message"
 ```
 
 ## 📄 License
