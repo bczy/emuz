@@ -28,7 +28,7 @@ export const defaultTheme = darkTheme;
 /**
  * Get a theme by name
  */
-export function getTheme(name: ThemeName): Theme {
+export function getTheme(name: ThemeName): typeof darkTheme | typeof lightTheme {
   return themes[name];
 }
 

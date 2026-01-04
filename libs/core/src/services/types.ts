@@ -18,9 +18,9 @@ export interface PaginationOptions {
 }
 
 /**
- * Sort options
+ * Sort configuration for queries
  */
-export interface SortOptions<T> {
+export interface SortConfig<T> {
   field: keyof T;
   order: 'asc' | 'desc';
 }
