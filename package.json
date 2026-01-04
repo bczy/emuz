@@ -11,6 +11,8 @@
   "scripts": {
     "build": "nx run-many -t build --all",
     "test": "nx run-many -t test --all",
+    "test:coverage": "nx run-many -t test --all --coverage",
+    "test:watch": "nx run-many -t test --all --watch",
     "lint": "nx run-many -t lint --all",
     "fix": "nx run-many -t lint --all --fix && prettier --write .",
     "format": "prettier --write .",
@@ -36,7 +38,7 @@
     "@types/node": "^22.10.0",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
-    "@vitest/coverage-v8": "^1.6.0",
+    "@vitest/coverage-v8": "^4.0.16",
     "@vitest/ui": "^4.0.0",
     "eslint": "^9.16.0",
     "eslint-config-prettier": "^9.1.0",
