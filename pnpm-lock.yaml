@@ -329,6 +329,12 @@ importers:
 
   libs/core:
     dependencies:
+      '@emuz/database':
+        specifier: workspace:*
+        version: link:../database
+      '@emuz/platform':
+        specifier: workspace:*
+        version: link:../platform
       react:
         specifier: '>=18.0.0'
         version: 19.2.3

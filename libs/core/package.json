@@ -8,8 +8,8 @@
   "dependencies": {
     "uuid": "^11.1.0",
     "zustand": "^5.0.0",
-    "@emuz/database": "0.0.1",
-    "@emuz/platform": "0.0.1"
+    "@emuz/database": "workspace:*",
+    "@emuz/platform": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
