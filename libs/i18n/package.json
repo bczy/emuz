@@ -7,6 +7,6 @@
   "types": "./index.d.ts",
   "dependencies": {
     "i18next": "^24.2.0",
-    "react-i18next": "^15.3.3"
+    "react-i18next": "^15.4.0"
   }
 }
