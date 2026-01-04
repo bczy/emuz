@@ -6,7 +6,9 @@
   "main": "./index.js",
   "types": "./index.d.ts",
   "dependencies": {
-    "react-native": "^0.76.5",
     "react-native-fs": "^2.20.0"
+  },
+  "peerDependencies": {
+    "react-native": ">=0.70.0"
   }
 }
