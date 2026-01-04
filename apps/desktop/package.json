@@ -16,7 +16,7 @@
     "package:all": "pnpm build && electron-builder -mwl",
     "lint": "eslint . --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps || true"
   },
   "dependencies": {
     "@electron-toolkit/utils": "^3.0.0",
