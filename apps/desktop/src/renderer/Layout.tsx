@@ -16,28 +16,37 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const { platforms, collections } = useLibraryStore();
   const { sidebar, toggleSidebar, setSearchOpen } = useUIStore();
-  
+
   // Handle platform click
-  const handlePlatformClick = useCallback((id: string) => {
-    navigate(`/platform/${id}`);
-  }, [navigate]);
-  
+  const handlePlatformClick = useCallback(
+    (id: string) => {
+      navigate(`/platform/${id}`);
+    },
+    [navigate]
+  );
+
   // Handle collection click
-  const handleCollectionClick = useCallback((id: string) => {
-    navigate(`/collection/${id}`);
-  }, [navigate]);
-  
+  const handleCollectionClick = useCallback(
+    (id: string) => {
+      navigate(`/collection/${id}`);
+    },
+    [navigate]
+  );
+
   // Handle search
-  const handleSearch = useCallback((query: string) => {
-    setSearchQuery(query);
-    if (query.trim()) {
-      navigate(`/search?q=${encodeURIComponent(query)}`);
-    }
-  }, [navigate]);
-  
+  const handleSearch = useCallback(
+    (query: string) => {
+      setSearchQuery(query);
+      if (query.trim()) {
+        navigate(`/search?q=${encodeURIComponent(query)}`);
+      }
+    },
+    [navigate]
+  );
+
   // Get selected ID based on current route
   const getSelectedId = () => {
     const path = location.pathname;
@@ -49,7 +58,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
     return undefined;
   };
-  
+
   // Container style
   const containerStyle: React.CSSProperties = {
     display: 'flex',
@@ -58,7 +67,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     backgroundColor: 'var(--bg-primary, #0F172A)',
     color: 'var(--text-primary, #F8FAFC)',
   };
-  
+
   // Main content style
   const mainStyle: React.CSSProperties = {
     flex: 1,
@@ -66,7 +75,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     flexDirection: 'column',
     overflow: 'hidden',
   };
-  
+
   // Header style
   const headerStyle: React.CSSProperties = {
     height: 64,
@@ -77,11 +86,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     padding: '0 24px',
     backgroundColor: 'var(--bg-secondary, #1E293B)',
     borderBottom: '1px solid var(--border, #334155)',
-    // macOS window controls space
-    paddingLeft: process.platform === 'darwin' ? 80 : 24,
+    // macOS window controls space (Electron only)
+    paddingLeft: typeof process !== 'undefined' && process.platform === 'darwin' ? 80 : 24,
     WebkitAppRegion: 'drag',
   } as React.CSSProperties;
-  
+
   // Logo style
   const logoStyle: React.CSSProperties = {
     fontSize: 24,
@@ -90,7 +99,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     letterSpacing: '-0.5px',
     WebkitAppRegion: 'no-drag',
   } as React.CSSProperties;
-  
+
   // Search container style
   const searchContainerStyle: React.CSSProperties = {
     flex: 1,
@@ -99,7 +108,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     marginRight: 'auto',
     WebkitAppRegion: 'no-drag',
   } as React.CSSProperties;
-  
+
   // Window controls style (for Windows/Linux)
   const windowControlsStyle: React.CSSProperties = {
     display: 'flex',
@@ -107,7 +116,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     marginLeft: 16,
     WebkitAppRegion: 'no-drag',
   } as React.CSSProperties;
-  
+
   // Window control button style
   const controlButtonStyle: React.CSSProperties = {
     width: 32,
@@ -121,14 +130,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     justifyContent: 'center',
     color: 'var(--text-secondary, #CBD5E1)',
   };
-  
+
   // Content area style
   const contentStyle: React.CSSProperties = {
     flex: 1,
     overflow: 'auto',
     padding: 24,
   };
-  
+
   return (
     <div style={containerStyle}>
       {/* Sidebar */}
@@ -141,13 +150,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         onCollectionClick={handleCollectionClick}
         onToggleCollapse={toggleSidebar}
       />
-      
+
       {/* Main content area */}
       <main style={mainStyle}>
         {/* Header */}
         <header style={headerStyle}>
           <span style={logoStyle}>EmuZ</span>
-          
+
           <div style={searchContainerStyle}>
             <SearchBar
               value={searchQuery}
@@ -159,13 +168,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               shortcutHint="⌘K"
             />
           </div>
-          
+
           {/* Window controls for Windows/Linux */}
-          {process.platform !== 'darwin' && (
+          {typeof process !== 'undefined' && process.platform !== 'darwin' && (
             <div style={windowControlsStyle}>
               <button
                 style={controlButtonStyle}
-                onClick={() => (window as unknown as { electron: { minimize: () => void } }).electron.minimize()}
+                onClick={() =>
+                  (window as unknown as { electron: { minimize: () => void } }).electron.minimize()
+                }
                 title="Minimize"
               >
                 <svg width="12" height="12" viewBox="0 0 12 12">
@@ -174,16 +185,28 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               </button>
               <button
                 style={controlButtonStyle}
-                onClick={() => (window as unknown as { electron: { maximize: () => void } }).electron.maximize()}
+                onClick={() =>
+                  (window as unknown as { electron: { maximize: () => void } }).electron.maximize()
+                }
                 title="Maximize"
               >
                 <svg width="12" height="12" viewBox="0 0 12 12">
-                  <rect x="2" y="2" width="8" height="8" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                  <rect
+                    x="2"
+                    y="2"
+                    width="8"
+                    height="8"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
                 </svg>
               </button>
               <button
                 style={{ ...controlButtonStyle, color: 'var(--color-error, #EF4444)' }}
-                onClick={() => (window as unknown as { electron: { close: () => void } }).electron.close()}
+                onClick={() =>
+                  (window as unknown as { electron: { close: () => void } }).electron.close()
+                }
                 title="Close"
               >
                 <svg width="12" height="12" viewBox="0 0 12 12">
@@ -194,11 +217,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
           )}
         </header>
-        
+
         {/* Page content */}
-        <div style={contentStyle}>
-          {children}
-        </div>
+        <div style={contentStyle}>{children}</div>
       </main>
     </div>
   );

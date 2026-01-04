@@ -32,7 +32,7 @@ describe('Theme Structure', () => {
     expect(darkTheme.colors).toBeDefined();
     expect(darkTheme.typography).toBeDefined();
     expect(darkTheme.spacing).toBeDefined();
-    expect(darkTheme.components).toBeDefined();
+    expect(darkTheme.colors.components).toBeDefined();
   });
 
   it('should have required properties in light theme', () => {
@@ -40,7 +40,7 @@ describe('Theme Structure', () => {
     expect(lightTheme.colors).toBeDefined();
     expect(lightTheme.typography).toBeDefined();
     expect(lightTheme.spacing).toBeDefined();
-    expect(lightTheme.components).toBeDefined();
+    expect(lightTheme.colors.components).toBeDefined();
   });
 
   it('should have primary color in both themes', () => {
@@ -95,12 +95,12 @@ describe('Color Tokens', () => {
 
 describe('Component Styles', () => {
   it('should have button component styles', () => {
-    expect(darkTheme.components.button).toBeDefined();
-    expect(lightTheme.components.button).toBeDefined();
+    expect(darkTheme.colors.components.button).toBeDefined();
+    expect(lightTheme.colors.components.button).toBeDefined();
   });
 
   it('should have card component styles', () => {
-    expect(darkTheme.components.card).toBeDefined();
-    expect(lightTheme.components.card).toBeDefined();
+    expect(darkTheme.colors.components.card).toBeDefined();
+    expect(lightTheme.colors.components.card).toBeDefined();
   });
 });
