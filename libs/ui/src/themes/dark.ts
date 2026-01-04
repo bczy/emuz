@@ -84,6 +84,82 @@ export const darkTheme = {
       atari: '#E40000',
       neoGeo: '#FFD700',
     },
+
+    // Component specific colors
+    components: {
+      skeleton: colors.slate[700],
+      button: {
+        primary: {
+          background: colors.primary[500],
+          text: colors.white,
+          border: 'transparent',
+          hoverBackground: colors.primary[400],
+          activeBackground: colors.primary[600],
+        },
+        secondary: {
+          background: colors.slate[700],
+          text: colors.slate[100],
+          border: colors.slate[600],
+          hoverBackground: colors.slate[600],
+          activeBackground: colors.slate[500],
+        },
+        ghost: {
+          background: 'transparent',
+          text: colors.slate[300],
+          border: 'transparent',
+          hoverBackground: colors.slate[800],
+          activeBackground: colors.slate[700],
+        },
+        danger: {
+          background: colors.error,
+          text: colors.white,
+          border: 'transparent',
+          hoverBackground: '#DC2626',
+          activeBackground: '#B91C1C',
+        },
+      },
+      card: {
+        background: colors.slate[800],
+        border: colors.slate[700],
+        hoverBorder: colors.primary[500],
+      },
+      input: {
+        background: colors.slate[800],
+        text: colors.slate[100],
+        placeholder: colors.slate[500],
+        border: colors.slate[600],
+        focusBorder: colors.primary[500],
+      },
+      sidebar: {
+        background: colors.slate[800],
+        itemHover: colors.slate[700],
+        itemActive: colors.primary[500] + '20',
+        itemActiveText: colors.primary[400],
+      },
+      gameCard: {
+        background: colors.slate[800],
+        border: colors.slate[700],
+        hoverBorder: colors.primary[500],
+        platformBadge: colors.slate[900] + 'CC',
+      },
+      widget: {
+        background: colors.slate[800],
+        border: colors.slate[700],
+        headerBorder: colors.slate[600],
+      },
+      bottomTab: {
+        background: colors.slate[900],
+        inactiveColor: colors.slate[500],
+        activeColor: colors.primary[400],
+        border: colors.slate[800],
+      },
+      searchBar: {
+        background: colors.slate[800],
+        text: colors.slate[100],
+        placeholder: colors.slate[500],
+        icon: colors.slate[400],
+      },
+    },
   },
 
   // Typography
@@ -139,82 +215,6 @@ export const darkTheme = {
       shadowOpacity: 0.4,
       shadowRadius: 16,
       elevation: 8,
-    },
-  },
-
-  // Component specific
-  components: {
-    skeleton: colors.slate[700],
-    button: {
-      primary: {
-        background: colors.primary[500],
-        text: colors.white,
-        border: 'transparent',
-        hoverBackground: colors.primary[400],
-        activeBackground: colors.primary[600],
-      },
-      secondary: {
-        background: colors.slate[700],
-        text: colors.slate[100],
-        border: colors.slate[600],
-        hoverBackground: colors.slate[600],
-        activeBackground: colors.slate[500],
-      },
-      ghost: {
-        background: 'transparent',
-        text: colors.slate[300],
-        border: 'transparent',
-        hoverBackground: colors.slate[800],
-        activeBackground: colors.slate[700],
-      },
-      danger: {
-        background: colors.error,
-        text: colors.white,
-        border: 'transparent',
-        hoverBackground: '#DC2626',
-        activeBackground: '#B91C1C',
-      },
-    },
-    card: {
-      background: colors.slate[800],
-      border: colors.slate[700],
-      hoverBorder: colors.primary[500],
-    },
-    input: {
-      background: colors.slate[800],
-      text: colors.slate[100],
-      placeholder: colors.slate[500],
-      border: colors.slate[600],
-      focusBorder: colors.primary[500],
-    },
-    sidebar: {
-      background: colors.slate[800],
-      itemHover: colors.slate[700],
-      itemActive: colors.primary[500] + '20',
-      itemActiveText: colors.primary[400],
-    },
-    gameCard: {
-      background: colors.slate[800],
-      border: colors.slate[700],
-      hoverBorder: colors.primary[500],
-      platformBadge: colors.slate[900] + 'CC',
-    },
-    widget: {
-      background: colors.slate[800],
-      border: colors.slate[700],
-      headerBorder: colors.slate[600],
-    },
-    bottomTab: {
-      background: colors.slate[900],
-      inactiveColor: colors.slate[500],
-      activeColor: colors.primary[400],
-      border: colors.slate[800],
-    },
-    searchBar: {
-      background: colors.slate[800],
-      text: colors.slate[100],
-      placeholder: colors.slate[500],
-      icon: colors.slate[400],
     },
   },
 } as const;
