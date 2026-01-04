@@ -241,7 +241,7 @@ export class ScannerService implements IScannerService {
 
       for await (const progress of this.scanDirectory(dir.path)) {
         totalProgress.currentPath = progress.currentPath;
-        totalProgress.filesFound += progress.filesFound;
+        totalProgress.filesFound = progress.filesFound;
         totalProgress.filesProcessed = progress.filesProcessed;
         totalProgress.gamesAdded += progress.gamesAdded;
         totalProgress.gamesUpdated += progress.gamesUpdated;
