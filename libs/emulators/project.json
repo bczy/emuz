@@ -1,0 +1,9 @@
+{
+  "name": "emulators",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/emulators/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project emulators --web",
+  "targets": {}
+}

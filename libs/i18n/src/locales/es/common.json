@@ -1,0 +1,63 @@
+{
+  "app": {
+    "name": "EmuZ",
+    "slogan": "Otra interfaz de gestión de emuladores y ROMs"
+  },
+  "navigation": {
+    "home": "Inicio",
+    "library": "Biblioteca",
+    "platforms": "Plataformas",
+    "genres": "Géneros",
+    "collections": "Colecciones",
+    "settings": "Configuración",
+    "search": "Buscar"
+  },
+  "actions": {
+    "play": "Jugar",
+    "add": "Añadir",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "confirm": "Confirmar",
+    "close": "Cerrar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "refresh": "Actualizar",
+    "scan": "Escanear",
+    "import": "Importar",
+    "export": "Exportar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "select": "Seleccionar",
+    "selectAll": "Seleccionar todo",
+    "deselectAll": "Deseleccionar todo"
+  },
+  "status": {
+    "loading": "Cargando...",
+    "saving": "Guardando...",
+    "scanning": "Escaneando...",
+    "noResults": "No se encontraron resultados",
+    "empty": "Sin elementos",
+    "error": "Se produjo un error",
+    "success": "Éxito",
+    "warning": "Advertencia"
+  },
+  "time": {
+    "justNow": "Ahora mismo",
+    "minutesAgo": "Hace {{count}} minuto",
+    "minutesAgo_other": "Hace {{count}} minutos",
+    "hoursAgo": "Hace {{count}} hora",
+    "hoursAgo_other": "Hace {{count}} horas",
+    "daysAgo": "Hace {{count}} día",
+    "daysAgo_other": "Hace {{count}} días",
+    "never": "Nunca"
+  },
+  "errors": {
+    "generic": "Algo salió mal. Por favor, inténtelo de nuevo.",
+    "network": "Error de red. Por favor, verifique su conexión.",
+    "notFound": "El elemento solicitado no fue encontrado.",
+    "unauthorized": "No está autorizado para realizar esta acción."
+  }
+}

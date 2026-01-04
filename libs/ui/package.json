@@ -1,0 +1,14 @@
+{
+  "name": "@emuz/ui",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "dependencies": {
+    "@emuz/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  }
+}

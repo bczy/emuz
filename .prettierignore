@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.cache/
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Coverage
+coverage/
+
+# Nx
+.nx/
+
+# Generated files
+*.generated.*
+*.min.js
+*.min.css
+
+# Assets
+*.ico
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.woff
+*.woff2
+*.ttf
+*.eot
+
+# React Native
+apps/mobile/android/
+apps/mobile/ios/
+Pods/
+
+# Electron
+apps/desktop/release/
+
+# Markdown (optional - enable if needed)
+# *.md

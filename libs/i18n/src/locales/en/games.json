@@ -1,0 +1,58 @@
+{
+  "title": "Games",
+  "library": {
+    "title": "Game Library",
+    "empty": "Your library is empty",
+    "emptyDescription": "Add a folder to scan for games to get started"
+  },
+  "card": {
+    "play": "Play {{title}}",
+    "favorite": "Add to favorites",
+    "unfavorite": "Remove from favorites",
+    "info": "Game info"
+  },
+  "detail": {
+    "title": "Game Details",
+    "platform": "Platform",
+    "developer": "Developer",
+    "publisher": "Publisher",
+    "releaseDate": "Release Date",
+    "genre": "Genre",
+    "rating": "Rating",
+    "playCount": "Play Count",
+    "playTime": "Play Time",
+    "lastPlayed": "Last Played",
+    "filePath": "File Path",
+    "fileSize": "File Size"
+  },
+  "stats": {
+    "totalGames": "Total Games",
+    "totalPlayTime": "Total Play Time",
+    "mostPlayed": "Most Played",
+    "recentlyPlayed": "Recently Played",
+    "favorites": "Favorites"
+  },
+  "sort": {
+    "title": "Sort by",
+    "titleAsc": "Title (A-Z)",
+    "titleDesc": "Title (Z-A)",
+    "recentlyAdded": "Recently Added",
+    "recentlyPlayed": "Recently Played",
+    "mostPlayed": "Most Played",
+    "releaseDate": "Release Date"
+  },
+  "filter": {
+    "title": "Filter",
+    "platform": "Platform",
+    "genre": "Genre",
+    "favorites": "Favorites only",
+    "clear": "Clear filters"
+  },
+  "actions": {
+    "launchWith": "Launch with...",
+    "editMetadata": "Edit Metadata",
+    "refreshMetadata": "Refresh Metadata",
+    "addToCollection": "Add to Collection",
+    "removeFromLibrary": "Remove from Library"
+  }
+}

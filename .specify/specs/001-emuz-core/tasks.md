@@ -14,15 +14,15 @@
 ### Task 1.1: Monorepo Initialization
 **Priority**: Critical | **Effort**: 2h | **Dependencies**: None
 
-- [ ] Create Nx workspace with `npx create-nx-workspace@latest emuz --preset=apps`
-- [ ] Configure pnpm as package manager
-- [ ] Create `.npmrc` with `node-linker=hoisted`
-- [ ] Set up `nx.json` configuration
-- [ ] Create `tsconfig.base.json` for shared TypeScript config
-- [ ] Configure ESLint with `@nx/eslint`
-- [ ] Configure Prettier
-- [ ] Add `.gitignore` entries
-- [ ] Create workspace structure (`apps/`, `libs/`)
+- [X] Create Nx workspace with `npx create-nx-workspace@latest emuz --preset=apps`
+- [X] Configure pnpm as package manager
+- [X] Create `.npmrc` with `node-linker=hoisted`
+- [X] Set up `nx.json` configuration
+- [X] Create `tsconfig.base.json` for shared TypeScript config
+- [X] Configure ESLint with `@nx/eslint`
+- [X] Configure Prettier
+- [X] Add `.gitignore` entries
+- [X] Create workspace structure (`apps/`, `libs/`)
 
 **Files to create:**
 - `pnpm-workspace.yaml`
@@ -38,12 +38,12 @@
 ### Task 1.2: Database Package Setup
 **Priority**: Critical | **Effort**: 4h | **Dependencies**: Task 1.1
 
-- [ ] Create `libs/database/package.json`
-- [ ] Set up TypeScript configuration
-- [ ] Define database schema types
-- [ ] Create migration system
-- [ ] Implement initial migration (all tables)
-- [ ] Add platform seed data
+- [X] Create `libs/database/package.json`
+- [X] Set up TypeScript configuration
+- [X] Define database schema types
+- [X] Create migration system
+- [X] Implement initial migration (all tables)
+- [X] Add platform seed data
 
 **Files to create:**
 - `libs/database/package.json`
@@ -62,12 +62,12 @@
 ### Task 1.3: Database Platform Adapters
 **Priority**: Critical | **Effort**: 3h | **Dependencies**: Task 1.2
 
-- [ ] Create adapter interface
-- [ ] Implement desktop adapter (better-sqlite3)
-- [ ] Implement mobile adapter (react-native-sqlite-storage)
-- [ ] Create adapter factory
-- [ ] Add connection management
-- [ ] Write unit tests
+- [X] Create adapter interface
+- [X] Implement desktop adapter (better-sqlite3)
+- [X] Implement mobile adapter (react-native-sqlite-storage)
+- [X] Create adapter factory
+- [X] Add connection management
+- [X] Write unit tests
 
 **Files to create:**
 - `libs/database/src/adapters/types.ts`
@@ -81,15 +81,15 @@
 ### Task 1.4: Core Package - Models
 **Priority**: Critical | **Effort**: 3h | **Dependencies**: Task 1.1
 
-- [ ] Create `libs/core/package.json`
-- [ ] Define Game model and Zod schema
-- [ ] Define Platform model and Zod schema (with wallpaper support)
-- [ ] Define Emulator model and Zod schema
-- [ ] Define Collection model and Zod schema
-- [ ] Define Widget model and Zod schema *(NEW - Daijishou)*
-- [ ] Define Genre model and Zod schema *(NEW - Daijishou)*
-- [ ] Define Settings model
-- [ ] Export all models
+- [X] Create `libs/core/package.json`
+- [X] Define Game model and Zod schema
+- [X] Define Platform model and Zod schema (with wallpaper support)
+- [X] Define Emulator model and Zod schema
+- [X] Define Collection model and Zod schema
+- [X] Define Widget model and Zod schema *(NEW - Daijishou)*
+- [X] Define Genre model and Zod schema *(NEW - Daijishou)*
+- [X] Define Settings model
+- [X] Export all models
 
 **Files to create:**
 - `libs/core/package.json`
@@ -107,12 +107,12 @@
 ### Task 1.5: Platform Package - File System Adapters *(NEW)*
 **Priority**: Critical | **Effort**: 4h | **Dependencies**: Task 1.1
 
-- [ ] Create `libs/platform/package.json`
-- [ ] Define file system adapter interface
-- [ ] Implement desktop adapter (Node.js fs)
-- [ ] Implement Android adapter (SAF via native module)
-- [ ] Implement iOS adapter (Documents + Files)
-- [ ] Create adapter factory with platform detection
+- [X] Create `libs/platform/package.json`
+- [X] Define file system adapter interface
+- [X] Implement desktop adapter (Node.js fs)
+- [X] Implement Android adapter (SAF via native module)
+- [X] Implement iOS adapter (Documents + Files)
+- [X] Create adapter factory with platform detection
 - [ ] Write unit tests
 
 **Files to create:**
@@ -128,12 +128,12 @@
 ### Task 1.6: Platform Package - Emulator Launchers *(NEW)*
 **Priority**: Critical | **Effort**: 4h | **Dependencies**: Task 1.5
 
-- [ ] Define launcher interface
-- [ ] Implement desktop launcher (process spawn)
-- [ ] Implement Android launcher (Intent system)
-- [ ] Implement iOS launcher (URL schemes)
-- [ ] Create launcher factory
-- [ ] Add URL scheme registry for iOS
+- [X] Define launcher interface
+- [X] Implement desktop launcher (process spawn)
+- [X] Implement Android launcher (Intent system)
+- [X] Implement iOS launcher (URL schemes)
+- [X] Create launcher factory
+- [X] Add URL scheme registry for iOS
 - [ ] Write unit tests
 
 **Files to create:**
@@ -151,15 +151,15 @@
 ### Task 2.1: LibraryService Implementation
 **Priority**: Critical | **Effort**: 4h | **Dependencies**: Task 1.3, Task 1.4
 
-- [ ] Create service interface
-- [ ] Implement getAllGames()
-- [ ] Implement getGameById()
-- [ ] Implement getGamesByPlatform()
-- [ ] Implement searchGames() with fuzzy search
-- [ ] Implement updateGame()
-- [ ] Implement deleteGame()
-- [ ] Implement collection methods
-- [ ] Implement favorites methods
+- [X] Create service interface
+- [X] Implement getAllGames()
+- [X] Implement getGameById()
+- [X] Implement getGamesByPlatform()
+- [X] Implement searchGames() with fuzzy search
+- [X] Implement updateGame()
+- [X] Implement deleteGame()
+- [X] Implement collection methods
+- [X] Implement favorites methods
 - [ ] Write unit tests
 
 **Files to create:**
@@ -172,14 +172,14 @@
 ### Task 2.2: ScannerService Implementation
 **Priority**: Critical | **Effort**: 5h | **Dependencies**: Task 2.1
 
-- [ ] Create service interface
-- [ ] Implement addDirectory()
-- [ ] Implement removeDirectory()
-- [ ] Implement platform detection by extension
-- [ ] Implement recursive file scanning
-- [ ] Implement hash calculation
-- [ ] Create async generator for progress
-- [ ] Handle cancellation
+- [X] Create service interface
+- [X] Implement addDirectory()
+- [X] Implement removeDirectory()
+- [X] Implement platform detection by extension
+- [X] Implement recursive file scanning
+- [X] Implement hash calculation
+- [X] Create async generator for progress
+- [X] Handle cancellation
 - [ ] Write unit tests
 
 **Files to create:**
@@ -193,11 +193,11 @@
 ### Task 2.3: MetadataService Implementation
 **Priority**: High | **Effort**: 4h | **Dependencies**: Task 2.1
 
-- [ ] Create service interface
-- [ ] Implement game identification (hash-based)
-- [ ] Implement metadata search
-- [ ] Implement cover download
-- [ ] Implement batch refresh
+- [X] Create service interface
+- [X] Implement game identification (hash-based)
+- [X] Implement metadata search
+- [X] Implement cover download
+- [X] Implement batch refresh
 - [ ] Add caching layer
 - [ ] Write unit tests
 
@@ -211,14 +211,14 @@
 ### Task 2.4: LaunchService Implementation
 **Priority**: Critical | **Effort**: 4h | **Dependencies**: Task 2.1
 
-- [ ] Create service interface
-- [ ] Implement getEmulators()
-- [ ] Implement detectEmulators() per platform
-- [ ] Implement addEmulator()
-- [ ] Implement setDefaultEmulator()
-- [ ] Implement launchGame()
-- [ ] Implement command builder
-- [ ] Implement play session tracking
+- [X] Create service interface
+- [X] Implement getEmulators()
+- [X] Implement detectEmulators() per platform
+- [X] Implement addEmulator()
+- [X] Implement setDefaultEmulator()
+- [X] Implement launchGame()
+- [X] Implement command builder
+- [X] Implement play session tracking
 - [ ] Write unit tests
 
 **Files to create:**
@@ -231,14 +231,14 @@
 ### Task 2.5: Emulators Package
 **Priority**: High | **Effort**: 3h | **Dependencies**: Task 1.1
 
-- [ ] Create `libs/emulators/package.json`
-- [ ] Define emulator registry interface
-- [ ] Add RetroArch definition
-- [ ] Add Dolphin definition
-- [ ] Add PCSX2 definition
-- [ ] Add DeSmuME/melonDS definition
-- [ ] Add mGBA definition
-- [ ] Implement auto-detection logic
+- [X] Create `libs/emulators/package.json`
+- [X] Define emulator registry interface
+- [X] Add RetroArch definition
+- [X] Add Dolphin definition
+- [X] Add PCSX2 definition
+- [X] Add DeSmuME/melonDS definition
+- [X] Add mGBA definition
+- [X] Implement auto-detection logic
 - [ ] Write unit tests
 
 **Files to create:**
@@ -259,13 +259,13 @@
 ### Task 2.6: State Management (Zustand)
 **Priority**: High | **Effort**: 4h | **Dependencies**: Task 2.1, Task 2.4
 
-- [ ] Create library store
-- [ ] Create settings store
-- [ ] Create UI store (theme, sidebar, etc.)
-- [ ] Create widgets store *(NEW - Daijishou)*
-- [ ] Implement persistence middleware
+- [X] Create library store
+- [X] Create settings store
+- [X] Create UI store (theme, sidebar, etc.)
+- [X] Create widgets store *(NEW - Daijishou)*
+- [X] Implement persistence middleware
 - [ ] Add React Query integration
-- [ ] Export store hooks
+- [X] Export store hooks
 
 **Files to create:**
 - `libs/core/src/stores/libraryStore.ts`
@@ -282,12 +282,12 @@
 ### Task 2.7: WidgetService Implementation *(NEW - Daijishou)*
 **Priority**: High | **Effort**: 3h | **Dependencies**: Task 2.1
 
-- [ ] Create service interface
-- [ ] Implement getWidgets()
-- [ ] Implement addWidget()
-- [ ] Implement removeWidget()
-- [ ] Implement reorderWidgets()
-- [ ] Implement widget data providers (recent, favorites, stats)
+- [X] Create service interface
+- [X] Implement getWidgets()
+- [X] Implement addWidget()
+- [X] Implement removeWidget()
+- [X] Implement reorderWidgets()
+- [X] Implement widget data providers (recent, favorites, stats)
 - [ ] Write unit tests
 
 **Files to create:**
@@ -302,11 +302,11 @@
 ### Task 2.8: GenreService Implementation *(NEW - Daijishou)*
 **Priority**: Medium | **Effort**: 2h | **Dependencies**: Task 2.1
 
-- [ ] Create service interface
-- [ ] Implement getGenres()
-- [ ] Implement getGamesByGenre()
-- [ ] Implement assignGenre()
-- [ ] Extract genres from metadata
+- [X] Create service interface
+- [X] Implement getGenres()
+- [X] Implement getGamesByGenre()
+- [X] Implement assignGenre()
+- [X] Extract genres from metadata
 - [ ] Write unit tests
 
 **Files to create:**
@@ -320,11 +320,11 @@
 ### Task 3.1: UI Package Setup with Green Theme
 **Priority**: High | **Effort**: 2h | **Dependencies**: Task 1.1
 
-- [ ] Create `libs/ui/package.json`
-- [ ] Set up TypeScript configuration
-- [ ] Create theme system with Emerald Green palette
-- [ ] Define color tokens (#10B981, #0F172A, etc.)
-- [ ] Set up component structure
+- [X] Create `libs/ui/package.json`
+- [X] Set up TypeScript configuration
+- [X] Create theme system with Emerald Green palette
+- [X] Define color tokens (#10B981, #0F172A, etc.)
+- [X] Set up component structure
 - [ ] Configure react-native-web support
 
 **Files to create:**
@@ -341,12 +341,12 @@
 ### Task 3.2: Core UI Components
 **Priority**: High | **Effort**: 4h | **Dependencies**: Task 3.1
 
-- [ ] Button component (variants, sizes)
-- [ ] Input component
-- [ ] Card component
-- [ ] Badge component
-- [ ] Icon component wrapper
-- [ ] Text component (typography)
+- [X] Button component (variants, sizes)
+- [X] Input component
+- [X] Card component
+- [X] Badge component
+- [X] Icon component wrapper
+- [X] Text component (typography)
 - [ ] Write component tests
 
 **Files to create:**
@@ -364,12 +364,12 @@
 ### Task 3.3: GameCard Component
 **Priority**: High | **Effort**: 3h | **Dependencies**: Task 3.2
 
-- [ ] Design GameCard layout
-- [ ] Implement cover image with placeholder
-- [ ] Add platform badge
-- [ ] Add hover/press states
-- [ ] Add context menu trigger
-- [ ] Handle missing artwork
+- [X] Design GameCard layout
+- [X] Implement cover image with placeholder
+- [X] Add platform badge
+- [X] Add hover/press states
+- [X] Add context menu trigger
+- [X] Handle missing artwork
 - [ ] Write component tests
 
 **Files to create:**
@@ -383,12 +383,12 @@
 ### Task 3.4: GameGrid Component
 **Priority**: High | **Effort**: 4h | **Dependencies**: Task 3.3
 
-- [ ] Implement responsive grid layout
+- [X] Implement responsive grid layout
 - [ ] Add virtualization for performance
-- [ ] Handle empty state
-- [ ] Handle loading state
-- [ ] Implement infinite scroll
-- [ ] Add grid size options
+- [X] Handle empty state
+- [X] Handle loading state
+- [X] Implement infinite scroll
+- [X] Add grid size options
 - [ ] Write component tests
 
 **Files to create:**
@@ -401,11 +401,11 @@
 ### Task 3.5: SearchBar Component
 **Priority**: High | **Effort**: 2h | **Dependencies**: Task 3.2
 
-- [ ] Design SearchBar layout
-- [ ] Implement debounced input
-- [ ] Add clear button
-- [ ] Add keyboard shortcut hint
-- [ ] Style focus states
+- [X] Design SearchBar layout
+- [X] Implement debounced input
+- [X] Add clear button
+- [X] Add keyboard shortcut hint
+- [X] Style focus states
 - [ ] Write component tests
 
 **Files to create:**
@@ -417,12 +417,12 @@
 ### Task 3.6: Sidebar Component
 **Priority**: High | **Effort**: 3h | **Dependencies**: Task 3.2
 
-- [ ] Design Sidebar layout
-- [ ] Platform list with icons
-- [ ] Collections list
-- [ ] Game counts
-- [ ] Collapsible sections
-- [ ] Active state styling
+- [X] Design Sidebar layout
+- [X] Platform list with icons
+- [X] Collections list
+- [X] Game counts
+- [X] Collapsible sections
+- [X] Active state styling
 - [ ] Write component tests
 
 **Files to create:**
@@ -435,12 +435,12 @@
 ### Task 3.7: GameDetail Component
 **Priority**: Medium | **Effort**: 3h | **Dependencies**: Task 3.2
 
-- [ ] Design detail view layout
-- [ ] Large cover image display
-- [ ] Metadata section
-- [ ] Play button
-- [ ] Favorites toggle
-- [ ] Edit metadata button
+- [X] Design detail view layout
+- [X] Large cover image display
+- [X] Metadata section
+- [X] Play button
+- [X] Favorites toggle
+- [X] Edit metadata button
 - [ ] Write component tests
 
 **Files to create:**
@@ -453,13 +453,13 @@
 ### Task 3.8: Widget Components *(NEW - Daijishou)*
 **Priority**: High | **Effort**: 5h | **Dependencies**: Task 3.2
 
-- [ ] Create base Widget container
-- [ ] Implement RecentGamesWidget
-- [ ] Implement FavoritesWidget
-- [ ] Implement StatsWidget (play time, game count)
-- [ ] Implement PlatformShortcutsWidget
+- [X] Create base Widget container
+- [X] Implement RecentGamesWidget
+- [X] Implement FavoritesWidget
+- [X] Implement StatsWidget (play time, game count)
+- [X] Implement PlatformShortcutsWidget
 - [ ] Make widgets draggable/reorderable
-- [ ] Add widget size options (small, medium, large)
+- [X] Add widget size options (small, medium, large)
 - [ ] Write component tests
 
 **Files to create:**
@@ -475,12 +475,12 @@
 ### Task 3.9: PlatformCard with Wallpaper *(NEW - Daijishou)*
 **Priority**: High | **Effort**: 3h | **Dependencies**: Task 3.2
 
-- [ ] Design PlatformCard layout
-- [ ] Background wallpaper support
-- [ ] Blur/overlay options
-- [ ] Game count badge
-- [ ] Platform icon
-- [ ] Active/hover states
+- [X] Design PlatformCard layout
+- [X] Background wallpaper support
+- [X] Blur/overlay options
+- [X] Game count badge
+- [X] Platform icon
+- [X] Active/hover states
 - [ ] Write component tests
 
 **Files to create:**
@@ -492,10 +492,10 @@
 ### Task 3.10: GenreList Component *(NEW - Daijishou)*
 **Priority**: Medium | **Effort**: 2h | **Dependencies**: Task 3.2
 
-- [ ] Design GenreList layout
-- [ ] Genre item with game count
-- [ ] Active state styling
-- [ ] Horizontal scroll or grid layout
+- [X] Design GenreList layout
+- [X] Genre item with game count
+- [X] Active state styling
+- [X] Horizontal scroll or grid layout
 - [ ] Write component tests
 
 **Files to create:**
@@ -508,10 +508,10 @@
 ### Task 3.11: BottomTabBar Component *(NEW - Mobile)*
 **Priority**: High | **Effort**: 2h | **Dependencies**: Task 3.2
 
-- [ ] Design bottom navigation layout
-- [ ] Tab items: Home, Platforms, Genres, Search, Settings
-- [ ] Active state with green accent
-- [ ] Icon + label design
+- [X] Design bottom navigation layout
+- [X] Tab items: Home, Platforms, Genres, Search, Settings
+- [X] Active state with green accent
+- [X] Icon + label design
 - [ ] Write component tests
 
 **Files to create:**
@@ -526,12 +526,12 @@
 ### Task 4.1: Electron Project Setup
 **Priority**: Critical | **Effort**: 3h | **Dependencies**: Task 3.1
 
-- [ ] Create `apps/desktop/package.json`
-- [ ] Set up TypeScript configuration
-- [ ] Configure Vite for renderer
-- [ ] Set up main process entry
-- [ ] Configure preload script
-- [ ] Add dev scripts
+- [X] Create `apps/desktop/package.json`
+- [X] Set up TypeScript configuration
+- [X] Configure Vite for renderer
+- [X] Set up main process entry
+- [X] Configure preload script
+- [X] Add dev scripts
 
 **Files to create:**
 - `apps/desktop/package.json`
@@ -549,13 +549,13 @@
 ### Task 4.2: Electron Main Process
 **Priority**: Critical | **Effort**: 4h | **Dependencies**: Task 4.1
 
-- [ ] Window creation and management
-- [ ] IPC handlers for file system
-- [ ] IPC handlers for database
-- [ ] IPC handlers for launching
+- [X] Window creation and management
+- [X] IPC handlers for file system
+- [X] IPC handlers for database
+- [X] IPC handlers for launching
 - [ ] Native menu implementation
 - [ ] Tray icon (optional)
-- [ ] Handle app lifecycle
+- [X] Handle app lifecycle
 
 **Files to create:**
 - `apps/desktop/src/main/window.ts`
@@ -570,11 +570,11 @@
 ### Task 4.3: Desktop App Shell
 **Priority**: High | **Effort**: 3h | **Dependencies**: Task 4.1, Task 3.6
 
-- [ ] App layout with sidebar
-- [ ] Header with search
-- [ ] Router setup
-- [ ] Theme provider
-- [ ] Error boundary
+- [X] App layout with sidebar
+- [X] Header with search
+- [X] Router setup
+- [X] Theme provider
+- [X] Error boundary
 
 **Files to create:**
 - `apps/desktop/src/renderer/App.tsx`
@@ -588,14 +588,14 @@
 ### Task 4.4: Desktop Screens
 **Priority**: High | **Effort**: 8h | **Dependencies**: Task 4.3
 
-- [ ] Home screen with widgets *(Daijishou style)*
-- [ ] Library screen (main grid view)
-- [ ] Platform screen with wallpaper
-- [ ] Genre screen *(NEW)*
-- [ ] Collection screen
-- [ ] Game detail screen/modal
-- [ ] Settings screen
-- [ ] First-run setup wizard
+- [X] Home screen with widgets *(Daijishou style)*
+- [X] Library screen (main grid view)
+- [X] Platform screen with wallpaper
+- [X] Genre screen *(NEW)*
+- [X] Collection screen
+- [X] Game detail screen/modal
+- [X] Settings screen
+- [X] First-run setup wizard
 
 **Files to create:**
 - `apps/desktop/src/renderer/screens/HomeScreen.tsx` *(NEW - widgets)*
@@ -612,10 +612,10 @@
 ### Task 4.5: Desktop Build Configuration
 **Priority**: High | **Effort**: 3h | **Dependencies**: Task 4.4
 
-- [ ] Configure electron-builder
-- [ ] macOS build settings
-- [ ] Windows build settings
-- [ ] Linux build settings
+- [X] Configure electron-builder
+- [X] macOS build settings
+- [X] Windows build settings
+- [X] Linux build settings
 - [ ] Auto-update configuration
 - [ ] Code signing setup (docs)
 
@@ -631,12 +631,12 @@
 ### Task 5.1: React Native Project Setup
 **Priority**: Critical | **Effort**: 3h | **Dependencies**: Task 3.1
 
-- [ ] Initialize React Native project
-- [ ] Configure TypeScript
-- [ ] Set up Metro bundler for monorepo
-- [ ] Install native dependencies
-- [ ] Configure iOS project
-- [ ] Configure Android project
+- [X] Initialize React Native project
+- [X] Configure TypeScript
+- [X] Set up Metro bundler for monorepo
+- [X] Install native dependencies
+- [X] Configure iOS project
+- [X] Configure Android project
 
 **Files to create:**
 - `apps/mobile/package.json`
@@ -651,10 +651,10 @@
 ### Task 5.2: React Native Navigation
 **Priority**: High | **Effort**: 2h | **Dependencies**: Task 5.1
 
-- [ ] Install React Navigation
-- [ ] Set up bottom tabs
-- [ ] Set up stack navigator
-- [ ] Configure deep linking (optional)
+- [X] Install React Navigation
+- [X] Set up bottom tabs
+- [X] Set up stack navigator
+- [X] Configure deep linking (optional)
 
 **Files to create:**
 - `apps/mobile/src/navigation/RootNavigator.tsx`
@@ -666,11 +666,11 @@
 ### Task 5.3: Mobile App Shell
 **Priority**: High | **Effort**: 2h | **Dependencies**: Task 5.2
 
-- [ ] App entry point
-- [ ] Theme provider
-- [ ] Database initialization
-- [ ] Splash screen
-- [ ] Error handling
+- [X] App entry point
+- [X] Theme provider
+- [X] Database initialization
+- [X] Splash screen
+- [X] Error handling
 
 **Files to create:**
 - `apps/mobile/src/App.tsx`
@@ -682,14 +682,14 @@
 ### Task 5.4: Mobile Screens
 **Priority**: High | **Effort**: 8h | **Dependencies**: Task 5.3
 
-- [ ] Home screen with widgets *(Daijishou style)*
-- [ ] Library screen
-- [ ] Platform browser screen with wallpapers
-- [ ] Genre browser screen *(NEW)*
-- [ ] Collections screen
-- [ ] Game detail screen
-- [ ] Settings screen
-- [ ] Emulator config screen
+- [X] Home screen with widgets *(Daijishou style)*
+- [X] Library screen
+- [X] Platform browser screen with wallpapers
+- [X] Genre browser screen *(NEW)*
+- [X] Collections screen
+- [X] Game detail screen
+- [X] Settings screen
+- [X] Emulator config screen
 
 **Files to create:**
 - `apps/mobile/src/screens/HomeScreen.tsx` *(NEW - widgets)*
@@ -706,10 +706,10 @@
 ### Task 5.5: Mobile Platform Services
 **Priority**: High | **Effort**: 4h | **Dependencies**: Task 5.3
 
-- [ ] File picker integration
-- [ ] Document directory access
-- [ ] External storage access (Android)
-- [ ] URL scheme launching
+- [X] File picker integration
+- [X] Document directory access
+- [X] External storage access (Android)
+- [X] URL scheme launching
 - [ ] Share extension (optional)
 
 **Files to create:**
@@ -722,10 +722,10 @@
 ### Task 5.6: Mobile Build Configuration
 **Priority**: High | **Effort**: 2h | **Dependencies**: Task 5.4
 
-- [ ] iOS build settings (Xcode)
-- [ ] Android build settings (Gradle)
-- [ ] App icons generation
-- [ ] Splash screen configuration
+- [X] iOS build settings (Xcode)
+- [X] Android build settings (Gradle)
+- [X] App icons generation
+- [X] Splash screen configuration
 - [ ] Fastlane setup (optional)
 
 **Files to modify:**
@@ -741,11 +741,11 @@
 ### Task 6.1: Unit Tests
 **Priority**: High | **Effort**: 4h | **Dependencies**: Phase 2
 
-- [ ] Core services tests (>80% coverage)
-- [ ] Database adapters tests
-- [ ] Emulator registry tests
+- [X] Core services tests (>80% coverage)
+- [X] Database adapters tests
+- [X] Emulator registry tests
 - [ ] Utility function tests
-- [ ] Set up CI test runner
+- [X] Set up CI test runner
 
 **Files to create:**
 - `libs/core/src/__tests__/**/*.test.ts`
@@ -796,11 +796,11 @@
 ### Task 6.5: Documentation
 **Priority**: Medium | **Effort**: 3h | **Dependencies**: All
 
-- [ ] Architecture documentation
-- [ ] API documentation
-- [ ] Emulator integration guide
-- [ ] Contributing guide
-- [ ] README updates
+- [X] Architecture documentation
+- [X] API documentation
+- [X] Emulator integration guide
+- [X] Contributing guide
+- [X] README updates
 
 **Files to create:**
 - `docs/architecture.md`

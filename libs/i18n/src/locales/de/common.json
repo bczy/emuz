@@ -1,0 +1,63 @@
+{
+  "app": {
+    "name": "EmuZ",
+    "slogan": "Ein weiteres Emulator- und ROM-Verwaltungs-Frontend"
+  },
+  "navigation": {
+    "home": "Startseite",
+    "library": "Bibliothek",
+    "platforms": "Plattformen",
+    "genres": "Genres",
+    "collections": "Sammlungen",
+    "settings": "Einstellungen",
+    "search": "Suchen"
+  },
+  "actions": {
+    "play": "Spielen",
+    "add": "Hinzufügen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "confirm": "Bestätigen",
+    "close": "Schließen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "refresh": "Aktualisieren",
+    "scan": "Scannen",
+    "import": "Importieren",
+    "export": "Exportieren",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "sort": "Sortieren",
+    "select": "Auswählen",
+    "selectAll": "Alle auswählen",
+    "deselectAll": "Alle abwählen"
+  },
+  "status": {
+    "loading": "Wird geladen...",
+    "saving": "Wird gespeichert...",
+    "scanning": "Wird gescannt...",
+    "noResults": "Keine Ergebnisse gefunden",
+    "empty": "Keine Elemente",
+    "error": "Ein Fehler ist aufgetreten",
+    "success": "Erfolg",
+    "warning": "Warnung"
+  },
+  "time": {
+    "justNow": "Gerade eben",
+    "minutesAgo": "Vor {{count}} Minute",
+    "minutesAgo_other": "Vor {{count}} Minuten",
+    "hoursAgo": "Vor {{count}} Stunde",
+    "hoursAgo_other": "Vor {{count}} Stunden",
+    "daysAgo": "Vor {{count}} Tag",
+    "daysAgo_other": "Vor {{count}} Tagen",
+    "never": "Nie"
+  },
+  "errors": {
+    "generic": "Etwas ist schief gelaufen. Bitte versuchen Sie es erneut.",
+    "network": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung.",
+    "notFound": "Das angeforderte Element wurde nicht gefunden.",
+    "unauthorized": "Sie sind nicht berechtigt, diese Aktion durchzuführen."
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "title": "Settings",
+  "sections": {
+    "appearance": "Appearance",
+    "library": "Library",
+    "scanning": "Scanning",
+    "metadata": "Metadata",
+    "emulators": "Emulators",
+    "advanced": "Advanced",
+    "about": "About"
+  },
+  "appearance": {
+    "theme": "Theme",
+    "themeSystem": "System",
+    "themeDark": "Dark",
+    "themeLight": "Light",
+    "accentColor": "Accent Color",
+    "language": "Language"
+  },
+  "library": {
+    "gridLayout": "Grid Layout",
+    "gridCompact": "Compact",
+    "gridComfortable": "Comfortable",
+    "gridSpacious": "Spacious",
+    "defaultSort": "Default Sort",
+    "showPlatformBadges": "Show Platform Badges",
+    "showGameTitles": "Show Game Titles"
+  },
+  "scanning": {
+    "scanDirectories": "Scan Directories",
+    "addDirectory": "Add Directory",
+    "removeDirectory": "Remove Directory",
+    "autoScanOnStartup": "Auto-scan on Startup",
+    "skipHiddenFiles": "Skip Hidden Files",
+    "scanNow": "Scan Now"
+  },
+  "metadata": {
+    "autoFetchMetadata": "Auto-fetch Metadata",
+    "autoDownloadCovers": "Auto-download Covers",
+    "preferredLanguage": "Preferred Language",
+    "clearCache": "Clear Metadata Cache"
+  },
+  "emulators": {
+    "title": "Emulators",
+    "detected": "Detected Emulators",
+    "custom": "Custom Emulators",
+    "addEmulator": "Add Emulator",
+    "preferRetroArch": "Prefer RetroArch",
+    "retroArchPath": "RetroArch Path",
+    "retroArchCoresPath": "RetroArch Cores Path"
+  },
+  "advanced": {
+    "enableAnalytics": "Enable Analytics",
+    "enableDebugMode": "Enable Debug Mode",
+    "clearData": "Clear All Data",
+    "resetSettings": "Reset to Defaults"
+  },
+  "about": {
+    "version": "Version",
+    "license": "License",
+    "sourceCode": "Source Code",
+    "reportBug": "Report a Bug",
+    "credits": "Credits"
+  }
+}

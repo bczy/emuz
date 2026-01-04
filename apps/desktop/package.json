@@ -1,0 +1,48 @@
+{
+  "name": "@emuz/desktop",
+  "version": "0.0.1",
+  "private": true,
+  "description": "EmuZ Desktop - Cross-platform emulator frontend",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "start": "electron .",
+    "package": "pnpm build && electron-builder",
+    "package:mac": "pnpm build && electron-builder --mac",
+    "package:win": "pnpm build && electron-builder --win",
+    "package:linux": "pnpm build && electron-builder --linux",
+    "package:all": "pnpm build && electron-builder -mwl",
+    "lint": "eslint . --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "@electron-toolkit/utils": "^3.0.0",
+    "@emuz/core": "workspace:*",
+    "@emuz/database": "workspace:*",
+    "@emuz/emulators": "workspace:*",
+    "@emuz/i18n": "workspace:*",
+    "@emuz/platform": "workspace:*",
+    "@emuz/ui": "workspace:*",
+    "better-sqlite3": "^11.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.0.0",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@electron-toolkit/preload": "^3.0.1",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.15.18",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "electron-vite": "^2.3.0",
+    "typescript": "^5.7.0",
+    "vite": "^5.4.0"
+  }
+}
