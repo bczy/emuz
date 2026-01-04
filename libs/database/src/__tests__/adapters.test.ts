@@ -3,11 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { 
-  DatabaseConfig, 
-  BaseDatabaseAdapter,
-  detectPlatform,
-} from '../adapters';
+import { DatabaseConfig, BaseDatabaseAdapter, detectPlatform } from '../adapters';
 
 /**
  * Mock database adapter for testing
@@ -125,7 +121,7 @@ describe('DatabaseAdapter', () => {
     it('should run transactions', async () => {
       await adapter.open();
       let transactionRan = false;
-      
+
       await adapter.transaction(async () => {
         transactionRan = true;
         return 'success';
@@ -136,23 +132,17 @@ describe('DatabaseAdapter', () => {
   });
 
   describe('detectPlatform', () => {
-    const originalProcess = global.process;
-    const originalNavigator = global.navigator;
-
     afterEach(() => {
       // Restore globals
-      global.process = originalProcess;
-      global.navigator = originalNavigator;
+      vi.unstubAllGlobals();
     });
 
     it('should detect Node.js on Linux', () => {
       // Mock Node.js environment on Linux
-      const mockProcess = {
+      vi.stubGlobal('process', {
         versions: { node: '20.0.0' },
         platform: 'linux',
-      };
-      // @ts-expect-error - mocking process
-      global.process = mockProcess;
+      });
 
       const result = detectPlatform();
       expect(result.type).toBe('desktop');
@@ -161,12 +151,10 @@ describe('DatabaseAdapter', () => {
     });
 
     it('should detect Node.js on macOS', () => {
-      const mockProcess = {
+      vi.stubGlobal('process', {
         versions: { node: '20.0.0' },
         platform: 'darwin',
-      };
-      // @ts-expect-error - mocking process
-      global.process = mockProcess;
+      });
 
       const result = detectPlatform();
       expect(result.type).toBe('desktop');
@@ -174,12 +162,10 @@ describe('DatabaseAdapter', () => {
     });
 
     it('should detect Node.js on Windows', () => {
-      const mockProcess = {
+      vi.stubGlobal('process', {
         versions: { node: '20.0.0' },
         platform: 'win32',
-      };
-      // @ts-expect-error - mocking process
-      global.process = mockProcess;
+      });
 
       const result = detectPlatform();
       expect(result.type).toBe('desktop');
