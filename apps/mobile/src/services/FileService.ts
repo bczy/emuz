@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import * as RNFS from 'react-native-fs';
-import * as DocumentPicker from 'react-native-document-picker';
+import { pick, types } from '@react-native-documents/picker';
 
 /**
  * File information
@@ -166,7 +166,7 @@ export class FileService {
    */
   async pickFiles(options?: FilePickerOptions): Promise<FileInfo[]> {
     try {
-      const results = await DocumentPicker.pick({
+      const results = await pick({
         allowMultiSelection: options?.type === 'multiple',
         type: this.getPickerType(options?.extensions),
       });
@@ -178,7 +178,7 @@ export class FileService {
         isDirectory: false,
       }));
     } catch (error) {
-      if (DocumentPicker.isCancel(error)) {
+      if ((error as Error).message?.includes('cancelled')) {
         return [];
       }
       throw error;
@@ -190,7 +190,7 @@ export class FileService {
    */
   private getPickerType(extensions?: string[]): string[] {
     if (!extensions || extensions.length === 0) {
-      return [DocumentPicker.types.allFiles];
+      return [types.allFiles];
     }
 
     // Map common ROM extensions to MIME types

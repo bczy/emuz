@@ -1,6 +1,6 @@
 # EmuZ Mobile App
 
-This is the React Native mobile application for EmuZ, supporting both iOS and Android.
+This is the React Native mobile application for EmuZ, built with **Expo** and supporting both iOS and Android.
 
 ## Prerequisites
 
@@ -18,15 +18,16 @@ This is the React Native mobile application for EmuZ, supporting both iOS and An
 # From workspace root
 pnpm install
 
-# Install iOS dependencies
-cd apps/mobile/ios
-pod install
+# Install iOS dependencies (after prebuild)
+cd apps/mobile
+npx expo prebuild
+cd ios && pod install && cd ..
 ```
 
 ### Environment Setup
 
-Follow the React Native environment setup guide:
-https://reactnative.dev/docs/environment-setup
+Follow the Expo environment setup guide:
+https://docs.expo.dev/get-started/set-up-your-environment/
 
 ## Running the App
 
@@ -44,16 +45,57 @@ pnpm start
 ### Run on iOS
 
 ```bash
-pnpm nx run-ios mobile
+# Using Expo
+npx expo run:ios
 
-# Or with specific device
-pnpm nx run-ios mobile -- --simulator="iPhone 15 Pro"
+# Or with Nx
+pnpm nx ios mobile
 ```
 
 ### Run on Android
 
 ```bash
-pnpm nx run-android mobile
+# Using Expo
+npx expo run:android
+
+# Or with Nx
+pnpm nx android mobile
+```
+
+## Configuration Notes
+
+### Monorepo Metro Configuration
+
+The app uses a custom `metro.config.js` configured for the pnpm monorepo:
+
+- Uses `expo/metro-config` for Expo compatibility
+- Watches the entire workspace for changes
+- Resolves `@emuz/*` workspace packages from `libs/`
+- Explicitly resolves `react` and `react-native` from project's `node_modules`
+- Uses `disableHierarchicalLookup` to avoid module resolution conflicts
+
+### Babel Configuration
+
+Uses `babel-preset-expo` with NativeWind v4 integration:
+
+```javascript
+module.exports = function (api) {
+  api.cache(true);
+  return {
+    presets: [['babel-preset-expo', { jsxImportSource: 'nativewind' }], 'nativewind/babel'],
+    plugins: ['react-native-reanimated/plugin'],
+  };
+};
+```
+
+### App Entry Point
+
+The app uses a custom entry point (`index.js`) registered as `'main'`:
+
+```javascript
+import { AppRegistry } from 'react-native';
+import App from './src/App';
+AppRegistry.registerComponent('main', () => App);
 ```
 
 ## Project Structure
@@ -107,19 +149,21 @@ apps/mobile/
 
 ## Tech Stack
 
-- React Native 0.76+
+- React Native 0.81+
+- Expo 54+
 - React Navigation 7
-- NativeWind (Tailwind CSS)
+- NativeWind 4.x (Tailwind CSS)
 - Zustand (State Management)
 - React Query (Data Fetching)
-- expo-linking (URL Schemes)
 
 ## Emulator Integration
 
 The app supports launching games in external emulators:
 
 ### Android
+
 Uses Intent system to launch games:
+
 - RetroArch
 - Dolphin
 - PPSSPP
@@ -127,7 +171,9 @@ Uses Intent system to launch games:
 - And more...
 
 ### iOS
+
 Uses URL schemes to launch games:
+
 - RetroArch
 - Delta
 - PPSSPP
@@ -138,15 +184,21 @@ Uses URL schemes to launch games:
 ### iOS
 
 ```bash
-# Build release bundle
-pnpm nx build-ios mobile
+# Prebuild native project
+npx expo prebuild --platform ios
 
-# Archive in Xcode
+# Build release bundle
+npx expo run:ios --configuration Release
+
+# Or archive in Xcode for App Store
 ```
 
 ### Android
 
 ```bash
+# Prebuild native project
+npx expo prebuild --platform android
+
 # Build release APK
 cd apps/mobile/android
 ./gradlew assembleRelease

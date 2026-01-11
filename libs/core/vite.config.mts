@@ -41,7 +41,14 @@ export default defineConfig(() => ({
     },
     rollupOptions: {
       // External packages that should not be bundled into your library.
-      external: [],
+      external: [
+        'react',
+        'react-dom',
+        'zustand',
+        'zustand/middleware',
+        '@emuz/database',
+        '@emuz/platform',
+      ],
     },
   },
 }));

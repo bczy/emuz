@@ -1,11 +1,4 @@
 {
-  "name": "EmuZ",
-  "displayName": "EmuZ",
-  "version": "0.0.1",
-  "bundleId": {
-    "ios": "com.emuz.app",
-    "android": "com.emuz.app"
-  },
   "expo": {
     "name": "EmuZ",
     "slug": "emuz",
@@ -13,14 +6,13 @@
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
+    "entryPoint": "./index.js",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#0F172A"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.emuz.app",
@@ -40,9 +32,6 @@
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE"
       ]
-    },
-    "plugins": [
-      "expo-linking"
-    ]
+    }
   }
 }
