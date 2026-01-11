@@ -113,6 +113,7 @@ pnpm nx run-android mobile
 - [API Reference](docs/api.md) - Library APIs and interfaces
 - [Emulator Integration](docs/emulator-integration.md) - How to add emulators
 - [Contributing](docs/contributing.md) - How to contribute
+- [AI Development Tools](docs/ai-tools.md) - Context7 and Nx MCP configuration
 
 ### Specifications
 

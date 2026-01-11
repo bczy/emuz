@@ -1,102 +1,25 @@
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
-
-    <!-- Basic permissions -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    
-    <!-- Storage permissions for ROM access -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" 
-        android:maxSdkVersion="32" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
-        android:maxSdkVersion="29" />
-    
-    <!-- For Android 13+ media permissions -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-    
-    <!-- Manage external storage for broad access (optional, needs Play Store approval) -->
-    <!-- <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" /> -->
-    
-    <!-- For vibration feedback -->
-    <uses-permission android:name="android.permission.VIBRATE" />
-
-    <application
-        android:name=".MainApplication"
-        android:label="@string/app_name"
-        android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher_round"
-        android:allowBackup="false"
-        android:theme="@style/AppTheme"
-        android:supportsRtl="true"
-        android:usesCleartextTraffic="true"
-        android:networkSecurityConfig="@xml/network_security_config"
-        android:requestLegacyExternalStorage="true"
-        tools:targetApi="31">
-        
-        <activity
-            android:name=".MainActivity"
-            android:label="@string/app_name"
-            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
-            android:launchMode="singleTask"
-            android:windowSoftInputMode="adjustResize"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-            
-            <!-- Deep linking -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="emuz" />
-            </intent-filter>
-        </activity>
-        
-        <!-- FileProvider for sharing files -->
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider>
-    </application>
-    
-    <!-- Emulator packages to query -->
-    <queries>
-        <package android:name="com.retroarch" />
-        <package android:name="com.retroarch.aarch64" />
-        <package android:name="com.retroarch.ra32" />
-        <package android:name="org.ppsspp.ppsspp" />
-        <package android:name="org.ppsspp.ppssppgold" />
-        <package android:name="org.dolphinemu.dolphinemu" />
-        <package android:name="com.dsemu.drastic" />
-        <package android:name="com.explusalpha.NesEmu" />
-        <package android:name="com.explusalpha.GbaEmu" />
-        <package android:name="com.explusalpha.GbcEmu" />
-        <package android:name="com.explusalpha.MdEmu" />
-        <package android:name="com.explusalpha.SnesEmu" />
-        <package android:name="com.dsemu.drastic" />
-        <package android:name="com.fastemulator.gba" />
-        <package android:name="org.citra.emu" />
-        <package android:name="org.citra.citra_emu" />
-        <package android:name="skyline.emu" />
-        <package android:name="org.yuzu.yuzu_emu" />
-        <package android:name="org.ryujinx.android" />
-        <package android:name="com.strato.emu" />
-        <package android:name="org.duckstation.duckstation" />
-        <package android:name="io.github.lime3ds.android" />
-        <package android:name="me.magnum.melonds" />
-        <package android:name="org.flycast.emu" />
-        <package android:name="org.mupen64plusae.v3.fzurita" />
-        <package android:name="paulscode.android.mupen64plus.free" />
-        <package android:name="com.epsxe.ePSXe" />
-        <package android:name="com.fpse.emulator" />
-        <package android:name="io.github.aepstudio.aethersx2" />
-    </queries>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <uses-permission android:name="android.permission.INTERNET"/>
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+  <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+  <uses-permission android:name="android.permission.VIBRATE"/>
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+  <queries>
+    <intent>
+      <action android:name="android.intent.action.VIEW"/>
+      <category android:name="android.intent.category.BROWSABLE"/>
+      <data android:scheme="https"/>
+    </intent>
+  </queries>
+  <application android:name=".MainApplication" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="true" android:theme="@style/AppTheme" android:supportsRtl="true" android:enableOnBackInvokedCallback="false">
+    <meta-data android:name="expo.modules.updates.ENABLED" android:value="false"/>
+    <meta-data android:name="expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH" android:value="ALWAYS"/>
+    <meta-data android:name="expo.modules.updates.EXPO_UPDATES_LAUNCH_WAIT_MS" android:value="0"/>
+    <activity android:name=".MainActivity" android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode" android:launchMode="singleTask" android:windowSoftInputMode="adjustResize" android:theme="@style/Theme.App.SplashScreen" android:exported="true" android:screenOrientation="unspecified">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+    </activity>
+  </application>
 </manifest>

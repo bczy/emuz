@@ -36,6 +36,10 @@ function createWindow(): void {
   // Show window when ready
   mainWindow.on('ready-to-show', () => {
     mainWindow?.show();
+    // Open DevTools in development to debug issues
+    if (is.dev) {
+      mainWindow?.webContents.openDevTools();
+    }
   });
 
   // Handle external links
@@ -72,7 +76,7 @@ app.whenReady().then(() => {
 
   // Initialize database
   initializeDatabase();
-  
+
   // Register all IPC handlers
   registerAllHandlers();
 
@@ -145,8 +149,11 @@ ipcMain.handle('shell:openExternal', async (_event: Electron.IpcMainInvokeEvent,
 });
 
 // Show item in folder
-ipcMain.handle('shell:showItemInFolder', async (_event: Electron.IpcMainInvokeEvent, path: string) => {
-  shell.showItemInFolder(path);
-});
+ipcMain.handle(
+  'shell:showItemInFolder',
+  async (_event: Electron.IpcMainInvokeEvent, path: string) => {
+    shell.showItemInFolder(path);
+  }
+);
 
 export { mainWindow };

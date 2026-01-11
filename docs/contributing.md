@@ -15,7 +15,24 @@ By participating in this project, you agree to abide by our Code of Conduct. Ple
 - **Git**: Latest stable version
 - **IDE**: VS Code recommended (with ESLint, Prettier extensions)
 
+### AI-Assisted Development (Recommended)
+
+The project is configured with **Context7 MCP** for AI-assisted development with up-to-date library documentation. This ensures accurate code generation with current API references.
+
+**Automatic Setup (VS Code):**
+
+- Open the project in VS Code with GitHub Copilot installed
+- The MCP server configuration in `.vscode/mcp.json` will be detected automatically
+- Context7 will be available for all AI coding sessions
+
+**Usage Tips:**
+
+- Add `use context7` to your prompts to fetch current documentation
+- Specify library IDs directly: `use library /react-native/react-native`
+- Works with React Native, Electron, Zustand, TailwindCSS, and all project dependencies
+
 ### Optional (for mobile development)
+
 - **Xcode**: 15+ (for iOS)
 - **Android Studio**: Latest stable (for Android)
 - **CocoaPods**: Latest (for iOS dependencies)
@@ -25,17 +42,20 @@ By participating in this project, you agree to abide by our Code of Conduct. Ple
 1. **Fork the repository** on GitHub
 
 2. **Clone your fork**:
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/emuz.git
    cd emuz
    ```
 
 3. **Install dependencies**:
+
    ```bash
    pnpm install
    ```
 
 4. **Build all packages**:
+
    ```bash
    pnpm nx run-many -t build
    ```
@@ -50,6 +70,7 @@ By participating in this project, you agree to abide by our Code of Conduct. Ple
 ### Branch Naming
 
 Use descriptive branch names:
+
 - `feature/add-widget-customization`
 - `fix/scan-directory-crash`
 - `docs/update-readme`
@@ -68,6 +89,7 @@ footer (optional)
 ```
 
 **Types**:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
@@ -77,6 +99,7 @@ footer (optional)
 - `chore`: Maintenance tasks
 
 **Examples**:
+
 ```
 feat(ui): add game card context menu
 fix(scanner): handle symbolic links correctly
@@ -170,7 +193,7 @@ function SearchResults({ query }: { query: string }) {
 // Good
 <button className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600">
   Play
-</button>
+</button>;
 
 // For variants
 const buttonVariants = {
@@ -201,6 +224,7 @@ pnpm nx test core --watch
 ### Writing Tests
 
 We use Vitest for unit tests. Tests should be:
+
 - Focused on one thing
 - Independent of each other
 - Fast and reliable
@@ -219,10 +243,12 @@ describe('LibraryService', () => {
 
   describe('getAllGames', () => {
     it('should return all games with pagination', async () => {
-      mockAdapter.query.mockResolvedValueOnce([/* mock data */]);
-      
+      mockAdapter.query.mockResolvedValueOnce([
+        /* mock data */
+      ]);
+
       const games = await service.getAllGames({ page: 1, limit: 10 });
-      
+
       expect(games).toHaveLength(/* expected */);
     });
   });
@@ -232,6 +258,7 @@ describe('LibraryService', () => {
 ### Test Coverage
 
 We aim for:
+
 - **Unit tests**: >80% coverage for services
 - **Component tests**: Key UI components
 - **E2E tests**: Critical user flows
@@ -305,7 +332,7 @@ export interface IMyService {
 
 export class MyService implements IMyService {
   constructor(private db: DatabaseAdapter) {}
-  
+
   async getAll(): Promise<MyModel[]> {
     const rows = await this.db.query('SELECT * FROM my_table');
     return rows.map(rowToModel);
@@ -368,7 +395,7 @@ import { useTranslation } from '@emuz/i18n';
 
 function MyComponent() {
   const { t } = useTranslation();
-  
+
   return <h1>{t('myFeature.title')}</h1>;
 }
 ```
@@ -378,6 +405,7 @@ function MyComponent() {
 ### Bug Reports
 
 Include:
+
 1. EmuZ version
 2. Operating system and version
 3. Steps to reproduce
@@ -388,6 +416,7 @@ Include:
 ### Feature Requests
 
 Include:
+
 1. Clear description of the feature
 2. Use case / why it's needed
 3. Possible implementation approach

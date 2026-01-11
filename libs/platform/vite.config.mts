@@ -59,7 +59,7 @@ export default defineConfig(() => ({
         // React Native modules
         'react-native',
         'react-native-fs',
-        'react-native-document-picker',
+        '@react-native-documents/picker',
         'react-native-send-intent',
       ],
     },

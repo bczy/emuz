@@ -6,6 +6,7 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLibraryStore, useUIStore } from '@emuz/core';
+import type { Platform, Collection } from '@emuz/core';
 import { Sidebar, SearchBar } from '@emuz/ui';
 
 interface LayoutProps {
@@ -22,16 +23,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Handle platform click
   const handlePlatformClick = useCallback(
-    (id: string) => {
-      navigate(`/platform/${id}`);
+    (platform: Platform) => {
+      navigate(`/platform/${platform.id}`);
     },
     [navigate]
   );
 
   // Handle collection click
   const handleCollectionClick = useCallback(
-    (id: string) => {
-      navigate(`/collection/${id}`);
+    (collection: Collection) => {
+      navigate(`/collection/${collection.id}`);
     },
     [navigate]
   );
