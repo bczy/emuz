@@ -27,8 +27,9 @@ const PlatformScreen: React.FC = () => {
   );
   
   // Favorites set
-  const favorites = new Set(
-    platformGames.filter((g: Game) => g.isFavorite).map((g: Game) => g.id)
+  const favorites = useMemo(
+    () => new Set(platformGames.filter((g: Game) => g.isFavorite).map((g: Game) => g.id)),
+    [platformGames]
   );
   
   // Handlers

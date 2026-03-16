@@ -7,11 +7,11 @@ import {
   getAllEmulators,
   getEmulatorById,
   searchEmulators,
-  getEmulatorsByPlatform,
-  getEmulatorsByHostPlatform,
+  getEmulatorsForPlatform as getEmulatorsByPlatform,
+  getEmulatorsForHost as getEmulatorsByHostPlatform,
   getRecommendedEmulator,
 } from '../registry';
-import type { EmulatorDefinition, HostPlatform } from '../registry/types';
+import type { EmulatorDefinition } from '../registry/types';
 
 describe('Emulator Registry', () => {
   describe('getAllEmulators', () => {
@@ -303,18 +303,18 @@ describe('Emulator Registry', () => {
 
   describe('Command templates', () => {
     it('should have valid command templates', () => {
-      const emulators = getAllEmulators().filter((e) => e.commandTemplate);
+      const emulators = getAllEmulators().filter((e) => e.desktop?.commandTemplate);
 
       for (const emulator of emulators) {
-        expect(emulator.commandTemplate).toContain('{rom}');
+        expect(emulator.desktop?.commandTemplate).toContain('{rom}');
       }
     });
 
     it('RetroArch should include core placeholder', () => {
       const retroarch = getEmulatorById('retroarch');
 
-      if (retroarch?.commandTemplate) {
-        expect(retroarch.commandTemplate).toContain('{core}');
+      if (retroarch?.desktop?.commandTemplate) {
+        expect(retroarch.desktop.commandTemplate).toContain('{core}');
       }
     });
   });

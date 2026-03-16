@@ -3,9 +3,9 @@
  */
 
 import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
-import { LaunchService } from '../LaunchService';
+import { LaunchService } from '../services/LaunchService';
 import type { DatabaseAdapter } from '@emuz/database';
-import type { Emulator } from '../../models/Emulator';
+import type { Emulator } from '../models/Emulator';
 
 // Mock UUID
 vi.mock('uuid', () => ({
@@ -25,7 +25,7 @@ function createMockAdapter(): DatabaseAdapter & {
     isConnected: vi.fn(() => true),
     execute: vi.fn(),
     query: vi.fn(),
-    transaction: vi.fn((fn: () => Promise<unknown>) => fn()),
+    transaction: vi.fn(<T>(fn: () => Promise<T>) => fn()),
   };
 }
 
@@ -88,7 +88,7 @@ describe('LaunchService', () => {
         createMockEmulatorRow({ platforms: '["nes"]' }),
       ]);
 
-      const emulators = await service.getEmulators({ platformId: 'nes' });
+      await service.getEmulators({ platformId: 'nes' });
 
       expect(mockAdapter.query).toHaveBeenCalledWith(
         expect.stringContaining('platforms'),

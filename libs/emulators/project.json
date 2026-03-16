@@ -5,5 +5,13 @@
   "projectType": "library",
   "tags": [],
   "// targets": "to see all targets run: nx show project emulators --web",
-  "targets": {}
+  "targets": {
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{workspaceRoot}/coverage/libs/emulators"],
+      "options": {
+        "config": "libs/emulators/vite.config.mts"
+      }
+    }
+  }
 }

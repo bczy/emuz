@@ -2,25 +2,26 @@
  * GenreService - Manages game genres (Daijishou-inspired)
  */
 
-import { v4 as uuidv4 } from 'uuid';
-import type { Genre } from '../models/Genre';
-import type { Game, GameMetadata } from '../models/Game';
+import type { Game } from '../models/Game';
 import type { DatabaseAdapter } from '@emuz/database';
 import type { IGenreService, PaginationOptions } from './types';
-import { CommonGenres } from '../models/Genre';
+import { toDate, toOptionalDate } from '../utils/db';
+
+/**
+ * Simplified Genre shape returned by getGenres
+ */
+export interface GenreInfo {
+  id: string;
+  name: string;
+  gameCount: number;
+}
 
 /**
  * Database row types
  */
-interface GenreRow {
-  id: string;
-  name: string;
-  slug: string;
-  icon_name: string | null;
-  color: string | null;
-  game_count: number;
-  created_at: number;
-  updated_at: number;
+interface GenreCountRow {
+  genre: string | null;
+  count: number;
 }
 
 interface GameRow {
@@ -39,20 +40,10 @@ interface GameRow {
   updated_at: number;
 }
 
-/**
- * Convert database row to Genre model
- */
-function rowToGenre(row: GenreRow): Genre {
-  return {
-    id: row.id,
-    name: row.name,
-    slug: row.slug,
-    iconName: row.icon_name ?? undefined,
-    color: row.color ?? undefined,
-    gameCount: row.game_count,
-    createdAt: new Date(row.created_at * 1000),
-    updatedAt: new Date(row.updated_at * 1000),
-  };
+interface GenreStatsRow {
+  total_games: number;
+  total_play_time: number;
+  avg_rating: number | null;
 }
 
 /**
@@ -69,11 +60,45 @@ function rowToGame(row: GameRow): Game {
     genre: row.genre ?? undefined,
     playCount: row.play_count,
     playTime: row.play_time,
-    lastPlayedAt: row.last_played_at ? new Date(row.last_played_at * 1000) : undefined,
+    lastPlayedAt: toOptionalDate(row.last_played_at),
     isFavorite: Boolean(row.is_favorite),
-    createdAt: new Date(row.created_at * 1000),
-    updatedAt: new Date(row.updated_at * 1000),
+    createdAt: toDate(row.created_at),
+    updatedAt: toDate(row.updated_at),
   };
+}
+
+/**
+ * Normalize a raw genre string.
+ *
+ * Rules:
+ * - Trim whitespace
+ * - If the string is entirely lowercase or entirely uppercase:
+ *   - If it's short (≤3 chars after trimming): uppercase all (e.g. 'rpg' → 'RPG')
+ *   - Otherwise: capitalize first letter, lowercase the rest (e.g. 'PLATFORMER' → 'Platformer', 'action' → 'Action')
+ * - If it's mixed case: capitalize only the first letter (e.g. 'Action RPG' → 'Action RPG')
+ */
+function normalizeGenreName(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return trimmed;
+
+  const upper = trimmed.toUpperCase();
+  const lower = trimmed.toLowerCase();
+
+  // Check if the string is entirely uppercase or entirely lowercase
+  const isAllUpper = trimmed === upper;
+  const isAllLower = trimmed === lower;
+
+  if (isAllUpper || isAllLower) {
+    if (trimmed.length <= 3) {
+      // Short abbreviation: uppercase all
+      return upper;
+    }
+    // Longer: capitalize first letter, lowercase the rest
+    return trimmed.charAt(0).toUpperCase() + lower.slice(1);
+  }
+
+  // Mixed case: capitalize first letter, keep rest as-is
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
 }
 
 /**
@@ -83,67 +108,48 @@ export class GenreService implements IGenreService {
   constructor(private readonly db: DatabaseAdapter) {}
 
   /**
-   * Get all genres with game counts
+   * Get all genres with game counts (derived from the games table)
    */
-  async getGenres(): Promise<Genre[]> {
-    const rows = await this.db.query<GenreRow>(
-      `SELECT g.*, 
-              (SELECT COUNT(*) FROM games ga WHERE ga.genre = g.slug) as game_count
-       FROM genres g
-       ORDER BY g.name ASC`
+  async getGenres(): Promise<GenreInfo[]> {
+    const rows = await this.db.query<GenreCountRow>(
+      `SELECT genre, COUNT(*) as count FROM games WHERE genre IS NOT NULL GROUP BY genre ORDER BY genre ASC`,
+      []
     );
-    return rows.map(rowToGenre);
+
+    return rows
+      .filter((row) => row.genre !== null && row.genre !== '')
+      .map((row) => ({
+        id: (row.genre as string).toLowerCase().replace(/\s+/g, '-'),
+        name: row.genre as string,
+        gameCount: row.count,
+      }));
   }
 
   /**
-   * Get a genre by ID
+   * Get games by genre (direct string match)
    */
-  async getGenreById(id: string): Promise<Genre | null> {
-    const rows = await this.db.query<GenreRow>(
-      `SELECT g.*, 
-              (SELECT COUNT(*) FROM games ga WHERE ga.genre = g.slug) as game_count
-       FROM genres g
-       WHERE g.id = ?`,
-      [id]
-    );
-    return rows.length > 0 ? rowToGenre(rows[0]) : null;
-  }
-
-  /**
-   * Get games by genre
-   */
-  async getGamesByGenre(genreId: string, options?: PaginationOptions): Promise<Game[]> {
+  async getGamesByGenre(genre: string, options?: PaginationOptions): Promise<Game[]> {
     const limit = options?.limit ?? 100;
-    const offset = options?.offset ?? 0;
-
-    // First get the genre slug
-    const genre = await this.getGenreById(genreId);
-    if (!genre) return [];
+    const offset = options?.page !== undefined
+      ? (options.page - 1) * limit
+      : (options?.offset ?? 0);
 
     const rows = await this.db.query<GameRow>(
-      `SELECT * FROM games 
-       WHERE genre = ? 
-       ORDER BY title ASC 
-       LIMIT ? OFFSET ?`,
-      [genre.slug, limit, offset]
+      `SELECT * FROM games WHERE genre = ? ORDER BY title ASC LIMIT ? OFFSET ?`,
+      [genre, limit, offset]
     );
 
     return rows.map(rowToGame);
   }
 
   /**
-   * Assign a genre to a game
+   * Assign a genre to a game (pass null to clear)
    */
-  async assignGenre(gameId: string, genreId: string): Promise<void> {
-    const genre = await this.getGenreById(genreId);
-    if (!genre) {
-      throw new Error(`Genre not found: ${genreId}`);
-    }
-
+  async assignGenre(gameId: string, genreId: string | null): Promise<void> {
     const now = Math.floor(Date.now() / 1000);
     await this.db.execute(
       'UPDATE games SET genre = ?, updated_at = ? WHERE id = ?',
-      [genre.slug, now, gameId]
+      [genreId, now, gameId]
     );
   }
 
@@ -159,95 +165,41 @@ export class GenreService implements IGenreService {
   }
 
   /**
-   * Extract genre from game metadata
+   * Get statistics for a specific genre
    */
-  extractGenreFromMetadata(metadata: GameMetadata): string | null {
-    if (!metadata.genre) return null;
-
-    const normalizedGenre = metadata.genre.toLowerCase().trim();
-
-    // Try to match with common genres
-    for (const value of Object.values(CommonGenres)) {
-      if (
-        normalizedGenre.includes(value.slug) ||
-        normalizedGenre.includes(value.name.toLowerCase())
-      ) {
-        return value.slug;
-      }
-    }
-
-    // Check for compound genres (e.g., "Action-Adventure")
-    for (const value of Object.values(CommonGenres)) {
-      if (normalizedGenre.startsWith(value.slug) || normalizedGenre.startsWith(value.name.toLowerCase())) {
-        return value.slug;
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * Ensure common genres exist in database
-   */
-  async ensureCommonGenres(): Promise<void> {
-    const existingGenres = await this.db.query<{ slug: string }>(
-      'SELECT slug FROM genres'
-    );
-    const existingSlugs = new Set(existingGenres.map((g) => g.slug));
-
-    const now = Math.floor(Date.now() / 1000);
-
-    for (const value of Object.values(CommonGenres)) {
-      if (!existingSlugs.has(value.slug)) {
-        const id = uuidv4();
-        await this.db.execute(
-          `INSERT INTO genres (id, name, slug, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?)`,
-          [id, value.name, value.slug, now, now]
-        );
-      }
-    }
-  }
-
-  /**
-   * Create a new genre
-   */
-  async createGenre(
-    name: string,
-    options?: { iconName?: string; color?: string }
-  ): Promise<Genre> {
-    const id = uuidv4();
-    const slug = this.slugify(name);
-    const now = Math.floor(Date.now() / 1000);
-
-    await this.db.execute(
-      `INSERT INTO genres (id, name, slug, icon_name, color, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [id, name, slug, options?.iconName ?? null, options?.color ?? null, now, now]
+  async getGenreStats(genre: string): Promise<{
+    totalGames: number;
+    totalPlayTime: number;
+    averageRating: number;
+  }> {
+    const rows = await this.db.query<GenreStatsRow>(
+      `SELECT COUNT(*) as total_games, SUM(play_time) as total_play_time, AVG(rating) as avg_rating FROM games WHERE genre = ?`,
+      [genre]
     );
 
+    const row = rows[0];
     return {
-      id,
-      name,
-      slug,
-      iconName: options?.iconName,
-      color: options?.color,
-      gameCount: 0,
-      createdAt: new Date(now * 1000),
-      updatedAt: new Date(now * 1000),
+      totalGames: row?.total_games ?? 0,
+      totalPlayTime: row?.total_play_time ?? 0,
+      averageRating: row?.avg_rating ?? 0,
     };
   }
 
   /**
-   * Convert name to slug
+   * Extract genre from a raw genre string.
+   * Accepts a string | null. Trims, normalizes, splits on " / " to take the first part.
    */
-  private slugify(name: string): string {
-    return name
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim();
+  extractGenreFromMetadata(input: string | null): string | null {
+    if (input === null || input === undefined) return null;
+
+    const trimmed = input.trim();
+    if (!trimmed) return null;
+
+    // Split on " / " and take the first part
+    const firstPart = trimmed.split(' / ')[0].trim();
+    if (!firstPart) return null;
+
+    return normalizeGenreName(firstPart);
   }
 }
 

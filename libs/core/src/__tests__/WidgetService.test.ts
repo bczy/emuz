@@ -3,9 +3,9 @@
  */
 
 import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
-import { WidgetService } from '../WidgetService';
+import { WidgetService } from '../services/WidgetService';
 import type { DatabaseAdapter } from '@emuz/database';
-import type { Widget, WidgetType } from '../../models/Widget';
+import type { WidgetType } from '../models/Widget';
 
 // Mock UUID
 vi.mock('uuid', () => ({
@@ -25,7 +25,7 @@ function createMockAdapter(): DatabaseAdapter & {
     isConnected: vi.fn(() => true),
     execute: vi.fn(),
     query: vi.fn(),
-    transaction: vi.fn((fn: () => Promise<unknown>) => fn()),
+    transaction: vi.fn(<T>(fn: () => Promise<T>) => fn()),
   };
 }
 

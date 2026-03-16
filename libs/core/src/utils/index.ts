@@ -3,3 +3,4 @@
  */
 
 export * from './fileExtensions';
+export * from './db';

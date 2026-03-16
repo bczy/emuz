@@ -2,7 +2,7 @@
  * Database adapters unit tests
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { DatabaseConfig, BaseDatabaseAdapter, detectPlatform } from '../adapters';
 
 /**

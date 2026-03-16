@@ -9,9 +9,9 @@ import type { DatabaseAdapter } from '@emuz/database';
 import type {
   ILibraryService,
   PaginationOptions,
-  SearchOptions,
   CreateCollectionInput,
 } from './types';
+import { toDate, toOptionalDate, buildUpdateQuery } from '../utils/db';
 
 /**
  * Database row types
@@ -71,10 +71,10 @@ function rowToGame(row: GameRow): Game {
     rating: row.rating ?? undefined,
     playCount: row.play_count,
     playTime: row.play_time,
-    lastPlayedAt: row.last_played_at ? new Date(row.last_played_at * 1000) : undefined,
+    lastPlayedAt: toOptionalDate(row.last_played_at),
     isFavorite: Boolean(row.is_favorite),
-    createdAt: new Date(row.created_at * 1000),
-    updatedAt: new Date(row.updated_at * 1000),
+    createdAt: toDate(row.created_at),
+    updatedAt: toDate(row.updated_at),
   };
 }
 
@@ -91,8 +91,8 @@ function rowToCollection(row: CollectionRow, gameIds: string[] = []): Collection
     gameIds,
     isSystem: Boolean(row.is_system),
     sortOrder: row.sort_order,
-    createdAt: new Date(row.created_at * 1000),
-    updatedAt: new Date(row.updated_at * 1000),
+    createdAt: toDate(row.created_at),
+    updatedAt: toDate(row.updated_at),
   };
 }
 
@@ -106,8 +106,10 @@ export class LibraryService implements ILibraryService {
    * Get all games with optional pagination
    */
   async getAllGames(options?: PaginationOptions): Promise<Game[]> {
-    const limit = options?.limit ?? 100;
-    const offset = options?.offset ?? 0;
+    const limit = options?.limit ?? 20;
+    const offset = options?.page !== undefined
+      ? (options.page - 1) * limit
+      : (options?.offset ?? 0);
 
     const rows = await this.db.query<GameRow>(
       `SELECT * FROM games ORDER BY title ASC LIMIT ? OFFSET ?`,
@@ -142,31 +144,32 @@ export class LibraryService implements ILibraryService {
   }
 
   /**
-   * Search games by title with optional filters
+   * Search games by query and/or filters (accepts an options object)
    */
-  async searchGames(query: string, options?: SearchOptions): Promise<Game[]> {
-    const limit = options?.limit ?? 100;
-    const offset = options?.offset ?? 0;
+  async searchGames(options: { query?: string; platformId?: string; genre?: string } | string): Promise<Game[]> {
+    // Support legacy string call
+    const opts = typeof options === 'string'
+      ? { query: options }
+      : options;
+
+    const query = opts.query ?? '';
     const conditions: string[] = ['title LIKE ?'];
     const params: (string | number | boolean)[] = [`%${query}%`];
 
-    if (options?.platformId) {
+    if (opts.platformId) {
       conditions.push('platform_id = ?');
-      params.push(options.platformId);
+      params.push(opts.platformId);
     }
 
-    if (options?.favorite !== undefined) {
-      conditions.push('is_favorite = ?');
-      params.push(options.favorite ? 1 : 0);
+    if ((opts as { genre?: string }).genre) {
+      conditions.push('genre = ?');
+      params.push((opts as { genre?: string }).genre as string);
     }
-
-    params.push(limit, offset);
 
     const sql = `
-      SELECT * FROM games 
-      WHERE ${conditions.join(' AND ')} 
-      ORDER BY title ASC 
-      LIMIT ? OFFSET ?
+      SELECT * FROM games
+      WHERE ${conditions.join(' AND ')}
+      ORDER BY title ASC
     `;
 
     const rows = await this.db.query<GameRow>(sql, params);
@@ -174,70 +177,30 @@ export class LibraryService implements ILibraryService {
   }
 
   /**
-   * Update a game
+   * Update a game and return the updated record
    */
-  async updateGame(id: string, data: Partial<Game>): Promise<void> {
-    const updates: string[] = [];
-    const params: (string | number | null)[] = [];
+  async updateGame(id: string, data: Partial<Game>): Promise<Game | null> {
+    const fields: Array<[string, string | number | null]> = [
+      ...(data.title !== undefined ? [['title', data.title] as [string, string]] : []),
+      ...(data.coverPath !== undefined ? [['cover_path', data.coverPath ?? null] as [string, string | null]] : []),
+      ...(data.description !== undefined ? [['description', data.description ?? null] as [string, string | null]] : []),
+      ...(data.developer !== undefined ? [['developer', data.developer ?? null] as [string, string | null]] : []),
+      ...(data.publisher !== undefined ? [['publisher', data.publisher ?? null] as [string, string | null]] : []),
+      ...(data.releaseDate !== undefined ? [['release_date', data.releaseDate ?? null] as [string, string | null]] : []),
+      ...(data.genre !== undefined ? [['genre', data.genre ?? null] as [string, string | null]] : []),
+      ...(data.rating !== undefined ? [['rating', data.rating ?? null] as [string, number | null]] : []),
+      ...(data.isFavorite !== undefined ? [['is_favorite', data.isFavorite ? 1 : 0] as [string, number]] : []),
+      ...(data.playCount !== undefined ? [['play_count', data.playCount] as [string, number]] : []),
+      ...(data.playTime !== undefined ? [['play_time', data.playTime] as [string, number]] : []),
+      ...(data.lastPlayedAt !== undefined ? [['last_played_at', data.lastPlayedAt ? Math.floor(data.lastPlayedAt.getTime() / 1000) : null] as [string, number | null]] : []),
+    ];
 
-    if (data.title !== undefined) {
-      updates.push('title = ?');
-      params.push(data.title);
-    }
-    if (data.coverPath !== undefined) {
-      updates.push('cover_path = ?');
-      params.push(data.coverPath ?? null);
-    }
-    if (data.description !== undefined) {
-      updates.push('description = ?');
-      params.push(data.description ?? null);
-    }
-    if (data.developer !== undefined) {
-      updates.push('developer = ?');
-      params.push(data.developer ?? null);
-    }
-    if (data.publisher !== undefined) {
-      updates.push('publisher = ?');
-      params.push(data.publisher ?? null);
-    }
-    if (data.releaseDate !== undefined) {
-      updates.push('release_date = ?');
-      params.push(data.releaseDate ?? null);
-    }
-    if (data.genre !== undefined) {
-      updates.push('genre = ?');
-      params.push(data.genre ?? null);
-    }
-    if (data.rating !== undefined) {
-      updates.push('rating = ?');
-      params.push(data.rating ?? null);
-    }
-    if (data.isFavorite !== undefined) {
-      updates.push('is_favorite = ?');
-      params.push(data.isFavorite ? 1 : 0);
-    }
-    if (data.playCount !== undefined) {
-      updates.push('play_count = ?');
-      params.push(data.playCount);
-    }
-    if (data.playTime !== undefined) {
-      updates.push('play_time = ?');
-      params.push(data.playTime);
-    }
-    if (data.lastPlayedAt !== undefined) {
-      updates.push('last_played_at = ?');
-      params.push(data.lastPlayedAt ? Math.floor(data.lastPlayedAt.getTime() / 1000) : null);
-    }
+    const query = buildUpdateQuery(fields);
+    if (!query) return this.getGameById(id);
 
-    if (updates.length === 0) {
-      return;
-    }
+    await this.db.execute(`UPDATE games SET ${query.setClauses} WHERE id = ?`, [...query.params, id]);
 
-    updates.push('updated_at = ?');
-    params.push(Math.floor(Date.now() / 1000));
-    params.push(id);
-
-    await this.db.execute(`UPDATE games SET ${updates.join(', ')} WHERE id = ?`, params);
+    return this.getGameById(id);
   }
 
   /**
@@ -260,14 +223,38 @@ export class LibraryService implements ILibraryService {
    */
   async getRecentGames(limit = 10): Promise<Game[]> {
     const rows = await this.db.query<GameRow>(
-      `SELECT * FROM games 
-       WHERE last_played_at IS NOT NULL 
-       ORDER BY last_played_at DESC 
+      `SELECT * FROM games
+       WHERE last_played_at IS NOT NULL
+       ORDER BY last_played_at DESC
        LIMIT ?`,
       [limit]
     );
 
     return rows.map(rowToGame);
+  }
+
+  /**
+   * Alias for getRecentGames - gets recently played games
+   */
+  async getRecentlyPlayed(limit = 10): Promise<Game[]> {
+    const rows = await this.db.query<GameRow>(
+      `SELECT * FROM games WHERE last_played_at IS NOT NULL ORDER BY last_played_at DESC LIMIT ?`,
+      [limit]
+    );
+
+    return rows.map(rowToGame);
+  }
+
+  /**
+   * Record a play session - updates play_count, play_time, last_played_at
+   */
+  async recordPlaySession(gameId: string, duration: number): Promise<void> {
+    const now = Math.floor(Date.now() / 1000);
+
+    await this.db.execute(
+      'UPDATE games SET play_count = play_count + 1, play_time = play_time + ?, last_played_at = ?, updated_at = ? WHERE id = ?',
+      [duration, now, now, gameId]
+    );
   }
 
   /**
@@ -278,19 +265,23 @@ export class LibraryService implements ILibraryService {
       'SELECT * FROM collections ORDER BY sort_order ASC, name ASC'
     );
 
-    // Get game IDs for each collection
-    const collections = await Promise.all(
-      rows.map(async (row) => {
-        const gameIdRows = await this.db.query<{ game_id: string }>(
-          'SELECT game_id FROM collection_games WHERE collection_id = ?',
-          [row.id]
-        );
-        const gameIds = gameIdRows.map((r) => r.game_id);
-        return rowToCollection(row, gameIds);
-      })
-    );
+    if (rows.length === 0) return [];
 
-    return collections;
+    // Fetch all collection-game relationships in one query, then group in memory
+    const cgRows = await this.db.query<{ collection_id: string; game_id: string }>(
+      'SELECT collection_id, game_id FROM collection_games'
+    );
+    const gameIdsByCollection = new Map<string, string[]>();
+    for (const cg of cgRows) {
+      const list = gameIdsByCollection.get(cg.collection_id);
+      if (list) {
+        list.push(cg.game_id);
+      } else {
+        gameIdsByCollection.set(cg.collection_id, [cg.game_id]);
+      }
+    }
+
+    return rows.map((row) => rowToCollection(row, gameIdsByCollection.get(row.id) ?? []));
   }
 
   /**
@@ -311,6 +302,20 @@ export class LibraryService implements ILibraryService {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, data.name, data.description ?? null, data.coverPath ?? null, data.isSystem ? 1 : 0, sortOrder, now, now]
     );
+
+    // Fetch the newly created collection
+    const rows = await this.db.query<CollectionRow>(
+      'SELECT * FROM collections WHERE id = ?',
+      [id]
+    );
+
+    if (rows.length > 0) {
+      const cgRows = await this.db.query<{ game_id: string }>(
+        'SELECT game_id FROM collection_games WHERE collection_id = ?',
+        [id]
+      );
+      return rowToCollection(rows[0], cgRows.map((r) => r.game_id));
+    }
 
     return {
       id,
@@ -334,8 +339,10 @@ export class LibraryService implements ILibraryService {
 
   /**
    * Add a game to a collection
+   * @param collectionId - The collection ID
+   * @param gameId - The game ID
    */
-  async addToCollection(gameId: string, collectionId: string): Promise<void> {
+  async addToCollection(collectionId: string, gameId: string): Promise<void> {
     const now = Math.floor(Date.now() / 1000);
     await this.db.execute(
       `INSERT OR IGNORE INTO collection_games (collection_id, game_id, added_at)
@@ -346,8 +353,10 @@ export class LibraryService implements ILibraryService {
 
   /**
    * Remove a game from a collection
+   * @param collectionId - The collection ID
+   * @param gameId - The game ID
    */
-  async removeFromCollection(gameId: string, collectionId: string): Promise<void> {
+  async removeFromCollection(collectionId: string, gameId: string): Promise<void> {
     await this.db.execute(
       'DELETE FROM collection_games WHERE collection_id = ? AND game_id = ?',
       [collectionId, gameId]
@@ -376,6 +385,28 @@ export class LibraryService implements ILibraryService {
     await this.db.execute(
       `UPDATE games SET is_favorite = NOT is_favorite, updated_at = ? WHERE id = ?`,
       [Math.floor(Date.now() / 1000), gameId]
+    );
+  }
+
+  /**
+   * Add a game to favorites
+   */
+  async addToFavorites(gameId: string): Promise<void> {
+    const now = Math.floor(Date.now() / 1000);
+    await this.db.execute(
+      'UPDATE games SET is_favorite = 1, updated_at = ? WHERE id = ?',
+      [now, gameId]
+    );
+  }
+
+  /**
+   * Remove a game from favorites
+   */
+  async removeFromFavorites(gameId: string): Promise<void> {
+    const now = Math.floor(Date.now() / 1000);
+    await this.db.execute(
+      'UPDATE games SET is_favorite = 0, updated_at = ? WHERE id = ?',
+      [now, gameId]
     );
   }
 

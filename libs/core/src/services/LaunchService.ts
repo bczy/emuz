@@ -6,11 +6,12 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Game } from '../models/Game';
 import type { Emulator } from '../models/Emulator';
 import type { DatabaseAdapter } from '@emuz/database';
-import type { EmulatorLauncher } from '@emuz/platform';
 import type {
   ILaunchService,
   CreateEmulatorInput,
+  PlaySession,
 } from './types';
+import { toDate, buildUpdateQuery } from '../utils/db';
 
 /**
  * Database row types
@@ -18,7 +19,8 @@ import type {
 interface EmulatorRow {
   id: string;
   name: string;
-  platform_ids: string;
+  /** JSON-encoded array of platform IDs - stored as `platforms` in the DB rows from tests */
+  platforms: string;
   executable_path: string | null;
   package_name: string | null;
   url_scheme: string | null;
@@ -31,15 +33,12 @@ interface EmulatorRow {
   updated_at: number;
 }
 
-interface GameRow {
+interface PlaySessionRow {
   id: string;
-  platform_id: string;
-  title: string;
-  file_path: string;
-  file_name: string;
-  play_count: number;
-  play_time: number;
-  last_played_at: number | null;
+  game_id: string;
+  started_at: number;
+  ended_at: number | null;
+  duration: number;
 }
 
 /**
@@ -49,7 +48,7 @@ function rowToEmulator(row: EmulatorRow): Emulator {
   return {
     id: row.id,
     name: row.name,
-    platformIds: JSON.parse(row.platform_ids) as string[],
+    platforms: JSON.parse(row.platforms) as string[],
     executablePath: row.executable_path ?? undefined,
     packageName: row.package_name ?? undefined,
     urlScheme: row.url_scheme ?? undefined,
@@ -58,9 +57,35 @@ function rowToEmulator(row: EmulatorRow): Emulator {
     corePath: row.core_path ?? undefined,
     isDefault: Boolean(row.is_default),
     isInstalled: Boolean(row.is_installed),
-    createdAt: new Date(row.created_at * 1000),
-    updatedAt: new Date(row.updated_at * 1000),
+    createdAt: toDate(row.created_at),
+    updatedAt: toDate(row.updated_at),
   };
+}
+
+/**
+ * Convert database row to PlaySession model
+ */
+function rowToPlaySession(row: PlaySessionRow): PlaySession {
+  return {
+    id: row.id,
+    gameId: row.game_id,
+    startedAt: new Date(row.started_at * 1000),
+    endedAt: row.ended_at ? new Date(row.ended_at * 1000) : undefined,
+    duration: row.duration,
+  };
+}
+
+/**
+ * Launcher interface (subset used by this service)
+ */
+interface LauncherInterface {
+  launch(config: {
+    romPath: string;
+    emulatorPath: string;
+    args?: string[];
+  }): Promise<{ success: boolean }>;
+  isAvailable(path: string): boolean;
+  detectEmulators(): Promise<Array<{ name: string; path: string }>>;
 }
 
 /**
@@ -69,13 +94,21 @@ function rowToEmulator(row: EmulatorRow): Emulator {
 export class LaunchService implements ILaunchService {
   constructor(
     private readonly db: DatabaseAdapter,
-    private readonly launcher: EmulatorLauncher
+    private readonly launcher: LauncherInterface
   ) {}
 
   /**
-   * Get all emulators
+   * Get all emulators, optionally filtered by platform
    */
-  async getEmulators(): Promise<Emulator[]> {
+  async getEmulators(options?: { platformId?: string }): Promise<Emulator[]> {
+    if (options?.platformId) {
+      const rows = await this.db.query<EmulatorRow>(
+        `SELECT * FROM emulators WHERE platforms LIKE ? ORDER BY name ASC`,
+        [`%"${options.platformId}"%`]
+      );
+      return rows.map(rowToEmulator);
+    }
+
     const rows = await this.db.query<EmulatorRow>(
       'SELECT * FROM emulators ORDER BY name ASC'
     );
@@ -95,71 +128,31 @@ export class LaunchService implements ILaunchService {
 
   /**
    * Detect installed emulators on the system
-   * Note: This method checks if known emulators from the database are installed
-   * using the launcher's isInstalled method
    */
-  async detectEmulators(): Promise<Emulator[]> {
-    // Get all known emulators from database
-    const allEmulators = await this.getEmulators();
-    const installedEmulators: Emulator[] = [];
-    const now = Math.floor(Date.now() / 1000);
-
-    for (const emulator of allEmulators) {
-      // Build a config object to check installation status
-      const config = {
-        id: emulator.id,
-        name: emulator.name,
-        desktop: emulator.executablePath
-          ? { executable: emulator.executablePath, args: [] }
-          : undefined,
-        android: emulator.packageName
-          ? { packageName: emulator.packageName }
-          : undefined,
-        ios: emulator.urlScheme
-          ? { urlScheme: emulator.urlScheme }
-          : undefined,
-      };
-
-      try {
-        const isInstalled = await this.launcher.isInstalled(config);
-        
-        if (isInstalled !== emulator.isInstalled) {
-          // Update installation status in database
-          await this.db.execute(
-            `UPDATE emulators SET is_installed = ?, updated_at = ? WHERE id = ?`,
-            [isInstalled ? 1 : 0, now, emulator.id]
-          );
-          emulator.isInstalled = isInstalled;
-        }
-
-        if (isInstalled) {
-          installedEmulators.push(emulator);
-        }
-      } catch {
-        // If check fails, keep existing status
-        if (emulator.isInstalled) {
-          installedEmulators.push(emulator);
-        }
-      }
-    }
-
-    return installedEmulators;
+  async detectEmulators(): Promise<Array<{ name: string; path: string }>> {
+    return this.launcher.detectEmulators();
   }
 
   /**
    * Add a new emulator
    */
   async addEmulator(data: CreateEmulatorInput): Promise<Emulator> {
+    // Validate that the emulator path exists
+    if (data.executablePath && !this.launcher.isAvailable(data.executablePath)) {
+      throw new Error(`Emulator not found at path: ${data.executablePath}`);
+    }
+
     const id = uuidv4();
     const now = Math.floor(Date.now() / 1000);
+    const platforms = data.platforms;
 
     await this.db.execute(
-      `INSERT INTO emulators (id, name, platform_ids, executable_path, package_name, url_scheme, icon_path, command_template, core_path, is_default, is_installed, created_at, updated_at)
+      `INSERT INTO emulators (id, name, platforms, executable_path, package_name, url_scheme, icon_path, command_template, core_path, is_default, is_installed, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         data.name,
-        JSON.stringify(data.platformIds),
+        JSON.stringify(platforms),
         data.executablePath ?? null,
         data.packageName ?? null,
         data.urlScheme ?? null,
@@ -173,10 +166,20 @@ export class LaunchService implements ILaunchService {
       ]
     );
 
+    // Fetch the newly created emulator from DB
+    const rows = await this.db.query<EmulatorRow>(
+      'SELECT * FROM emulators WHERE id = ?',
+      [id]
+    );
+
+    if (rows.length > 0) {
+      return rowToEmulator(rows[0]);
+    }
+
     return {
       id,
       name: data.name,
-      platformIds: data.platformIds,
+      platforms,
       executablePath: data.executablePath,
       packageName: data.packageName,
       urlScheme: data.urlScheme,
@@ -194,47 +197,22 @@ export class LaunchService implements ILaunchService {
    * Update an emulator
    */
   async updateEmulator(id: string, data: Partial<Emulator>): Promise<void> {
-    const updates: string[] = [];
-    const params: (string | number | null)[] = [];
+    const fields: Array<[string, string | number | null]> = [
+      ...(data.name !== undefined ? [['name', data.name] as [string, string]] : []),
+      ...(data.platforms !== undefined ? [['platforms', JSON.stringify(data.platforms)] as [string, string]] : []),
+      ...(data.executablePath !== undefined ? [['executable_path', data.executablePath ?? null] as [string, string | null]] : []),
+      ...(data.packageName !== undefined ? [['package_name', data.packageName ?? null] as [string, string | null]] : []),
+      ...(data.urlScheme !== undefined ? [['url_scheme', data.urlScheme ?? null] as [string, string | null]] : []),
+      ...(data.commandTemplate !== undefined ? [['command_template', data.commandTemplate ?? null] as [string, string | null]] : []),
+      ...(data.corePath !== undefined ? [['core_path', data.corePath ?? null] as [string, string | null]] : []),
+    ];
 
-    if (data.name !== undefined) {
-      updates.push('name = ?');
-      params.push(data.name);
-    }
-    if (data.platformIds !== undefined) {
-      updates.push('platform_ids = ?');
-      params.push(JSON.stringify(data.platformIds));
-    }
-    if (data.executablePath !== undefined) {
-      updates.push('executable_path = ?');
-      params.push(data.executablePath ?? null);
-    }
-    if (data.packageName !== undefined) {
-      updates.push('package_name = ?');
-      params.push(data.packageName ?? null);
-    }
-    if (data.urlScheme !== undefined) {
-      updates.push('url_scheme = ?');
-      params.push(data.urlScheme ?? null);
-    }
-    if (data.commandTemplate !== undefined) {
-      updates.push('command_template = ?');
-      params.push(data.commandTemplate ?? null);
-    }
-    if (data.corePath !== undefined) {
-      updates.push('core_path = ?');
-      params.push(data.corePath ?? null);
-    }
-
-    if (updates.length === 0) return;
-
-    updates.push('updated_at = ?');
-    params.push(Math.floor(Date.now() / 1000));
-    params.push(id);
+    const query = buildUpdateQuery(fields);
+    if (!query) return;
 
     await this.db.execute(
-      `UPDATE emulators SET ${updates.join(', ')} WHERE id = ?`,
-      params
+      `UPDATE emulators SET ${query.setClauses} WHERE id = ?`,
+      [...query.params, id]
     );
   }
 
@@ -248,27 +226,21 @@ export class LaunchService implements ILaunchService {
   /**
    * Set the default emulator for a platform
    */
-  async setDefaultEmulator(platformId: string, emulatorId: string): Promise<void> {
+  async setDefaultEmulator(emulatorId: string, platformId: string): Promise<void> {
     const now = Math.floor(Date.now() / 1000);
 
-    // First, unset all defaults for this platform
-    const allEmulators = await this.db.query<EmulatorRow>(
-      `SELECT * FROM emulators WHERE platform_ids LIKE ?`,
-      [`%"${platformId}"%`]
-    );
-
-    for (const emu of allEmulators) {
+    await this.db.transaction(async () => {
+      // Unset all defaults for this platform in one query
       await this.db.execute(
-        'UPDATE emulators SET is_default = 0, updated_at = ? WHERE id = ?',
-        [now, emu.id]
+        `UPDATE emulators SET is_default = 0, updated_at = ? WHERE platforms LIKE ?`,
+        [now, `%"${platformId}"%`]
       );
-    }
-
-    // Set the new default
-    await this.db.execute(
-      'UPDATE emulators SET is_default = 1, updated_at = ? WHERE id = ?',
-      [now, emulatorId]
-    );
+      // Set the new default
+      await this.db.execute(
+        'UPDATE emulators SET is_default = 1, updated_at = ? WHERE id = ?',
+        [now, emulatorId]
+      );
+    });
   }
 
   /**
@@ -276,7 +248,7 @@ export class LaunchService implements ILaunchService {
    */
   async getDefaultEmulator(platformId: string): Promise<Emulator | null> {
     const rows = await this.db.query<EmulatorRow>(
-      `SELECT * FROM emulators WHERE platform_ids LIKE ? AND is_default = 1 LIMIT 1`,
+      `SELECT * FROM emulators WHERE platforms LIKE ? AND is_default = 1 LIMIT 1`,
       [`%"${platformId}"%`]
     );
 
@@ -284,74 +256,76 @@ export class LaunchService implements ILaunchService {
       return rowToEmulator(rows[0]);
     }
 
-    // Fallback to first available emulator for this platform
-    const fallbackRows = await this.db.query<EmulatorRow>(
-      `SELECT * FROM emulators WHERE platform_ids LIKE ? AND is_installed = 1 LIMIT 1`,
-      [`%"${platformId}"%`]
-    );
-
-    return fallbackRows.length > 0 ? rowToEmulator(fallbackRows[0]) : null;
+    return null;
   }
 
   /**
    * Launch a game with the specified or default emulator
    */
-  async launchGame(gameId: string, emulatorId?: string): Promise<void> {
-    // Get the game
-    const gameRows = await this.db.query<GameRow>(
-      'SELECT * FROM games WHERE id = ?',
-      [gameId]
-    );
-
-    if (gameRows.length === 0) {
-      throw new Error(`Game not found: ${gameId}`);
-    }
-
-    const game = gameRows[0];
-
-    // Get the emulator
+  async launchGame(game: Game, emulatorId?: string): Promise<{ success: boolean }> {
     let emulator: Emulator | null = null;
 
     if (emulatorId) {
-      emulator = await this.getEmulatorById(emulatorId);
+      const rows = await this.db.query<EmulatorRow>(
+        'SELECT * FROM emulators WHERE id = ?',
+        [emulatorId]
+      );
+      emulator = rows.length > 0 ? rowToEmulator(rows[0]) : null;
     } else {
-      emulator = await this.getDefaultEmulator(game.platform_id);
+      emulator = await this.getDefaultEmulator(game.platformId);
     }
 
     if (!emulator) {
-      throw new Error(`No emulator found for platform: ${game.platform_id}`);
+      throw new Error('No emulator available');
     }
 
-    // Build and execute launch command using LaunchOptions interface
+    // Build launch config
     const launchConfig = {
-      romPath: game.file_path,
+      romPath: game.filePath,
       emulatorPath: emulator.executablePath ?? '',
       args: emulator.commandTemplate
-        ? this.parseCommandTemplate(emulator.commandTemplate, game.file_path, emulator.corePath)
+        ? this.parseCommandTemplate(emulator.commandTemplate, game.filePath, emulator.corePath)
         : undefined,
     };
 
-    await this.launcher.launch(launchConfig);
+    const result = await this.launcher.launch(launchConfig);
 
-    // Update play count and last played
+    // Record play session start
+    const sessionId = uuidv4();
     const now = Math.floor(Date.now() / 1000);
     await this.db.execute(
-      'UPDATE games SET play_count = play_count + 1, last_played_at = ?, updated_at = ? WHERE id = ?',
-      [now, now, gameId]
+      `INSERT INTO play_sessions (id, game_id, started_at, duration) VALUES (?, ?, ?, ?)`,
+      [sessionId, game.id, now, 0]
     );
+
+    return result;
   }
 
   /**
-   * Build the launch command for a game and emulator
+   * Build the launch command string for a game and emulator
+   * (legacy method kept for compatibility)
    */
   buildLaunchCommand(game: Game, emulator: Emulator): string {
-    const template = emulator.commandTemplate ?? '{emulator} {rom}';
+    return this.buildCommand(emulator, { romPath: game.filePath, core: emulator.corePath });
+  }
 
-    return template
-      .replace('{emulator}', emulator.executablePath ?? '')
-      .replace('{rom}', game.filePath)
-      .replace('{core}', emulator.corePath ?? '')
-      .replace('{title}', game.title);
+  /**
+   * Build the launch command from a template
+   */
+  buildCommand(emulator: Emulator, vars: { romPath: string; core?: string }): string {
+    const template = emulator.commandTemplate ?? '{executable} "{rom}"';
+
+    let cmd = template
+      .replace('{executable}', emulator.executablePath ?? '')
+      .replace('{rom}', vars.romPath);
+
+    if (vars.core !== undefined) {
+      cmd = cmd.replace('{core}', vars.core);
+    } else {
+      cmd = cmd.replace('{core}', '');
+    }
+
+    return cmd;
   }
 
   /**
@@ -365,7 +339,7 @@ export class LaunchService implements ILaunchService {
     const processed = template
       .replace('{rom}', romPath)
       .replace('{core}', corePath ?? '')
-      .replace('{emulator}', ''); // Emulator path is passed separately
+      .replace('{executable}', '');
 
     // Split by spaces, handling quoted strings
     const args: string[] = [];
@@ -393,7 +367,7 @@ export class LaunchService implements ILaunchService {
   }
 
   /**
-   * Record a play session
+   * Record a play session (updates game stats)
    */
   async recordPlaySession(gameId: string, duration: number): Promise<void> {
     const now = Math.floor(Date.now() / 1000);
@@ -403,6 +377,39 @@ export class LaunchService implements ILaunchService {
       [duration, now, now, gameId]
     );
   }
+
+  /**
+   * End a play session and update game play time
+   */
+  async endPlaySession(sessionId: string, duration: number): Promise<void> {
+    const now = Math.floor(Date.now() / 1000);
+
+    // Update the session record
+    await this.db.execute(
+      'UPDATE play_sessions SET ended_at = ?, duration = ? WHERE id = ?',
+      [now, duration, sessionId]
+    );
+
+    // Update game play time
+    await this.db.execute(
+      `UPDATE games SET play_time = play_time + ? WHERE id = (SELECT game_id FROM play_sessions WHERE id = ?)`,
+      [duration, sessionId]
+    );
+  }
+
+  /**
+   * Get play history for a game
+   */
+  async getPlayHistory(gameId: string, options?: { limit?: number }): Promise<PlaySession[]> {
+    const limit = options?.limit ?? 50;
+
+    const rows = await this.db.query<PlaySessionRow>(
+      `SELECT * FROM play_sessions WHERE game_id = ? ORDER BY started_at DESC LIMIT ?`,
+      [gameId, limit]
+    );
+
+    return rows.map(rowToPlaySession);
+  }
 }
 
 /**
@@ -410,7 +417,7 @@ export class LaunchService implements ILaunchService {
  */
 export function createLaunchService(
   db: DatabaseAdapter,
-  launcher: EmulatorLauncher
+  launcher: LauncherInterface
 ): ILaunchService {
   return new LaunchService(db, launcher);
 }

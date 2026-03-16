@@ -22,10 +22,10 @@ const HomeScreen: React.FC = () => {
   const totalPlayTime = games.reduce((acc: number, g: Game) => acc + (g.playTime || 0), 0);
   const favorites = games.filter((g: Game) => g.isFavorite);
   const recentGames = [...games]
-    .filter((g: Game) => g.lastPlayed)
+    .filter((g: Game) => g.lastPlayedAt)
     .sort((a: Game, b: Game) => {
-      const aTime = a.lastPlayed?.getTime() ?? 0;
-      const bTime = b.lastPlayed?.getTime() ?? 0;
+      const aTime = a.lastPlayedAt?.getTime() ?? 0;
+      const bTime = b.lastPlayedAt?.getTime() ?? 0;
       return bTime - aTime;
     })
     .slice(0, 10);
@@ -145,13 +145,13 @@ const HomeScreen: React.FC = () => {
 /**
  * Calculate games played this week
  */
-function getGamesThisWeek(games: { lastPlayed?: Date }[]): number {
+function getGamesThisWeek(games: { lastPlayedAt?: Date }[]): number {
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
-  
+
   return games.filter(g => {
-    if (!g.lastPlayed) return false;
-    return new Date(g.lastPlayed) > weekAgo;
+    if (!g.lastPlayedAt) return false;
+    return new Date(g.lastPlayedAt) > weekAgo;
   }).length;
 }
 

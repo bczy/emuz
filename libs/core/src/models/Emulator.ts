@@ -6,7 +6,7 @@ import { z } from 'zod';
 export const EmulatorSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1),
-  platformIds: z.array(z.string().uuid()),
+  platforms: z.array(z.string()),
   executablePath: z.string().optional(),
   packageName: z.string().optional(), // Android package name
   urlScheme: z.string().optional(), // iOS URL scheme
@@ -25,7 +25,7 @@ export type Emulator = z.infer<typeof EmulatorSchema>;
  * Create a new Emulator with defaults
  */
 export function createEmulator(
-  data: Partial<Emulator> & Pick<Emulator, 'id' | 'name' | 'platformIds'>
+  data: Partial<Emulator> & Pick<Emulator, 'id' | 'name' | 'platforms'>
 ): Emulator {
   const now = new Date();
   return EmulatorSchema.parse({

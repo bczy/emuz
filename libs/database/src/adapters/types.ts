@@ -31,7 +31,8 @@ export interface DatabaseAdapter {
   /**
    * Run multiple statements in a transaction
    */
-  transaction<T>(fn: () => Promise<T>): Promise<T>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  transaction(fn: () => Promise<any>): Promise<any>;
 
   /**
    * Check if the database is connected
@@ -84,7 +85,8 @@ export abstract class BaseDatabaseAdapter implements DatabaseAdapter {
     return results[0] || null;
   }
 
-  abstract transaction<T>(fn: () => Promise<T>): Promise<T>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  abstract transaction(fn: () => Promise<any>): Promise<any>;
 
   isConnected(): boolean {
     return this.connected;

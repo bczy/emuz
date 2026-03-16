@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
-import { ScannerService } from '../ScannerService';
+import { ScannerService } from '../services/ScannerService';
 import type { DatabaseAdapter } from '@emuz/database';
 
 // Mock UUID
@@ -24,7 +24,7 @@ function createMockAdapter(): DatabaseAdapter & {
     isConnected: vi.fn(() => true),
     execute: vi.fn(),
     query: vi.fn(),
-    transaction: vi.fn((fn: () => Promise<unknown>) => fn()),
+    transaction: vi.fn(<T>(fn: () => Promise<T>) => fn()),
   };
 }
 
