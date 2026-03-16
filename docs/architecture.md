@@ -9,62 +9,116 @@ EmuZ is a modern, cross-platform emulator frontend built with a focus on user ex
 ## Architecture Diagram
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           Applications                                    │
-├─────────────────────────────────┬───────────────────────────────────────┤
-│       Desktop (Electron)        │        Mobile (React Native)          │
-│  ┌─────────────────────────┐    │    ┌─────────────────────────┐        │
-│  │    Renderer Process     │    │    │       React Native      │        │
-│  │  ┌─────────────────┐    │    │    │    ┌─────────────────┐  │        │
-│  │  │   React + Vite  │    │    │    │    │   NativeWind    │  │        │
-│  │  └─────────────────┘    │    │    │    └─────────────────┘  │        │
-│  │  ┌─────────────────┐    │    │    │    ┌─────────────────┐  │        │
-│  │  │  TailwindCSS    │    │    │    │    │ React Navigation│  │        │
-│  │  └─────────────────┘    │    │    │    └─────────────────┘  │        │
-│  └─────────────────────────┘    │    └─────────────────────────┘        │
-│  ┌─────────────────────────┐    │                                       │
-│  │     Main Process        │    │                                       │
-│  │  ┌─────────────────┐    │    │                                       │
-│  │  │    IPC Bridge   │    │    │                                       │
-│  │  └─────────────────┘    │    │                                       │
-│  └─────────────────────────┘    │                                       │
-└─────────────────────────────────┴───────────────────────────────────────┘
-                                  │
-                                  ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         Shared Libraries                                 │
-├─────────────────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐        │
-│  │   @emuz/ui  │ │ @emuz/core  │ │@emuz/database│ │@emuz/emulators│     │
-│  │             │ │             │ │             │ │             │        │
-│  │ • Components│ │ • Services  │ │ • Schema    │ │ • Registry  │        │
-│  │ • Themes    │ │ • Models    │ │ • Migrations│ │ • Detector  │        │
-│  │ • Hooks     │ │ • Stores    │ │ • Adapters  │ │ • Launchers │        │
-│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘        │
-│  ┌─────────────┐ ┌─────────────┐                                        │
-│  │@emuz/platform│ │  @emuz/i18n │                                       │
-│  │             │ │             │                                        │
-│  │ • Filesystem│ │ • Locales   │                                        │
-│  │ • Launchers │ │ • Config    │                                        │
-│  └─────────────┘ └─────────────┘                                        │
-└─────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                              Applications                                 │
+├──────────────────────────────────┬───────────────────────────────────────┤
+│        Desktop (Electron)        │         Mobile (React Native)         │
+│  ┌──────────────────────────┐    │    ┌──────────────────────────┐       │
+│  │    Renderer Process      │    │    │  React Native + Expo 54  │       │
+│  │  React 18 + react-router │    │    │  NativeWind 4.x          │       │
+│  │  TailwindCSS 4.x         │    │    │  React Navigation 7.x    │       │
+│  └──────────────────────────┘    │    └──────────────────────────┘       │
+│  ┌──────────────────────────┐    │                                       │
+│  │    Main Process          │    │                                       │
+│  │  IPC Bridge (3 channels) │    │                                       │
+│  │  database · fs · launcher│    │                                       │
+│  └──────────────────────────┘    │                                       │
+└──────────────────────────────────┴───────────────────────────────────────┘
+         │  depends on all 6 libs       │  depends on all 6 libs
+         └─────────────────┬────────────┘
+                           ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                         Shared Libraries                                  │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│   ┌──────────────┐      depends on @emuz/core                            │
+│   │  @emuz/ui    │──────────────────────────────────────────────┐        │
+│   │ Components   │                                              │        │
+│   │ Themes/Design│                                              ▼        │
+│   └──────────────┘                               ┌─────────────────────┐ │
+│                                                  │    @emuz/core       │ │
+│                                                  │ Models · Services   │ │
+│                                                  │ Stores  · Hooks     │ │
+│                                                  └──────┬──────┬───────┘ │
+│                                          depends on     │      │         │
+│                                     ┌───────────────────┘      │         │
+│                                     ▼                           ▼         │
+│                       ┌─────────────────────┐   ┌───────────────────┐   │
+│                       │   @emuz/database    │   │  @emuz/platform   │   │
+│                       │ Schema · Migrations │   │ Filesystem Adapts │   │
+│                       │ Adapters (desktop + │   │ Launcher Adapts   │   │
+│                       │  mobile)            │   │ (desktop/ios/     │   │
+│                       └─────────────────────┘   │  android)         │   │
+│                                                  └───────────────────┘   │
+│                                                                           │
+│   ┌──────────────────────┐   ┌────────────────────────────────────────┐  │
+│   │   @emuz/emulators    │   │             @emuz/i18n                 │  │
+│   │ Registry · Detector  │   │  Locales: EN ES FR DE JA ZH            │  │
+│   │ retroarch dolphin    │   │  react-i18next config                  │  │
+│   │ mgba desmume pcsx2   │   └────────────────────────────────────────┘  │
+│   └──────────────────────┘                                               │
+│  (no internal deps)       (no internal deps)                             │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
+
+## Nx Dependency Graph
+
+Generated from `nx graph --file=nx-graph.json` — arrows point from dependent → dependency:
+
+![EmuZ Nx Dependency Graph](nx-graph.svg)
+
+> Run `pnpm nx graph` to open the interactive version in your browser.
+
+Generated from `nx graph` — dependency directions flow bottom-up:
+
+```
+Leaf libs (no internal deps)
+  @emuz/database   @emuz/platform   @emuz/emulators   @emuz/i18n
+        │                 │
+        └────────┬─────────┘
+                 ▼
+           @emuz/core
+         (models · services · stores)
+                 │
+                 ▼
+            @emuz/ui
+         (components · themes)
+                 │
+        ┌────────┴────────┐
+        ▼                 ▼
+   apps/desktop      apps/mobile
+   (also directly imports database, emulators, i18n, platform)
+```
+
+### Dependency Table
+
+| Package | Depends On (internal) | Dependents |
+|---|---|---|
+| `@emuz/database` | — | `@emuz/core`, `apps/desktop`, `apps/mobile` |
+| `@emuz/platform` | — | `@emuz/core`, `apps/desktop`, `apps/mobile` |
+| `@emuz/emulators` | — | `apps/desktop`, `apps/mobile` |
+| `@emuz/i18n` | — | `apps/desktop`, `apps/mobile` |
+| `@emuz/core` | `@emuz/database`, `@emuz/platform` | `@emuz/ui`, `apps/desktop`, `apps/mobile` |
+| `@emuz/ui` | `@emuz/core` | `apps/desktop`, `apps/mobile` |
+| `apps/desktop` | all 6 libs | — |
+| `apps/mobile` | all 6 libs | — |
 
 ## Package Structure
 
 ### Applications
 
 #### `apps/desktop` - Electron Desktop Application
-- **Framework**: Electron 33.x with Vite
-- **Renderer**: React 19.x with TailwindCSS 4.x
+- **Framework**: Electron 33.x with electron-vite 2.x
+- **Renderer**: React 18 + react-router-dom 7 + TailwindCSS 4.x
 - **State**: Zustand 5.x with React Query 5.x
-- **Features**: Native file system access, process spawning, window management
+- **IPC channels**: `database`, `filesystem`, `launcher`
+- **Screens**: Home, Library, Platform, Collection, Genre, GameDetail, Settings, SetupWizard
 
-#### `apps/mobile` - React Native Mobile Application  
-- **Framework**: React Native 0.76+ (Bare Workflow)
+#### `apps/mobile` - React Native Mobile Application
+- **Framework**: React Native 0.81 + Expo 54 (bare workflow)
 - **Styling**: NativeWind 4.x (Tailwind for React Native)
-- **Navigation**: React Navigation 7.x
-- **Features**: Platform-specific file access, emulator launching via intents/URL schemes
+- **Navigation**: React Navigation 7.x (`RootNavigator` + `TabNavigator`)
+- **Screens**: Home, Library, Platforms, PlatformDetail, Collections, CollectionDetail, Genres, GenreDetail, GameDetail, Search, ScanProgress, EmulatorConfig, Settings, Setup
 
 ### Libraries
 
@@ -201,27 +255,37 @@ emulators ∞──∞ platforms
 ## Build System
 
 ### Nx Monorepo
-- Task orchestration with caching
-- Dependency graph for builds
-- Parallel execution
+
+- **Version**: Nx 20.x, default project: `mobile`
+- **Inference plugins**: `@nx/vite/plugin` (auto-detects `vite.config.*`), `@nx/eslint/plugin`
+- **Task caching**: enabled for `build`, `test`, `lint` targets
+- **Build ordering**: `^build` dependency ensures libs build before apps
+- **Module format**: all libs use ESM (`"type": "module"`)
 
 ### Scripts
 ```bash
 # Development
-pnpm nx serve desktop    # Run desktop dev
-pnpm nx start mobile     # Run mobile Metro
+pnpm nx serve desktop      # Electron dev server (Vite + HMR)
+pnpm nx start mobile       # Metro bundler
 
 # Build
-pnpm nx build desktop    # Build desktop
-pnpm nx build-ios mobile # Build iOS
-pnpm nx build-android mobile # Build Android
+pnpm nx build desktop      # Build desktop (main + renderer)
+pnpm nx build-ios mobile   # iOS release build
+pnpm nx build-android mobile # Android release build
 
 # Test
-pnpm nx test core        # Test core library
-pnpm nx run-many -t test # Run all tests
+pnpm nx test core          # Test @emuz/core
+pnpm nx test core --coverage
+pnpm nx run-many -t test   # All projects in parallel
+
+# Affected (CI)
+pnpm affected:test         # Test only changed packages
 
 # Lint
-pnpm nx run-many -t lint # Lint all projects
+pnpm nx run-many -t lint   # Lint all projects
+
+# Visualise
+pnpm nx graph              # Open dependency graph in browser
 ```
 
 ## Security Considerations

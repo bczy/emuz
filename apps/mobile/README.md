@@ -1,218 +1,161 @@
 # EmuZ Mobile App
 
-This is the React Native mobile application for EmuZ, built with **Expo** and supporting both iOS and Android.
+> React Native 0.81 + Expo 54 application: EmuZ emulator frontend for iOS and Android, styled with NativeWind 4 and navigated with React Navigation 7.
 
-## Prerequisites
+## Boundaries
+
+### Owns
+- React Native screens and navigation (React Navigation 7 stack + bottom tabs)
+- App root (`index.js`, `App.tsx`, `AppProviders`)
+- Metro bundler configuration for pnpm monorepo workspace resolution
+- Babel configuration (NativeWind + Expo preset)
+- NativeWind/Tailwind configuration
+- First-run setup wizard
+- Mobile platform service adapters (`FileService`, `LauncherService`, `StorageService`)
+
+### Delegates
+- Business logic (library, scan, launch) → `@emuz/core` services and stores
+- Database access → `@emuz/database` mobile adapter (`react-native-sqlite-storage`)
+- File I/O → `@emuz/platform` mobile adapters
+- Shared UI components → `@emuz/ui`
+- Emulator definitions → `@emuz/emulators`
+- Translations → `@emuz/i18n`
+
+## Integration Map
+
+### Internal dependencies
+| Package | Used for |
+|---------|----------|
+| `@emuz/core` | All services + Zustand stores + model types |
+| `@emuz/database` | `createMobileAdapter` — SQLite on-device storage |
+| `@emuz/platform` | `createMobileFSAdapter`, `createMobileLauncherAdapter` |
+| `@emuz/ui` | All shared screen components |
+| `@emuz/emulators` | Emulator registry for launch target selection |
+| `@emuz/i18n` | `I18nProvider`, `useTranslation` |
+
+### Depended by
+
+_Top-level application — nothing depends on `apps/mobile`._
+
+### External dependencies
+| Package | Version | Role |
+|---------|---------|------|
+| `react-native` | `^0.81` | Cross-platform mobile runtime |
+| `expo` | `^54.x` | Dev tooling, build system, managed config |
+| `@react-navigation/native` | `^7.x` | Navigation container |
+| `@react-navigation/bottom-tabs` | `^7.x` | Bottom tab navigator |
+| `nativewind` | `^4.x` | Tailwind utility classes for React Native |
+| `react-native-sqlite-storage` | `^6.x` | On-device SQLite (via `@emuz/database`) |
+
+## Usage
+
+### Command line
+
+```bash
+# Install dependencies (from workspace root)
+pnpm install
+
+# iOS: install native dependencies
+cd apps/mobile && npx expo prebuild && cd ios && pod install && cd ../..
+
+# Start Metro bundler
+pnpm nx start mobile
+
+# Run on iOS simulator
+pnpm nx run-ios mobile
+# Or: npx expo run:ios
+
+# Run on Android emulator
+pnpm nx run-android mobile
+# Or: npx expo run:android
+
+# Run tests
+pnpm nx test mobile
+
+# Lint
+pnpm nx lint mobile
+
+# Build for production (iOS)
+npx expo prebuild --platform ios
+npx expo run:ios --configuration Release
+
+# Build for production (Android APK)
+cd apps/mobile/android && ./gradlew assembleRelease
+
+# Build for production (Android AAB — Play Store)
+cd apps/mobile/android && ./gradlew bundleRelease
+```
+
+### Prerequisites
 
 - Node.js 22 LTS
 - pnpm 9.x
-- Xcode 15+ (for iOS)
-- Android Studio (for Android)
-- CocoaPods (for iOS)
-
-## Setup
-
-### Install Dependencies
-
-```bash
-# From workspace root
-pnpm install
-
-# Install iOS dependencies (after prebuild)
-cd apps/mobile
-npx expo prebuild
-cd ios && pod install && cd ..
-```
-
-### Environment Setup
-
-Follow the Expo environment setup guide:
-https://docs.expo.dev/get-started/set-up-your-environment/
-
-## Running the App
-
-### Start Metro Bundler
-
-```bash
-# From workspace root
-pnpm nx start mobile
-
-# Or from mobile directory
-cd apps/mobile
-pnpm start
-```
-
-### Run on iOS
-
-```bash
-# Using Expo
-npx expo run:ios
-
-# Or with Nx
-pnpm nx ios mobile
-```
-
-### Run on Android
-
-```bash
-# Using Expo
-npx expo run:android
-
-# Or with Nx
-pnpm nx android mobile
-```
-
-## Configuration Notes
-
-### Monorepo Metro Configuration
-
-The app uses a custom `metro.config.js` configured for the pnpm monorepo:
-
-- Uses `expo/metro-config` for Expo compatibility
-- Watches the entire workspace for changes
-- Resolves `@emuz/*` workspace packages from `libs/`
-- Explicitly resolves `react` and `react-native` from project's `node_modules`
-- Uses `disableHierarchicalLookup` to avoid module resolution conflicts
-
-### Babel Configuration
-
-Uses `babel-preset-expo` with NativeWind v4 integration:
-
-```javascript
-module.exports = function (api) {
-  api.cache(true);
-  return {
-    presets: [['babel-preset-expo', { jsxImportSource: 'nativewind' }], 'nativewind/babel'],
-    plugins: ['react-native-reanimated/plugin'],
-  };
-};
-```
-
-### App Entry Point
-
-The app uses a custom entry point (`index.js`) registered as `'main'`:
-
-```javascript
-import { AppRegistry } from 'react-native';
-import App from './src/App';
-AppRegistry.registerComponent('main', () => App);
-```
+- Xcode 15+ (iOS builds only)
+- Android Studio with SDK (Android builds only)
+- CocoaPods (iOS builds only)
 
 ## Project Structure
 
 ```
 apps/mobile/
 ├── src/
-│   ├── App.tsx              # Main app entry
-│   ├── global.css           # NativeWind styles
-│   ├── navigation/          # React Navigation setup
+│   ├── App.tsx              # React root — wraps I18nProvider, AppProviders
+│   ├── global.css           # NativeWind base styles
+│   ├── navigation/
 │   │   ├── RootNavigator.tsx
 │   │   ├── TabNavigator.tsx
 │   │   └── types.ts
-│   ├── screens/             # Screen components
-│   │   ├── HomeScreen.tsx
-│   │   ├── LibraryScreen.tsx
+│   ├── screens/             # One file per screen
+│   │   ├── HomeScreen.tsx         # Daijishou-style widget dashboard
+│   │   ├── LibraryScreen.tsx      # Game grid with sort/filter
 │   │   ├── PlatformsScreen.tsx
 │   │   ├── GenresScreen.tsx
 │   │   ├── CollectionsScreen.tsx
 │   │   ├── GameDetailScreen.tsx
-│   │   ├── SettingsScreen.tsx
-│   │   └── ...
-│   ├── services/            # Platform services
+│   │   └── SettingsScreen.tsx
+│   ├── services/            # Mobile-specific adapter wiring
 │   │   ├── FileService.ts
 │   │   ├── LauncherService.ts
 │   │   ├── StorageService.ts
-│   │   └── init.ts
-│   ├── providers/           # App providers
-│   │   └── AppProviders.tsx
-│   └── types/               # TypeScript declarations
-│       └── global.d.ts
-├── android/                 # Android project
-├── ios/                     # iOS project
-├── index.js                 # App entry point
-├── metro.config.js          # Metro bundler config
-├── babel.config.js          # Babel config
-├── tailwind.config.js       # NativeWind/Tailwind config
-└── app.json                 # App configuration
+│   │   └── init.ts          # Bootstrap: create adapters, initialize DB
+│   └── providers/
+│       └── AppProviders.tsx # Zustand, React Query, I18n, Navigation providers
+├── android/
+├── ios/
+├── index.js                 # AppRegistry entry point
+├── metro.config.js          # Monorepo-aware Metro config
+├── babel.config.js          # NativeWind + Expo Babel preset
+└── tailwind.config.js
 ```
 
-## Features
+## Emulator Launch
 
-- **Home Screen**: Daijishou-style widgets (Recent, Favorites, Stats)
-- **Library**: Grid view with sorting and filtering
-- **Platforms**: Browse by gaming platform with wallpaper support
-- **Genres**: Browse by game genre
-- **Collections**: User-defined game collections
-- **Game Detail**: Full game info with play button
-- **Settings**: App configuration
-- **Setup Wizard**: First-run experience
+### Android (Intent system)
+Games are launched via Android package intents: RetroArch, Dolphin, PPSSPP, DuckStation. Intent package names are sourced from `@emuz/emulators` `EmulatorDefinition.androidPackages`.
 
-## Tech Stack
+### iOS (URL schemes)
+Games are launched via URL schemes: RetroArch (`retroarch://`), Delta (`delta://`), PPSSPP (`ppsspp://`), Provenance. URL schemes are sourced from `@emuz/emulators` `EmulatorDefinition.iosUrlScheme`.
 
-- React Native 0.81+
-- Expo 54+
-- React Navigation 7
-- NativeWind 4.x (Tailwind CSS)
-- Zustand (State Management)
-- React Query (Data Fetching)
+## Anti-Patterns
 
-## Emulator Integration
+| ❌ Do NOT | ✅ Do instead |
+|-----------|--------------|
+| Put business logic in screens or navigation | Business logic belongs in `@emuz/core` services; screens only call hooks |
+| Import `@emuz/database` directly in screens | Database access goes through `@emuz/core` services |
+| Use hardcoded colors in `StyleSheet.create` | Use NativeWind `className` with design token classes |
+| Use `import fs from 'fs'` or Node.js APIs | React Native has no Node.js — use `@emuz/platform` mobile adapters |
+| Configure Metro to use `disableHierarchicalLookup: false` | The monorepo requires `disableHierarchicalLookup: true` to prevent duplicate React instances |
 
-The app supports launching games in external emulators:
+## Constraints
 
-### Android
+- No Node.js APIs — React Native runs in a JS engine without Node
+- All `@emuz/*` workspace packages must be resolved through Metro's `watchFolders` configuration
+- `react` and `react-native` must resolve from the app's `node_modules` (not hoisted) — enforced by `extraNodeModules` in Metro config
+- NativeWind requires `jsxImportSource: 'nativewind'` in Babel preset — do not remove it
+- Minimum supported: iOS 16, Android API 26
 
-Uses Intent system to launch games:
+## See Also
 
-- RetroArch
-- Dolphin
-- PPSSPP
-- DuckStation
-- And more...
-
-### iOS
-
-Uses URL schemes to launch games:
-
-- RetroArch
-- Delta
-- PPSSPP
-- Provenance
-
-## Building for Release
-
-### iOS
-
-```bash
-# Prebuild native project
-npx expo prebuild --platform ios
-
-# Build release bundle
-npx expo run:ios --configuration Release
-
-# Or archive in Xcode for App Store
-```
-
-### Android
-
-```bash
-# Prebuild native project
-npx expo prebuild --platform android
-
-# Build release APK
-cd apps/mobile/android
-./gradlew assembleRelease
-
-# Build release AAB (for Play Store)
-./gradlew bundleRelease
-```
-
-## Testing
-
-```bash
-pnpm nx test mobile
-```
-
-## License
-
-GPL-3.0
+- Architecture overview: [docs/architecture.md](../../docs/architecture.md)
+- Emulator integration guide: [docs/emulator-integration.md](../../docs/emulator-integration.md)
+- Contributing guide: [docs/contributing.md](../../docs/contributing.md)
