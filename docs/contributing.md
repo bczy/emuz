@@ -17,13 +17,13 @@ By participating in this project, you agree to abide by our Code of Conduct. Ple
 
 ### AI-Assisted Development (Recommended)
 
-The project is configured with **Context7 MCP** for AI-assisted development with up-to-date library documentation. This ensures accurate code generation with current API references.
+The project is configured with **Claude Code** as the primary AI assistant, with **Context7 MCP** for up-to-date library documentation. Project instructions are in `CLAUDE.md` at the root.
 
-**Automatic Setup (VS Code):**
+**Setup:**
 
-- Open the project in VS Code with GitHub Copilot installed
-- The MCP server configuration in `.vscode/mcp.json` will be detected automatically
-- Context7 will be available for all AI coding sessions
+- Install Claude Code: `npm install -g @anthropic-ai/claude-code`
+- Run `claude` in the project root — it will automatically pick up `CLAUDE.md`
+- Context7 and Nx MCP servers are pre-configured in `docs/ai-tools.md`
 
 **Usage Tips:**
 
