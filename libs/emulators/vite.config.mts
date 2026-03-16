@@ -30,6 +30,7 @@ export default defineConfig(() => ({
     coverage: {
       reportsDirectory: '../../coverage/libs/emulators',
       provider: 'v8' as const,
+      reporter: ['text', 'lcov'],
     },
   },
   // Configuration for building your library.

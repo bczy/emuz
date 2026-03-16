@@ -26,6 +26,7 @@ export default defineConfig(() => ({
     coverage: {
       reportsDirectory: '../../coverage/libs/core',
       provider: 'v8' as const,
+      reporter: ['text', 'lcov'],
     },
   },
   // Uncomment this if you are using workers.
