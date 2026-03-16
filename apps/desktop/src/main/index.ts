@@ -5,8 +5,12 @@
 
 import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import { join } from 'path';
-import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 import { registerAllHandlers, initializeDatabase, closeDatabase } from './ipc';
+
+// Inline replacements for @electron-toolkit/utils (avoids early app.isPackaged access)
+const is = { get dev() { return !app.isPackaged; } };
+const electronApp = { setAppUserModelId: (id: string) => { if (process.platform === 'win32') app.setAppUserModelId(id); } };
+const optimizer = { watchWindowShortcuts: (_win: BrowserWindow) => {} };
 
 // Keep a global reference of the window object
 let mainWindow: BrowserWindow | null = null;

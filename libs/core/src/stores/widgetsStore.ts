@@ -13,29 +13,29 @@ export interface WidgetsState {
   // Data
   widgets: Widget[];
   isEditing: boolean;
-  
+
   // Loading
   isLoading: boolean;
   loadingWidgetId: string | null;
-  
+
   // Cached widget data
   widgetData: Map<string, unknown>;
-  
+
   // Actions
   setWidgets: (widgets: Widget[]) => void;
   addWidget: (widget: Widget) => void;
   updateWidget: (id: string, updates: Partial<Widget>) => void;
   removeWidget: (id: string) => void;
   reorderWidgets: (widgetIds: string[]) => void;
-  
+
   setEditing: (isEditing: boolean) => void;
   setLoading: (isLoading: boolean) => void;
   setLoadingWidget: (widgetId: string | null) => void;
-  
+
   setWidgetData: (widgetId: string, data: unknown) => void;
   getWidgetData: (widgetId: string) => unknown;
   clearWidgetData: (widgetId?: string) => void;
-  
+
   // Widget helpers
   getVisibleWidgets: () => Widget[];
   moveWidget: (widgetId: string, direction: 'up' | 'down') => void;
@@ -47,11 +47,11 @@ export interface WidgetsState {
  * Default widget configuration
  */
 export const defaultWidgets: Array<{ type: WidgetType; size: WidgetSize }> = [
-  { type: 'continue-playing', size: 'large' },
-  { type: 'recent-games', size: 'medium' },
+  { type: 'continue_playing', size: 'large' },
+  { type: 'recent_games', size: 'medium' },
   { type: 'favorites', size: 'medium' },
   { type: 'stats', size: 'small' },
-  { type: 'platform-shortcuts', size: 'medium' },
+  { type: 'platform_shortcuts', size: 'medium' },
 ];
 
 /**
@@ -130,17 +130,17 @@ export const useWidgetsStore = create<WidgetsState>()(
         set((state) => {
           const widgets = [...state.widgets].sort((a, b) => a.position - b.position);
           const index = widgets.findIndex((w) => w.id === widgetId);
-          
+
           if (index === -1) return state;
-          
+
           const newIndex = direction === 'up' ? index - 1 : index + 1;
           if (newIndex < 0 || newIndex >= widgets.length) return state;
-          
+
           // Swap positions
           const temp = widgets[index].position;
           widgets[index] = { ...widgets[index], position: widgets[newIndex].position };
           widgets[newIndex] = { ...widgets[newIndex], position: temp };
-          
+
           return { widgets };
         }),
 

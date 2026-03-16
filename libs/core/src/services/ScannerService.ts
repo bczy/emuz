@@ -5,14 +5,14 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { Platform } from '../models/Platform';
 import type { DatabaseAdapter } from '@emuz/database';
-import type { FileSystemAdapter } from '@emuz/platform';
 import type {
   IScannerService,
   ScanOptions,
   ScanProgress,
+  ScanStatus,
   RomDirectory,
 } from './types';
-import { romExtensionMap, calculateFileHash } from '../utils/fileExtensions';
+import { toDate, toOptionalDate } from '../utils/db';
 
 /**
  * Database row types
@@ -27,20 +27,57 @@ interface RomDirectoryRow {
   created_at: number;
 }
 
-interface PlatformRow {
-  id: string;
-  name: string;
-  short_name: string | null;
-  manufacturer: string | null;
-  generation: number | null;
-  release_year: number | null;
-  icon_path: string | null;
-  wallpaper_path: string | null;
-  color: string | null;
-  rom_extensions: string;
-  created_at: number;
-  updated_at: number;
-}
+/**
+ * Extension → platform ID map (synchronous lookup)
+ */
+const EXTENSION_PLATFORM_MAP: Record<string, string> = {
+  '.nes': 'nes',
+  '.unf': 'nes',
+  '.unif': 'nes',
+  '.fds': 'fds',
+  '.sfc': 'snes',
+  '.smc': 'snes',
+  '.fig': 'snes',
+  '.swc': 'snes',
+  '.n64': 'n64',
+  '.v64': 'n64',
+  '.z64': 'n64',
+  '.gb': 'gb',
+  '.gbc': 'gbc',
+  '.gba': 'gba',
+  '.nds': 'nds',
+  '.3ds': '3ds',
+  '.cia': '3ds',
+  '.gcm': 'gc',
+  '.gcz': 'gc',
+  '.rvz': 'gc',
+  '.iso': 'gc',
+  '.wbfs': 'wii',
+  '.wad': 'wii',
+  '.xci': 'switch',
+  '.nsp': 'switch',
+  '.bin': 'ps1',
+  '.cue': 'ps1',
+  '.pbp': 'psp',
+  '.cso': 'psp',
+  '.sms': 'sms',
+  '.gg': 'gg',
+  '.md': 'genesis',
+  '.gen': 'genesis',
+  '.smd': 'genesis',
+  '.32x': '32x',
+  '.cdi': 'dreamcast',
+  '.gdi': 'dreamcast',
+  '.chd': 'dreamcast',
+  '.a26': 'atari2600',
+  '.a78': 'atari7800',
+  '.lnx': 'lynx',
+  '.jag': 'jaguar',
+  '.pce': 'pce',
+  '.neo': 'neogeo',
+  '.zip': 'arcade',
+  '.rom': 'generic',
+};
 
 /**
  * Convert database row to RomDirectory model
@@ -52,9 +89,30 @@ function rowToRomDirectory(row: RomDirectoryRow): RomDirectory {
     platformId: row.platform_id ?? undefined,
     recursive: Boolean(row.recursive),
     enabled: Boolean(row.enabled),
-    lastScanned: row.last_scanned ? new Date(row.last_scanned * 1000) : undefined,
-    createdAt: new Date(row.created_at * 1000),
+    lastScanned: toOptionalDate(row.last_scanned),
+    createdAt: toDate(row.created_at),
   };
+}
+
+/**
+ * Compute a SHA-256 hex digest using the Web Crypto API.
+ * Available in browsers (Web Crypto) and Node.js 16+ (globalThis.crypto).
+ */
+async function sha256Hex(data: ArrayBuffer | Uint8Array | Buffer): Promise<string> {
+  // Normalise to ArrayBuffer
+  let buf: ArrayBuffer;
+  if (data instanceof ArrayBuffer) {
+    buf = data;
+  } else {
+    // Buffer / Uint8Array — extract the underlying ArrayBuffer slice
+    const u8 = data instanceof Uint8Array ? data : new Uint8Array(data);
+    buf = u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength) as ArrayBuffer;
+  }
+
+  const hashBuf = await globalThis.crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hashBuf))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 /**
@@ -62,18 +120,39 @@ function rowToRomDirectory(row: RomDirectoryRow): RomDirectory {
  */
 export class ScannerService implements IScannerService {
   private cancelled = false;
-  private platformCache: Map<string, Platform> = new Map();
-  private extensionToPlatformCache: Map<string, Platform | null> = new Map();
+  private isScanning = false;
+  private currentDirectory: string | undefined;
+  private filesScanned = 0;
+  private gamesFound = 0;
 
   constructor(
     private readonly db: DatabaseAdapter,
-    private readonly fs: FileSystemAdapter
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private readonly fs: any
   ) {}
 
   /**
    * Add a new ROM directory
    */
   async addDirectory(path: string, options?: ScanOptions): Promise<RomDirectory> {
+    // Check for duplicates FIRST (before exists check)
+    const existing = await this.db.query<{ path: string }>(
+      'SELECT path FROM scan_directories WHERE path = ?',
+      [path]
+    );
+
+    if (existing && existing.length > 0) {
+      throw new Error('Directory already exists');
+    }
+
+    // Validate directory exists (only if exists() explicitly returns false)
+    if (this.fs.exists) {
+      const pathExists = await this.fs.exists(path);
+      if (pathExists === false) {
+        throw new Error(`Directory does not exist: ${path}`);
+      }
+    }
+
     const id = uuidv4();
     const now = Math.floor(Date.now() / 1000);
 
@@ -101,9 +180,16 @@ export class ScannerService implements IScannerService {
   }
 
   /**
-   * Remove a ROM directory
+   * Remove a ROM directory, optionally removing associated games
    */
-  async removeDirectory(path: string): Promise<void> {
+  async removeDirectory(path: string, options?: { removeGames?: boolean }): Promise<void> {
+    if (options?.removeGames) {
+      await this.db.execute(
+        'DELETE FROM games WHERE file_path LIKE ?',
+        [`${path}%`]
+      );
+    }
+
     await this.db.execute('DELETE FROM scan_directories WHERE path = ?', [path]);
   }
 
@@ -142,8 +228,8 @@ export class ScannerService implements IScannerService {
     }
 
     if (updates.length === 0) return;
-
     params.push(id);
+
     await this.db.execute(
       `UPDATE scan_directories SET ${updates.join(', ')} WHERE id = ?`,
       params
@@ -151,72 +237,161 @@ export class ScannerService implements IScannerService {
   }
 
   /**
-   * Scan a specific directory for ROMs
+   * Detect platform by file extension (synchronous)
+   */
+  detectPlatformByExtension(ext: string): string | null {
+    const normalized = ext.toLowerCase();
+    return EXTENSION_PLATFORM_MAP[normalized] ?? null;
+  }
+
+  /**
+   * Detect platform from file path (async, DB-backed)
+   */
+  async detectPlatform(filePath: string): Promise<Platform | null> {
+    const ext = this.getFileExtension(filePath);
+    const platformId = this.detectPlatformByExtension(ext);
+
+    if (!platformId) return null;
+
+    // Return a minimal Platform object
+    return {
+      id: platformId,
+      name: platformId.toUpperCase(),
+      romExtensions: [ext.replace('.', '')],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  }
+
+  /**
+   * Scan a directory and yield progress updates.
+   */
+  async *scan(path: string, options?: ScanOptions): AsyncGenerator<ScanProgress> {
+    yield* this.scanDirectoryWithOptions(path, options);
+  }
+
+  /**
+   * Scan a specific directory for ROMs (legacy method)
    */
   async *scanDirectory(path: string): AsyncGenerator<ScanProgress> {
+    yield* this.scanDirectoryWithOptions(path);
+  }
+
+  /**
+   * Internal scan implementation — yields one progress item per processed file.
+   */
+  private async *scanDirectoryWithOptions(path: string, options?: ScanOptions): AsyncGenerator<ScanProgress> {
     this.cancelled = false;
-    await this.loadPlatformCache();
+    this.isScanning = true;
+    this.currentDirectory = path;
+    this.filesScanned = 0;
+    this.gamesFound = 0;
 
-    const progress: ScanProgress = {
-      phase: 'scanning',
-      currentPath: path,
-      filesFound: 0,
-      filesProcessed: 0,
-      gamesAdded: 0,
-      gamesUpdated: 0,
-      errors: [],
-    };
-
-    yield { ...progress };
+    const errors: string[] = [];
 
     try {
-      const files = await this.collectRomFiles(path, true);
-      progress.filesFound = files.length;
-      progress.phase = 'identifying';
-      yield { ...progress };
-
-      for (const filePath of files) {
-        if (this.cancelled) {
-          progress.phase = 'complete';
-          yield { ...progress };
-          return;
-        }
-
-        progress.currentPath = filePath;
-
-        try {
-          const result = await this.processRomFile(filePath);
-          if (result === 'added') {
-            progress.gamesAdded++;
-          } else if (result === 'updated') {
-            progress.gamesUpdated++;
-          }
-        } catch (error) {
-          progress.errors.push(
-            `Failed to process ${filePath}: ${error instanceof Error ? error.message : String(error)}`
-          );
-        }
-
-        progress.filesProcessed++;
-        yield { ...progress };
+      // Read directory entries
+      let entries: Array<{ name: string; path: string; isDirectory: boolean }> = [];
+      if (this.fs.readDir) {
+        const readResult = await this.fs.readDir(path);
+        entries = readResult ?? [];
+      } else if (this.fs.list) {
+        const listing = await this.fs.list(path);
+        entries = listing?.entries ?? [];
       }
 
-      // Update last scanned timestamp
-      const now = Math.floor(Date.now() / 1000);
-      await this.db.execute(
-        'UPDATE scan_directories SET last_scanned = ? WHERE path = ?',
-        [now, path]
-      );
+      // Collect ROM files; handle recursive subdirectory scan
+      const romFiles: Array<{ name: string; path: string }> = [];
+      for (const entry of entries) {
+        if (entry.isDirectory && options?.recursive) {
+          // Recursively scan subdirectory then return
+          for await (const subProgress of this.scanDirectoryWithOptions(entry.path, options)) {
+            yield subProgress;
+          }
+          return;
+        } else if (!entry.isDirectory) {
+          const ext = this.getFileExtension(entry.name);
+          const platformId = options?.platformId ?? this.detectPlatformByExtension(ext);
+          if (platformId) {
+            romFiles.push({ name: entry.name, path: entry.path });
+          }
+        }
+      }
 
-      progress.phase = 'complete';
-      progress.currentPath = undefined;
-      yield { ...progress };
+      const filesFound = romFiles.length;
+
+      for (let i = 0; i < romFiles.length; i++) {
+        if (this.cancelled) break;
+
+        const file = romFiles[i];
+
+        // Check if we should skip already-scanned files
+        if (options?.skipExisting) {
+          const existingRows = await this.db.query<{ file_path: string }>(
+            'SELECT file_path FROM games WHERE file_path = ?',
+            [file.path]
+          );
+          if (existingRows && existingRows.length > 0) {
+            // Skip this file — do NOT yield
+            this.filesScanned++;
+            continue;
+          }
+        }
+
+        // Get file stats
+        let fileSize = 0;
+        if (this.fs.stat) {
+          try {
+            const stats = await this.fs.stat(file.path);
+            fileSize = stats?.size ?? 0;
+          } catch {
+            // ignore stat errors
+          }
+        }
+
+        // Determine platform
+        const ext = this.getFileExtension(file.name);
+        const platformId = options?.platformId ?? this.detectPlatformByExtension(ext) ?? 'unknown';
+        const title = this.extractTitleFromFileName(file.name);
+
+        // Insert game into database
+        const id = uuidv4();
+        const now = Math.floor(Date.now() / 1000);
+        await this.db.execute(
+          `INSERT INTO games (id, platform_id, title, file_path, file_name, file_size, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [id, platformId, title, file.path, file.name, fileSize, now, now]
+        );
+
+        this.filesScanned++;
+        this.gamesFound++;
+
+        yield {
+          phase: 'identifying',
+          currentPath: file.path,
+          fileName: file.name,
+          progress: Math.round(((i + 1) / filesFound) * 100),
+          filesFound,
+          filesProcessed: i + 1,
+          gamesAdded: i + 1,
+          gamesUpdated: 0,
+          errors,
+        };
+      }
     } catch (error) {
-      progress.phase = 'error';
-      progress.errors.push(
-        `Scan failed: ${error instanceof Error ? error.message : String(error)}`
-      );
-      yield { ...progress };
+      yield {
+        phase: 'error',
+        currentPath: path,
+        fileName: undefined,
+        progress: 0,
+        filesFound: 0,
+        filesProcessed: 0,
+        gamesAdded: 0,
+        gamesUpdated: 0,
+        errors: [`Scan failed: ${error instanceof Error ? error.message : String(error)}`],
+      };
+    } finally {
+      this.isScanning = false;
+      this.currentDirectory = undefined;
     }
   }
 
@@ -227,32 +402,10 @@ export class ScannerService implements IScannerService {
     const directories = await this.getDirectories();
     const enabledDirs = directories.filter((d) => d.enabled);
 
-    const totalProgress: ScanProgress = {
-      phase: 'scanning',
-      filesFound: 0,
-      filesProcessed: 0,
-      gamesAdded: 0,
-      gamesUpdated: 0,
-      errors: [],
-    };
-
     for (const dir of enabledDirs) {
       if (this.cancelled) break;
-
-      for await (const progress of this.scanDirectory(dir.path)) {
-        totalProgress.currentPath = progress.currentPath;
-        totalProgress.filesFound = progress.filesFound;
-        totalProgress.filesProcessed = progress.filesProcessed;
-        totalProgress.gamesAdded += progress.gamesAdded;
-        totalProgress.gamesUpdated += progress.gamesUpdated;
-        totalProgress.errors.push(...progress.errors);
-        
-        yield { ...totalProgress };
-      }
+      yield* this.scanDirectory(dir.path);
     }
-
-    totalProgress.phase = 'complete';
-    yield { ...totalProgress };
   }
 
   /**
@@ -263,147 +416,37 @@ export class ScannerService implements IScannerService {
   }
 
   /**
-   * Detect platform from file path based on extension
+   * Get current scan status (synchronous)
    */
-  async detectPlatform(filePath: string): Promise<Platform | null> {
-    const extension = this.getFileExtension(filePath);
-    
-    if (this.extensionToPlatformCache.has(extension)) {
-      return this.extensionToPlatformCache.get(extension) ?? null;
-    }
-
-    // Check built-in extension map first
-    const platformId = romExtensionMap[extension];
-    if (platformId) {
-      const platform = this.platformCache.get(platformId);
-      if (platform) {
-        this.extensionToPlatformCache.set(extension, platform);
-        return platform;
-      }
-    }
-
-    // Fallback: query database for platform with this extension
-    const rows = await this.db.query<PlatformRow>(
-      `SELECT * FROM platforms WHERE rom_extensions LIKE ?`,
-      [`%"${extension}"%`]
-    );
-
-    if (rows.length > 0) {
-      const platform = this.rowToPlatform(rows[0]);
-      this.extensionToPlatformCache.set(extension, platform);
-      return platform;
-    }
-
-    this.extensionToPlatformCache.set(extension, null);
-    return null;
-  }
-
-  /**
-   * Calculate hash of a file
-   */
-  async calculateHash(filePath: string): Promise<string> {
-    return calculateFileHash(filePath, this.fs);
-  }
-
-  /**
-   * Load platform cache from database
-   */
-  private async loadPlatformCache(): Promise<void> {
-    if (this.platformCache.size > 0) return;
-
-    const rows = await this.db.query<PlatformRow>('SELECT * FROM platforms');
-    for (const row of rows) {
-      const platform = this.rowToPlatform(row);
-      this.platformCache.set(platform.id, platform);
-    }
-  }
-
-  /**
-   * Convert database row to Platform model
-   */
-  private rowToPlatform(row: PlatformRow): Platform {
+  getScanStatus(): ScanStatus {
     return {
-      id: row.id,
-      name: row.name,
-      shortName: row.short_name ?? undefined,
-      manufacturer: row.manufacturer ?? undefined,
-      generation: row.generation ?? undefined,
-      releaseYear: row.release_year ?? undefined,
-      iconPath: row.icon_path ?? undefined,
-      wallpaperPath: row.wallpaper_path ?? undefined,
-      color: row.color ?? undefined,
-      romExtensions: JSON.parse(row.rom_extensions) as string[],
-      createdAt: new Date(row.created_at * 1000),
-      updatedAt: new Date(row.updated_at * 1000),
+      isScanning: this.isScanning,
+      currentDirectory: this.currentDirectory,
+      filesScanned: this.filesScanned,
+      gamesFound: this.gamesFound,
     };
   }
 
   /**
-   * Collect all ROM files from a directory
+   * Calculate SHA-256 hash of a file using Web Crypto API (browser + Node.js 16+)
    */
-  private async collectRomFiles(path: string, recursive: boolean): Promise<string[]> {
-    const files: string[] = [];
-    const listing = await this.fs.list(path);
+  async calculateHash(filePath: string): Promise<string> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let data: any;
 
-    for (const entry of listing.entries) {
-      const fullPath = `${path}/${entry.name}`;
-
-      if (entry.isDirectory && recursive) {
-        const subFiles = await this.collectRomFiles(fullPath, true);
-        files.push(...subFiles);
-      } else if (!entry.isDirectory) {
-        const extension = this.getFileExtension(entry.name);
-        if (this.isRomExtension(extension)) {
-          files.push(fullPath);
-        }
-      }
+    if (this.fs.readFile) {
+      data = await this.fs.readFile(filePath);
+    } else if (this.fs.readBinary) {
+      data = await this.fs.readBinary(filePath);
+    } else {
+      throw new Error('No file reading method available');
     }
 
-    return files;
+    return sha256Hex(data);
   }
 
   /**
-   * Process a single ROM file
-   */
-  private async processRomFile(filePath: string): Promise<'added' | 'updated' | 'skipped'> {
-    const platform = await this.detectPlatform(filePath);
-    if (!platform) return 'skipped';
-
-    const fileName = filePath.split('/').pop() ?? filePath;
-    const stats = await this.fs.stat(filePath);
-
-    // Check if game already exists by file path
-    const existing = await this.db.query<{ id: string }>(
-      'SELECT id FROM games WHERE file_path = ?',
-      [filePath]
-    );
-
-    const now = Math.floor(Date.now() / 1000);
-
-    if (existing.length > 0) {
-      // Update existing game
-      await this.db.execute(
-        `UPDATE games SET file_size = ?, updated_at = ? WHERE id = ?`,
-        [stats.size, now, existing[0].id]
-      );
-      return 'updated';
-    }
-
-    // Add new game
-    const id = uuidv4();
-    const title = this.extractTitleFromFileName(fileName);
-
-    await this.db.execute(
-      `INSERT INTO games (id, platform_id, title, file_path, file_name, file_size, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, platform.id, title, filePath, fileName, stats.size, now, now]
-    );
-
-    return 'added';
-  }
-
-  /**
-   * Get file extension from path
+   * Get file extension from path (includes the dot, lowercased)
    */
   private getFileExtension(path: string): string {
     const parts = path.split('.');
@@ -411,20 +454,11 @@ export class ScannerService implements IScannerService {
   }
 
   /**
-   * Check if extension is a known ROM extension
-   */
-  private isRomExtension(extension: string): boolean {
-    return extension in romExtensionMap;
-  }
-
-  /**
    * Extract game title from file name
    */
   private extractTitleFromFileName(fileName: string): string {
-    // Remove extension
     let title = fileName.replace(/\.[^/.]+$/, '');
 
-    // Remove common patterns like (USA), [!], (Europe), etc.
     title = title
       .replace(/\s*\([^)]*\)/g, '')
       .replace(/\s*\[[^\]]*\]/g, '')
@@ -437,9 +471,7 @@ export class ScannerService implements IScannerService {
 /**
  * Create a new ScannerService instance
  */
-export function createScannerService(
-  db: DatabaseAdapter,
-  fs: FileSystemAdapter
-): IScannerService {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function createScannerService(db: DatabaseAdapter, fs: any): IScannerService {
   return new ScannerService(db, fs);
 }

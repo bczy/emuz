@@ -9,6 +9,11 @@ export default defineConfig({
       outDir: 'dist/main',
       rollupOptions: {
         external: ['better-sqlite3'],
+        output: {
+          // Patch Module._resolveFilename before any require('electron') runs.
+          // In pnpm workspaces, Electron's _load patch may not win over npm resolution.
+          banner: `;(function(){var M=require('module'),o=M._resolveFilename.bind(M);M._resolveFilename=function(id){return id==='electron'?id:o.apply(this,arguments);};}());`,
+        },
       },
     },
   },

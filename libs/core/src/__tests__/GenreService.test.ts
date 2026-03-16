@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
-import { GenreService } from '../GenreService';
+import { GenreService } from '../services/GenreService';
 import type { DatabaseAdapter } from '@emuz/database';
 
 /**
@@ -19,7 +19,7 @@ function createMockAdapter(): DatabaseAdapter & {
     isConnected: vi.fn(() => true),
     execute: vi.fn(),
     query: vi.fn(),
-    transaction: vi.fn((fn: () => Promise<unknown>) => fn()),
+    transaction: vi.fn(<T>(fn: () => Promise<T>) => fn()),
   };
 }
 

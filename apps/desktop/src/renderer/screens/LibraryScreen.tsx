@@ -2,7 +2,7 @@
  * Library Screen - Grid view of all games
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLibraryStore } from '@emuz/core';
 import { GameGrid } from '@emuz/ui';
@@ -23,8 +23,9 @@ const LibraryScreen: React.FC = () => {
   const filteredGames = getFilteredGames();
   
   // Create favorites set
-  const favorites = new Set(
-    games.filter((g: Game) => g.isFavorite).map((g: Game) => g.id)
+  const favorites = useMemo(
+    () => new Set(games.filter((g: Game) => g.isFavorite).map((g: Game) => g.id)),
+    [games]
   );
   
   // Handlers

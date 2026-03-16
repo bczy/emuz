@@ -2,12 +2,11 @@
  * Service types and interfaces for @emuz/core
  */
 
-import type { Game, GameMetadata } from '../models/Game';
+import type { Game } from '../models/Game';
 import type { Platform } from '../models/Platform';
 import type { Emulator } from '../models/Emulator';
 import type { Collection } from '../models/Collection';
 import type { Widget } from '../models/Widget';
-import type { Genre } from '../models/Genre';
 
 /**
  * Pagination options
@@ -15,6 +14,7 @@ import type { Genre } from '../models/Genre';
 export interface PaginationOptions {
   limit?: number;
   offset?: number;
+  page?: number;
 }
 
 /**
@@ -29,8 +29,10 @@ export interface SortConfig<T> {
  * Search options
  */
 export interface SearchOptions extends PaginationOptions {
+  query?: string;
   platformId?: string;
   genreId?: string;
+  genre?: string;
   favorite?: boolean;
 }
 
@@ -49,13 +51,28 @@ export interface CreateCollectionInput {
  */
 export interface CreateEmulatorInput {
   name: string;
-  platformIds: string[];
+  platforms: string[];
   executablePath?: string;
   packageName?: string;
   urlScheme?: string;
   iconPath?: string;
   commandTemplate?: string;
   corePath?: string;
+}
+
+export interface PlaySession {
+  id: string;
+  gameId: string;
+  startedAt: Date;
+  endedAt?: Date;
+  duration: number;
+}
+
+export interface ScanStatus {
+  isScanning: boolean;
+  currentDirectory?: string;
+  filesScanned: number;
+  gamesFound: number;
 }
 
 /**
@@ -65,6 +82,7 @@ export interface ScanOptions {
   recursive?: boolean;
   platformId?: string;
   includeHidden?: boolean;
+  skipExisting?: boolean;
 }
 
 /**
@@ -73,6 +91,8 @@ export interface ScanOptions {
 export interface ScanProgress {
   phase: 'scanning' | 'identifying' | 'complete' | 'error';
   currentPath?: string;
+  fileName?: string;
+  progress?: number;
   filesFound: number;
   filesProcessed: number;
   gamesAdded: number;
@@ -114,22 +134,26 @@ export interface ILibraryService {
   getAllGames(options?: PaginationOptions): Promise<Game[]>;
   getGameById(id: string): Promise<Game | null>;
   getGamesByPlatform(platformId: string, options?: PaginationOptions): Promise<Game[]>;
-  searchGames(query: string, options?: SearchOptions): Promise<Game[]>;
-  updateGame(id: string, data: Partial<Game>): Promise<void>;
+  searchGames(options: SearchOptions | string | { query?: string; platformId?: string; genre?: string }): Promise<Game[]>;
+  updateGame(id: string, data: Partial<Game>): Promise<Game | null>;
   deleteGame(id: string): Promise<void>;
   getGameCount(): Promise<number>;
   getRecentGames(limit?: number): Promise<Game[]>;
+  getRecentlyPlayed(limit?: number): Promise<Game[]>;
+  recordPlaySession(gameId: string, duration: number): Promise<void>;
 
   // Collections
   getCollections(): Promise<Collection[]>;
   createCollection(data: CreateCollectionInput): Promise<Collection>;
   deleteCollection(id: string): Promise<void>;
-  addToCollection(gameId: string, collectionId: string): Promise<void>;
-  removeFromCollection(gameId: string, collectionId: string): Promise<void>;
+  addToCollection(collectionId: string, gameId: string): Promise<void>;
+  removeFromCollection(collectionId: string, gameId: string): Promise<void>;
   getCollectionGames(collectionId: string): Promise<Game[]>;
 
   // Favorites
   toggleFavorite(gameId: string): Promise<void>;
+  addToFavorites(gameId: string): Promise<void>;
+  removeFromFavorites(gameId: string): Promise<void>;
   getFavorites(): Promise<Game[]>;
 }
 
@@ -139,17 +163,20 @@ export interface ILibraryService {
 export interface IScannerService {
   // Directory management
   addDirectory(path: string, options?: ScanOptions): Promise<RomDirectory>;
-  removeDirectory(path: string): Promise<void>;
+  removeDirectory(path: string, options?: { removeGames?: boolean }): Promise<void>;
   getDirectories(): Promise<RomDirectory[]>;
   updateDirectory(id: string, data: Partial<RomDirectory>): Promise<void>;
 
   // Scanning
+  scan(path: string, options?: ScanOptions): AsyncGenerator<ScanProgress>;
   scanDirectory(path: string): AsyncGenerator<ScanProgress>;
   scanAllDirectories(): AsyncGenerator<ScanProgress>;
   cancelScan(): void;
+  getScanStatus(): ScanStatus;
 
   // ROM detection
   detectPlatform(filePath: string): Promise<Platform | null>;
+  detectPlatformByExtension(ext: string): string | null;
   calculateHash(filePath: string): Promise<string>;
 }
 
@@ -158,8 +185,8 @@ export interface IScannerService {
  */
 export interface IMetadataService {
   // Identification
-  identifyGame(game: Game): Promise<GameMetadata | null>;
-  searchMetadata(query: string, platformId?: string): Promise<GameMetadata[]>;
+  identifyGame(game: Game): Promise<import('../models/Game').GameMetadata | null>;
+  searchMetadata(query: string, platformId?: string): Promise<import('../models/Game').GameMetadata[]>;
 
   // Artwork
   downloadCover(gameId: string, url: string): Promise<string>;
@@ -174,46 +201,50 @@ export interface IMetadataService {
  */
 export interface ILaunchService {
   // Emulator management
-  getEmulators(): Promise<Emulator[]>;
+  getEmulators(options?: { platformId?: string }): Promise<Emulator[]>;
   getEmulatorById(id: string): Promise<Emulator | null>;
-  detectEmulators(): Promise<Emulator[]>;
+  detectEmulators(): Promise<Array<{ name: string; path: string }>>;
   addEmulator(data: CreateEmulatorInput): Promise<Emulator>;
   updateEmulator(id: string, data: Partial<Emulator>): Promise<void>;
   deleteEmulator(id: string): Promise<void>;
-  setDefaultEmulator(platformId: string, emulatorId: string): Promise<void>;
+  setDefaultEmulator(emulatorId: string, platformId: string): Promise<void>;
   getDefaultEmulator(platformId: string): Promise<Emulator | null>;
 
   // Launching
-  launchGame(gameId: string, emulatorId?: string): Promise<void>;
+  launchGame(game: Game, emulatorId?: string): Promise<{ success: boolean }>;
+  buildCommand(emulator: Emulator, vars: { romPath: string; core?: string }): string;
   buildLaunchCommand(game: Game, emulator: Emulator): string;
 
   // Tracking
   recordPlaySession(gameId: string, duration: number): Promise<void>;
+  endPlaySession(sessionId: string, duration: number): Promise<void>;
+  getPlayHistory(gameId: string, options?: { limit?: number }): Promise<PlaySession[]>;
 }
 
 /**
  * Widget service interface
  */
 export interface IWidgetService {
-  getWidgets(): Promise<Widget[]>;
+  getWidgets(options?: { visibleOnly?: boolean }): Promise<Widget[]>;
   getWidgetById(id: string): Promise<Widget | null>;
-  addWidget(type: Widget['type'], position?: number): Promise<Widget>;
+  addWidget(config: { type: Widget['type']; title?: string; size?: string }): Promise<Widget>;
   removeWidget(id: string): Promise<void>;
-  updateWidget(id: string, data: Partial<Widget>): Promise<void>;
+  updateWidget(id: string, data: Partial<Widget>): Promise<Widget | null>;
   reorderWidgets(widgetIds: string[]): Promise<void>;
-  getWidgetData(widget: Widget): Promise<unknown>;
+  getWidgetData(id: string, type: Widget['type']): Promise<unknown>;
+  getDefaultWidgets(): Array<{ type: Widget['type']; title?: string; size?: string }>;
 }
 
 /**
  * Genre service interface
  */
 export interface IGenreService {
-  getGenres(): Promise<Genre[]>;
-  getGenreById(id: string): Promise<Genre | null>;
-  getGamesByGenre(genreId: string, options?: PaginationOptions): Promise<Game[]>;
-  assignGenre(gameId: string, genreId: string): Promise<void>;
+  getGenres(): Promise<Array<{ id: string; name: string; gameCount: number }>>;
+  getGamesByGenre(genre: string, options?: PaginationOptions): Promise<Game[]>;
+  assignGenre(gameId: string, genreId: string | null): Promise<void>;
   removeGenre(gameId: string, genreId: string): Promise<void>;
-  extractGenreFromMetadata(metadata: GameMetadata): string | null;
+  extractGenreFromMetadata(input: string | null): string | null;
+  getGenreStats(genre: string): Promise<{ totalGames: number; totalPlayTime: number; averageRating: number }>;
 }
 
 /**

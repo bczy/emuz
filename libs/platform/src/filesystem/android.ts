@@ -13,6 +13,7 @@ import {
   ReadOptions,
   WriteOptions,
 } from './types';
+import { base64ToUint8Array, uint8ArrayToBase64 } from './utils';
 
 /**
  * Type definitions for react-native-fs
@@ -85,7 +86,7 @@ export class AndroidFileSystemAdapter extends BaseFileSystemAdapter {
   async readBinary(path: string): Promise<Uint8Array> {
     await this.ensureModules();
     const base64 = await this.rnfs!.readFile(path, 'base64');
-    return this.base64ToUint8Array(base64);
+    return base64ToUint8Array(base64);
   }
 
   async writeText(path: string, content: string, options?: WriteOptions): Promise<void> {
@@ -113,7 +114,7 @@ export class AndroidFileSystemAdapter extends BaseFileSystemAdapter {
       await this.mkdir(dir, true);
     }
 
-    const base64 = this.uint8ArrayToBase64(content);
+    const base64 = uint8ArrayToBase64(content);
     
     if (options?.append) {
       await this.rnfs!.appendFile(path, base64, 'base64');
@@ -221,10 +222,9 @@ export class AndroidFileSystemAdapter extends BaseFileSystemAdapter {
    */
   async requestReadPermission(_path: string): Promise<boolean> {
     try {
-      // @ts-expect-error - react-native module
       const { PermissionsAndroid } = await import('react-native');
       const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS['READ_EXTERNAL_STORAGE'],
         {
           title: 'Storage Permission',
           message: 'EmuZ needs access to your ROM files',
@@ -233,7 +233,7 @@ export class AndroidFileSystemAdapter extends BaseFileSystemAdapter {
           buttonPositive: 'OK',
         }
       );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
+      return granted === PermissionsAndroid.RESULTS['GRANTED'];
     } catch {
       return false;
     }
@@ -244,10 +244,9 @@ export class AndroidFileSystemAdapter extends BaseFileSystemAdapter {
    */
   async requestWritePermission(_path: string): Promise<boolean> {
     try {
-      // @ts-expect-error - react-native module
       const { PermissionsAndroid } = await import('react-native');
       const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS['WRITE_EXTERNAL_STORAGE'],
         {
           title: 'Storage Permission',
           message: 'EmuZ needs access to save game data',
@@ -256,7 +255,7 @@ export class AndroidFileSystemAdapter extends BaseFileSystemAdapter {
           buttonPositive: 'OK',
         }
       );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
+      return granted === PermissionsAndroid.RESULTS['GRANTED'];
     } catch {
       return false;
     }
@@ -270,28 +269,6 @@ export class AndroidFileSystemAdapter extends BaseFileSystemAdapter {
     return lastSlash > 0 ? filePath.substring(0, lastSlash) : '/';
   }
 
-  /**
-   * Convert Base64 string to Uint8Array
-   */
-  private base64ToUint8Array(base64: string): Uint8Array {
-    const binaryString = atob(base64);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes;
-  }
-
-  /**
-   * Convert Uint8Array to Base64 string
-   */
-  private uint8ArrayToBase64(bytes: Uint8Array): string {
-    let binary = '';
-    for (let i = 0; i < bytes.byteLength; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return btoa(binary);
-  }
 }
 
 /**

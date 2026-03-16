@@ -26,26 +26,26 @@ export interface UseWidgetsReturn {
   visibleWidgets: Widget[];
   isLoading: boolean;
   isEditing: boolean;
-  
+
   // Widget data
   getWidgetData: <T>(widgetId: string) => T | undefined;
-  
+
   // Actions
   refreshWidgets: () => Promise<void>;
   addWidget: (type: WidgetType) => Promise<Widget | null>;
   removeWidget: (widgetId: string) => Promise<void>;
   updateWidget: (widgetId: string, updates: Partial<Widget>) => Promise<void>;
   reorderWidgets: (widgetIds: string[]) => Promise<void>;
-  
+
   // Edit mode
   setEditing: (isEditing: boolean) => void;
   toggleEditing: () => void;
-  
+
   // Widget actions
   toggleVisibility: (widgetId: string) => void;
   resizeWidget: (widgetId: string, size: WidgetSize) => void;
   moveWidget: (widgetId: string, direction: 'up' | 'down') => void;
-  
+
   // Data loading
   loadWidgetData: (widgetId: string) => Promise<void>;
 }
@@ -77,7 +77,7 @@ export function useWidgets(options: UseWidgetsOptions): UseWidgetsReturn {
   const addWidget = useCallback(
     async (type: WidgetType): Promise<Widget | null> => {
       try {
-        const widget = await service.addWidget(type);
+        const widget = await service.addWidget({ type });
         store.addWidget(widget);
         return widget;
       } catch (err) {
@@ -136,7 +136,7 @@ export function useWidgets(options: UseWidgetsOptions): UseWidgetsReturn {
       store.setLoadingWidget(widgetId);
 
       try {
-        const data = await service.getWidgetData(widget);
+        const data = await service.getWidgetData(widgetId, widget.type);
         store.setWidgetData(widgetId, data);
       } catch (err) {
         console.error(`Failed to load data for widget ${widgetId}:`, err);

@@ -12,7 +12,7 @@ export const retroarch: EmulatorDefinition = {
   name: 'RetroArch',
   description: 'Multi-system emulator frontend using libretro cores',
   website: 'https://www.retroarch.com/',
-  platformIds: [], // Platforms depend on loaded cores
+  platformIds: ['nes', 'fds', 'snes', 'gb', 'gbc', 'gba', 'n64', 'genesis', 'sms', 'gg', '32x', 'scd', 'psx', 'nds', 'psp'],
   hostPlatforms: ['windows', 'macos', 'linux', 'android', 'ios'],
   
   desktop: {

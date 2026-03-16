@@ -87,10 +87,10 @@ export class DesktopEmulatorDetector {
     }
 
     // Check if executable is in PATH
-    for (const executable of executables) {
+    for (const _executable of executables) {
       // Strip any path components for PATH check - would be used for which/where command
-      // const baseName = executable.split('/').pop() ?? executable;
-      
+      // const baseName = _executable.split('/').pop() ?? _executable;
+
       // This would be done via which/where command in real implementation
       // For now, just return null if not found in standard paths
     }

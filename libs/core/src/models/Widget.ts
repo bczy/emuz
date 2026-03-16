@@ -4,13 +4,13 @@ import { z } from 'zod';
  * Widget types for the home screen (Daijishou-inspired)
  */
 export const WidgetTypes = {
-  RECENT_GAMES: 'recent-games',
+  RECENT_GAMES: 'recent_games',
   FAVORITES: 'favorites',
-  PLATFORM_SHORTCUTS: 'platform-shortcuts',
+  PLATFORM_SHORTCUTS: 'platform_shortcuts',
   STATS: 'stats',
-  CONTINUE_PLAYING: 'continue-playing',
-  RANDOM_PICKS: 'random-picks',
-  BY_GENRE: 'by-genre',
+  CONTINUE_PLAYING: 'continue_playing',
+  RANDOM_PICKS: 'random_picks',
+  BY_GENRE: 'by_genre',
 } as const;
 
 export type WidgetType = (typeof WidgetTypes)[keyof typeof WidgetTypes];

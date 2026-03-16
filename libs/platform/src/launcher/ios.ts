@@ -46,7 +46,6 @@ export class IOSLauncher extends BaseLauncher {
    */
   private async ensureModules(): Promise<void> {
     if (!this.linking) {
-      // @ts-expect-error - React Native module
       const { Linking } = await import('react-native');
       this.linking = Linking;
     }
