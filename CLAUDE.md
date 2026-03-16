@@ -29,7 +29,10 @@ emuz/
 │   ├── platform/    # @emuz/platform — filesystem, platform-specific adapters
 │   └── ui/          # @emuz/ui — shared React/RN components, themes
 ├── docs/            # Architecture, API, contributing guides
-└── .specify/        # Spec-Kit artifacts (specs, tasks, constitution)
+├── _bmad/           # BMAD agent framework (36 skills, 9 agents)
+└── _bmad-output/    # Planning and implementation artifacts
+    ├── planning-artifacts/     # prd.md, architecture.md
+    └── implementation-artifacts/stories/  # 41 story files (6 epics)
 ```
 
 ## Key Commands
@@ -135,6 +138,26 @@ See `docs/ai-tools.md` for the full library ID list.
 
 Tools: `nx_workspace`, `nx_project_details`, `nx_generators`, `nx_run_generator`, `nx_visualize_graph`, `nx_docs`
 
+## AI Development Workflow (BMAD)
+
+This project uses the BMAD Method for structured AI-driven development. Use agent personas for each type of task:
+
+| Agent | Skill | Use for |
+|---|---|---|
+| Analyst | `/bmad-analyst` | Requirements, research, discovery |
+| Product Manager | `/bmad-pm` | PRD edits, feature planning |
+| Architect | `/bmad-architect` | Technical design, ADR decisions |
+| Developer | `/bmad-dev` | Story implementation (enforces TDD) |
+| Scrum Master | `/bmad-sm` | Story creation, sprint planning |
+| QA | `/bmad-qa` | Test strategy, E2E tests |
+| UX Designer | `/bmad-ux-designer` | UI/UX specifications |
+
+**Implement a story**: `/bmad-dev-story _bmad-output/implementation-artifacts/stories/epic-XX/story-X.X-*.md`
+
+**Check sprint status**: `/bmad-sprint-status`
+
+**Next story to implement**: stories with `Status: Pending` or `Status: In Progress` in `_bmad-output/implementation-artifacts/stories/`
+
 ## Key Architecture Decisions
 
 - Desktop uses IPC bridge between Electron main and renderer processes
@@ -142,11 +165,13 @@ Tools: `nx_workspace`, `nx_project_details`, `nx_generators`, `nx_run_generator`
 - Database adapters pattern: same interface for better-sqlite3 and react-native-sqlite-storage
 - Zustand stores live in `@emuz/core`; components consume via hooks
 - Navigation: React Navigation (mobile) / Electron router (desktop)
+- Full ADR list: `_bmad-output/planning-artifacts/architecture.md`
 
 ## Reference Docs
 
+- Architecture (BMAD): `_bmad-output/planning-artifacts/architecture.md`
+- PRD (BMAD): `_bmad-output/planning-artifacts/prd.md`
+- Stories (BMAD): `_bmad-output/implementation-artifacts/stories/`
 - Architecture: `docs/architecture.md`
 - API reference: `docs/api.md`
 - Emulator integration: `docs/emulator-integration.md`
-- Project constitution: `.specify/memory/constitution.md`
-- Implementation tasks: `.specify/specs/001-emuz-core/tasks.md`
