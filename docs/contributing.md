@@ -111,11 +111,14 @@ test(core): add LibraryService unit tests
 
 1. Create a feature branch from `main`
 2. Make your changes
-3. Run tests: `pnpm nx run-many -t test`
-4. Run linting: `pnpm nx run-many -t lint`
-5. Push your branch and create a PR
-6. Fill out the PR template
-7. Wait for review
+3. **Update documentation** — if your PR adds or modifies a public API, update the relevant `README.md` and `docs/api.md` in the same PR. PRs that change APIs without updating docs will be rejected. See [Documentation Guidelines](documentation-guidelines.md).
+4. Run tests: `pnpm nx run-many -t test`
+5. Run linting: `pnpm nx run-many -t lint`
+6. Push your branch and create a PR
+7. Fill out the PR template
+8. Wait for review
+
+> **Documentation language**: All documentation must be written in English. This applies to READMEs, `docs/`, and public API comments.
 
 ## Project Structure
 

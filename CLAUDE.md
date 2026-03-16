@@ -175,3 +175,4 @@ This project uses the BMAD Method for structured AI-driven development. Use agen
 - Architecture: `docs/architecture.md`
 - API reference: `docs/api.md`
 - Emulator integration: `docs/emulator-integration.md`
+- Documentation guidelines (README standards): `docs/documentation-guidelines.md`
