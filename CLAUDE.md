@@ -142,21 +142,44 @@ Tools: `nx_workspace`, `nx_project_details`, `nx_generators`, `nx_run_generator`
 
 This project uses the BMAD Method for structured AI-driven development. Use agent personas for each type of task:
 
-| Agent | Skill | Use for |
-|---|---|---|
-| Analyst | `/bmad-analyst` | Requirements, research, discovery |
-| Product Manager | `/bmad-pm` | PRD edits, feature planning |
-| Architect | `/bmad-architect` | Technical design, ADR decisions |
-| Developer | `/bmad-dev` | Story implementation (enforces TDD) |
-| Scrum Master | `/bmad-sm` | Story creation, sprint planning |
-| QA | `/bmad-qa` | Test strategy, E2E tests |
-| UX Designer | `/bmad-ux-designer` | UI/UX specifications |
+| Agent           | Skill               | Use for                             |
+| --------------- | ------------------- | ----------------------------------- |
+| Analyst         | `/bmad-analyst`     | Requirements, research, discovery   |
+| Product Manager | `/bmad-pm`          | PRD edits, feature planning         |
+| Architect       | `/bmad-architect`   | Technical design, ADR decisions     |
+| Developer       | `/bmad-dev`         | Story implementation (enforces TDD) |
+| Scrum Master    | `/bmad-sm`          | Story creation, sprint planning     |
+| QA              | `/bmad-qa`          | Test strategy, E2E tests            |
+| UX Designer     | `/bmad-ux-designer` | UI/UX specifications                |
 
 **Implement a story**: `/bmad-dev-story _bmad-output/implementation-artifacts/stories/epic-XX/story-X.X-*.md`
 
 **Check sprint status**: `/bmad-sprint-status`
 
 **Next story to implement**: stories with `Status: Pending` or `Status: In Progress` in `_bmad-output/implementation-artifacts/stories/`
+
+### BMAD ↔ GitHub Issues — Mandatory Sync (NON-NEGOTIABLE)
+
+Every agent or LLM that changes a story's implementation or status **must** keep the BMAD story file and its GitHub issue in sync. Do this atomically — story file update + GitHub update in the same commit/action.
+
+**Status → GitHub state mapping:**
+
+| Story `**Status**`                      | GitHub issue state | Labels to apply                                        |
+| --------------------------------------- | ------------------ | ------------------------------------------------------ |
+| `Done` (all ACs checked)                | CLOSED             | none                                                   |
+| `Done (tests pending)`                  | OPEN               | `tests-pending`                                        |
+| `Done (X pending)` where X is a feature | OPEN               | `feature-pending`                                      |
+| `Done (X pending)` where X is both      | OPEN               | `tests-pending` + `feature-pending`                    |
+| `In Progress`                           | OPEN               | `tests-pending` and/or `feature-pending` as applicable |
+| `Pending`                               | OPEN               | no pending labels until work starts                    |
+
+**Rules:**
+
+1. When all `- [ ]` ACs are checked off → set `**Status**: Done`, close the GitHub issue, remove pending labels.
+2. When completing tests for a story → check off the test AC, remove `tests-pending` label; if no other pending items remain, close the issue and mark Done.
+3. When implementing a pending feature → check off its AC, remove `feature-pending` label if no others remain.
+4. Never close a GitHub issue while unchecked ACs exist in the story file.
+5. Never leave a story as `Done (X pending)` on GitHub as CLOSED.
 
 ## Key Architecture Decisions
 
