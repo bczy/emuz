@@ -1,0 +1,68 @@
+name: 'BMAD Story'
+description: 'New implementation story derived from a BMAD story file'
+title: 'Story X.X: [Title]'
+labels: ['story', 'bmad']
+body:
+  - type: dropdown
+    id: epic
+    attributes:
+      label: Epic
+      options:
+        - 'Epic 1 — Foundation'
+        - 'Epic 2 — Core Services'
+        - 'Epic 3 — UI Components'
+        - 'Epic 4 — Desktop App'
+        - 'Epic 5 — Mobile App'
+        - 'Epic 6 — Polish & Testing'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - Critical
+        - High
+        - Medium
+    validations:
+      required: true
+
+  - type: input
+    id: story_file
+    attributes:
+      label: BMAD Story File
+      description: 'Path to the story file in _bmad-output/implementation-artifacts/stories/'
+      placeholder: 'epic-XX-name/story-X.X-title.md'
+    validations:
+      required: true
+
+  - type: input
+    id: estimate
+    attributes:
+      label: Estimate
+      placeholder: 'e.g. 3h'
+
+  - type: textarea
+    id: user_story
+    attributes:
+      label: User Story
+      placeholder: 'As a [user], I want to [action], so that [benefit].'
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: technical_notes
+    attributes:
+      label: Technical Notes
+      placeholder: 'Architecture refs, dependencies, constraints...'
