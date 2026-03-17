@@ -17,28 +17,33 @@ EmuZ centralizes multiple gaming emulators into a single, unified interface acro
 ## Core Principles
 
 ### I. Cross-Platform First
+
 - React Native (mobile) + Electron (desktop) from a single Nx monorepo
 - No platform-specific code in shared `libs/` — all divergence goes through adapters
 - Platform-appropriate UX while maintaining feature parity across all 5 targets
 
 ### II. User Experience Excellence
+
 - Any game reachable within 3 clicks/taps
 - Cover art, screenshots, metadata displayed prominently (Daijishou-style)
 - Game launch handoff in < 1 second
 - Customizable home screen with widgets (Recent, Favorites, Stats)
 
 ### III. Test-First Development (NON-NEGOTIABLE)
+
 - TDD cycle enforced: tests → user approval → red → green → refactor
 - Minimum 80% coverage for core services
 - All public APIs must have tests
 
 ### IV. Performance Targets
+
 - App launch: < 2 seconds
 - Library scan: < 5 seconds for 1000+ ROMs
 - Search results: < 100ms
 - Memory: < 500MB for large libraries
 
 ### V. Security & Privacy
+
 - Zero telemetry — no data collection without explicit consent
 - All data stored locally by default
 - Never modify or distribute ROM files
@@ -85,6 +90,7 @@ EmuZ centralizes multiple gaming emulators into a single, unified interface acro
 **Decision**: Use Nx 20.x for monorepo management with pnpm 9.x as package manager.
 
 **Rationale**:
+
 - Existing team experience with Nx
 - Official `@nx/react-native` plugin for mobile app support
 - Dependency graph visualization and affected-build optimization
@@ -92,6 +98,7 @@ EmuZ centralizes multiple gaming emulators into a single, unified interface acro
 - pnpm significant disk savings; `node-linker=hoisted` required for React Native compatibility
 
 **Configuration**:
+
 ```ini
 # .npmrc
 node-linker=hoisted
@@ -109,12 +116,14 @@ shamefully-hoist=true
 **Decision**: Use bare React Native workflow without Expo managed runtime.
 
 **Rationale**:
+
 - Full native module access (SQLite, SAF, URL schemes, deep links)
 - Complete control over Gradle/Xcode configuration
 - Better integration with native emulators
 - No Expo limitations for deep link handling
 
 **Implications**:
+
 - Requires Xcode for iOS builds
 - Manual native module configuration
 - More flexibility for platform-specific optimizations
@@ -127,9 +136,9 @@ shamefully-hoist=true
 
 **Decision**: SQLite for all local storage via a unified adapter interface with two implementations.
 
-| Platform | Library | Mode |
-|---|---|---|
-| Desktop (Electron) | `better-sqlite3` | Synchronous |
+| Platform             | Library                       | Mode          |
+| -------------------- | ----------------------------- | ------------- |
+| Desktop (Electron)   | `better-sqlite3`              | Synchronous   |
 | Mobile (iOS/Android) | `react-native-sqlite-storage` | Async/Promise |
 
 **Adapter interface** (`libs/database/src/adapters/types.ts`) abstracts the difference so `libs/core` services are platform-agnostic.
@@ -145,6 +154,7 @@ shamefully-hoist=true
 **Decision**: Zustand for client state (UI, preferences, widgets); React Query for async/server-derived data (library, metadata).
 
 **Store split**:
+
 - `libraryStore` — selected platform, active filters, sort order
 - `settingsStore` — theme, language, emulator paths, preferences
 - `uiStore` — sidebar state, modals, loading indicators
@@ -161,11 +171,13 @@ All stores use Zustand persistence middleware for local storage.
 **Decision**: All platform-specific operations (filesystem, emulator launching) are abstracted behind interfaces in `libs/platform` with per-platform implementations.
 
 **Filesystem adapters**:
+
 - `android.ts` — Storage Access Framework (SAF), persisted URI permissions
 - `ios.ts` — Documents folder + Files app import (sandboxed)
 - `desktop.ts` — Native Node.js `fs` module
 
 **Launcher adapters**:
+
 - `android.ts` — Android Intent system (`retroarch://`, generic Intent)
 - `ios.ts` — URL schemes (`retroarch://run?rom=...`, `delta://game/...`)
 - `desktop.ts` — `child_process.spawn` (detached, stdio ignored)
@@ -181,6 +193,7 @@ Factory pattern selects the correct adapter at runtime based on `Platform.OS`.
 **Decision**: NativeWind 4.x (Tailwind CSS for React Native) on mobile; TailwindCSS 4.x on desktop renderer.
 
 **Color palette** (Emerald Green on Slate Dark):
+
 ```
 Primary:     #10B981  (Emerald 500)
 Primary-light: #34D399 (Emerald 400)
@@ -218,6 +231,7 @@ Error:       #EF4444
 **Decision**: Local pre-built SQLite database downloaded on first launch + ScreenScraper API fallback.
 
 **Flow**:
+
 1. First launch → download `metadata.db.gz` (~50-100MB) from GitHub Releases
 2. Local lookup by ROM hash
 3. On miss → ScreenScraper API scrape, cache permanently
@@ -234,13 +248,18 @@ Error:       #EF4444
 **Decision**: Platform/emulator definitions stored as JSON files in `libs/emulators/src/data/platforms/`.
 
 **Structure per platform**:
+
 ```json
 {
   "id": "nes",
   "name": "Nintendo Entertainment System",
   "extensions": [".nes", ".fds"],
   "players": [
-    { "id": "retroarch-nestopia", "core": "nestopia_libretro", "platforms": ["android", "ios", "desktop"] }
+    {
+      "id": "retroarch-nestopia",
+      "core": "nestopia_libretro",
+      "platforms": ["android", "ios", "desktop"]
+    }
   ],
   "scraper": { "screenscraper_id": 3 }
 }
@@ -254,12 +273,12 @@ Error:       #EF4444
 
 **Status**: Accepted | **Source**: clarification #13
 
-| Level | Tool | Scope |
-|---|---|---|
-| Unit | Vitest | Core services, utilities |
-| Component | RNTL | React Native components |
-| E2E Mobile | Detox | iOS/Android critical flows |
-| E2E Desktop | Playwright | Electron critical flows |
+| Level       | Tool       | Scope                      |
+| ----------- | ---------- | -------------------------- |
+| Unit        | Vitest     | Core services, utilities   |
+| Component   | RNTL       | React Native components    |
+| E2E Mobile  | Detox      | iOS/Android critical flows |
+| E2E Desktop | Playwright | Electron critical flows    |
 
 Coverage threshold: 80% lines for `libs/core`.
 
@@ -279,13 +298,13 @@ No automatic releases (resource conservation for v1.0).
 
 **Status**: Accepted | **Source**: clarification #12
 
-| Platform | Minimum | Build flag |
-|---|---|---|
-| iOS | 15.0+ | `IPHONEOS_DEPLOYMENT_TARGET=15.0` |
-| Android | API 28 (9.0 Pie)+ | `minSdkVersion=28` |
-| macOS | 12.0 (Monterey)+ | — |
-| Windows | 10 (21H2)+ | — |
-| Linux | Ubuntu 22.04 LTS+ | AppImage/Flatpak |
+| Platform | Minimum           | Build flag                        |
+| -------- | ----------------- | --------------------------------- |
+| iOS      | 15.0+             | `IPHONEOS_DEPLOYMENT_TARGET=15.0` |
+| Android  | API 28 (9.0 Pie)+ | `minSdkVersion=28`                |
+| macOS    | 12.0 (Monterey)+  | —                                 |
+| Windows  | 10 (21H2)+        | —                                 |
+| Linux    | Ubuntu 22.04 LTS+ | AppImage/Flatpak                  |
 
 ---
 
@@ -472,14 +491,14 @@ interface LaunchService {
 
 ## Implementation Phases
 
-| Phase | Scope | Status |
-|---|---|---|
-| 1 — Foundation | Monorepo, database, models, platform adapters | ✅ Complete |
-| 2 — Core Services | LibraryService, ScannerService, MetadataService, LaunchService, Zustand stores | ✅ Complete (tests pending) |
-| 3 — UI Components | GameCard, GameGrid, Sidebar, Widgets, SearchBar | 🔄 In Progress |
-| 4 — Desktop App | Electron main/renderer, screens, build | 🔄 In Progress |
-| 5 — Mobile App | React Native screens, navigation, build | 🔄 In Progress |
-| 6 — Polish | E2E tests, performance, docs | ⬜ Pending |
+| Phase             | Scope                                                                          | Status                                                                                |
+| ----------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| 1 — Foundation    | Monorepo, database, models, platform adapters                                  | ✅ Complete (tests pending: 1.3, 1.5, 1.6)                                            |
+| 2 — Core Services | LibraryService, ScannerService, MetadataService, LaunchService, Zustand stores | ✅ Complete (tests pending all; React Query integration pending 2.6)                  |
+| 3 — UI Components | GameCard, GameGrid, Sidebar, Widgets, SearchBar                                | ✅ Complete (tests pending all; virtualization pending 3.4; drag-reorder pending 3.8) |
+| 4 — Desktop App   | Electron main/renderer, screens, build                                         | ✅ Complete (native menu pending 4.2; auto-update + signing pending 4.5)              |
+| 5 — Mobile App    | React Native screens, navigation, build                                        | ✅ Complete (share extension pending 5.5; Fastlane optional 5.6)                      |
+| 6 — Polish        | E2E tests, performance, docs                                                   | 🔄 In Progress (6.1 in progress; 6.2–6.4 pending; 6.5 done)                           |
 
 ---
 
@@ -509,10 +528,10 @@ Before any feature is considered done:
 
 ## Risk Register
 
-| Risk | Probability | Impact | Mitigation |
-|---|---|---|---|
-| RN/Electron code-sharing complexity | Medium | High | Strict adapter layers |
-| SQLite perf with large libraries | Low | Medium | Proper indexing |
-| Cross-platform path handling | High | Medium | Path normalization utilities |
-| iOS App Store rejection | Medium | High | No ROM downloading; follow guidelines |
-| Metadata scraper rate limits | Medium | Low | Caching + local DB fallback |
+| Risk                                | Probability | Impact | Mitigation                            |
+| ----------------------------------- | ----------- | ------ | ------------------------------------- |
+| RN/Electron code-sharing complexity | Medium      | High   | Strict adapter layers                 |
+| SQLite perf with large libraries    | Low         | Medium | Proper indexing                       |
+| Cross-platform path handling        | High        | Medium | Path normalization utilities          |
+| iOS App Store rejection             | Medium      | High   | No ROM downloading; follow guidelines |
+| Metadata scraper rate limits        | Medium      | Low    | Caching + local DB fallback           |
