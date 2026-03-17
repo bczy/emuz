@@ -491,14 +491,14 @@ interface LaunchService {
 
 ## Implementation Phases
 
-| Phase             | Scope                                                                          | Status                                                                                |
-| ----------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| 1 — Foundation    | Monorepo, database, models, platform adapters                                  | ✅ Complete (tests pending: 1.3, 1.5, 1.6)                                            |
-| 2 — Core Services | LibraryService, ScannerService, MetadataService, LaunchService, Zustand stores | ✅ Complete (tests pending all; React Query integration pending 2.6)                  |
-| 3 — UI Components | GameCard, GameGrid, Sidebar, Widgets, SearchBar                                | ✅ Complete (tests pending all; virtualization pending 3.4; drag-reorder pending 3.8) |
-| 4 — Desktop App   | Electron main/renderer, screens, build                                         | ✅ Complete (native menu pending 4.2; auto-update + signing pending 4.5)              |
-| 5 — Mobile App    | React Native screens, navigation, build                                        | ✅ Complete (share extension pending 5.5; Fastlane optional 5.6)                      |
-| 6 — Polish        | E2E tests, performance, docs                                                   | 🔄 In Progress (6.1 in progress; 6.2–6.4 pending; 6.5 done)                           |
+| Phase             | Scope                                                                          | Status                                                                                                                |
+| ----------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| 1 — Foundation    | Monorepo, database, models, platform adapters                                  | ✅ Complete — 125 tests passing (6/6 stories done)                                                                    |
+| 2 — Core Services | LibraryService, ScannerService, MetadataService, LaunchService, Zustand stores | 🔄 Mostly done — 6/8 stories complete; MetadataService caching pending (2.3); React Query + store tests pending (2.6) |
+| 3 — UI Components | GameCard, GameGrid, Sidebar, Widgets, SearchBar                                | 🔄 Implementation done, render tests pending all components; virtualization pending 3.4; drag-reorder pending 3.8     |
+| 4 — Desktop App   | Electron main/renderer, screens, build                                         | 🔄 Mostly done — 3/5 stories complete; native menu pending (4.2); auto-update + signing docs pending (4.5)            |
+| 5 — Mobile App    | React Native screens, navigation, build                                        | 🔄 Mostly done — 4/6 stories complete; share extension pending (5.5); Fastlane optional (5.6)                         |
+| 6 — Polish        | E2E tests, performance, docs                                                   | 🔄 In Progress — docs done (6.5); unit test suite in progress (6.1); E2E + perf pending (6.2–6.4)                     |
 
 ---
 
