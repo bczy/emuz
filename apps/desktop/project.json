@@ -1,0 +1,12 @@
+{
+  "name": "@emuz/desktop",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/desktop/src",
+  "projectType": "application",
+  "tags": ["scope:app", "platform:desktop"],
+  "targets": {
+    "test": {
+      "outputs": ["{workspaceRoot}/coverage/apps/desktop"]
+    }
+  }
+}

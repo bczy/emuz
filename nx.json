@@ -10,16 +10,18 @@
       "!{projectRoot}/eslint.config.js",
       "!{projectRoot}/src/test-setup.[jt]s"
     ],
-    "sharedGlobals": []
+    "sharedGlobals": ["{workspaceRoot}/package.json", "{workspaceRoot}/pnpm-lock.yaml"]
   },
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"],
+      "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
       "cache": true
     },
     "test": {
       "inputs": ["default", "^production", "{workspaceRoot}/vitest.workspace.ts"],
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "cache": true
     },
     "lint": {
@@ -29,6 +31,7 @@
         "{workspaceRoot}/.eslintignore",
         "{workspaceRoot}/eslint.config.js"
       ],
+      "outputs": [],
       "cache": true
     }
   },

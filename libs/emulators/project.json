@@ -8,7 +8,7 @@
   "targets": {
     "test": {
       "executor": "@nx/vite:test",
-      "outputs": ["{workspaceRoot}/coverage/libs/emulators"],
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "config": "libs/emulators/vite.config.mts"
       }
