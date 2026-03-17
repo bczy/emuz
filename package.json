@@ -13,7 +13,7 @@
     "test": "nx run-many -t test --all",
     "test:coverage": "nx run-many -t test --all --coverage",
     "test:watch": "nx run-many -t test --all --watch",
-    "lint": "nx run-many -t lint --all",
+    "lint": "nx run-many -t lint --all -- --max-warnings 0",
     "fix": "nx run-many -t lint --all --fix && prettier --write .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

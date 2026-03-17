@@ -1,7 +1,7 @@
 /**
  * Android file system adapter
  * Uses React Native File System (RNFS) and Storage Access Framework (SAF)
- * 
+ *
  * Note: This adapter requires react-native-fs and react-native-document-picker
  * to be installed in the React Native project
  */
@@ -49,12 +49,12 @@ interface RNFSModule {
 
 /**
  * Android file system adapter using React Native FS
- * 
+ *
  * Features:
  * - Access to app documents and cache directories
  * - External storage access (with permissions)
  * - SAF integration for scoped storage
- * 
+ *
  * @example
  * ```typescript
  * const adapter = new AndroidFileSystemAdapter();
@@ -70,27 +70,28 @@ export class AndroidFileSystemAdapter extends BaseFileSystemAdapter {
   /**
    * Lazy-load React Native FS module
    */
-  private async ensureModules(): Promise<void> {
-    if (!this.rnfs) {
-      // @ts-expect-error - react-native-fs types not available at compile time
-      this.rnfs = await import('react-native-fs');
-    }
+  private async getModules(): Promise<RNFSModule> {
+    if (this.rnfs) return this.rnfs;
+    // @ts-expect-error - react-native-fs types not available at compile time
+    const rnfs = (await import('react-native-fs')) as RNFSModule;
+    this.rnfs = rnfs;
+    return rnfs;
   }
 
   async readText(path: string, options?: ReadOptions): Promise<string> {
-    await this.ensureModules();
+    const rnfs = await this.getModules();
     const encoding = options?.encoding || 'utf8';
-    return this.rnfs!.readFile(path, encoding);
+    return rnfs.readFile(path, encoding);
   }
 
   async readBinary(path: string): Promise<Uint8Array> {
-    await this.ensureModules();
-    const base64 = await this.rnfs!.readFile(path, 'base64');
+    const rnfs = await this.getModules();
+    const base64 = await rnfs.readFile(path, 'base64');
     return base64ToUint8Array(base64);
   }
 
   async writeText(path: string, content: string, options?: WriteOptions): Promise<void> {
-    await this.ensureModules();
+    const rnfs = await this.getModules();
 
     if (options?.recursive) {
       const dir = this.getDirectoryPath(path);
@@ -98,16 +99,16 @@ export class AndroidFileSystemAdapter extends BaseFileSystemAdapter {
     }
 
     const encoding = options?.encoding || 'utf8';
-    
+
     if (options?.append) {
-      await this.rnfs!.appendFile(path, content, encoding);
+      await rnfs.appendFile(path, content, encoding);
     } else {
-      await this.rnfs!.writeFile(path, content, encoding);
+      await rnfs.writeFile(path, content, encoding);
     }
   }
 
   async writeBinary(path: string, content: Uint8Array, options?: WriteOptions): Promise<void> {
-    await this.ensureModules();
+    const rnfs = await this.getModules();
 
     if (options?.recursive) {
       const dir = this.getDirectoryPath(path);
@@ -115,27 +116,27 @@ export class AndroidFileSystemAdapter extends BaseFileSystemAdapter {
     }
 
     const base64 = uint8ArrayToBase64(content);
-    
+
     if (options?.append) {
-      await this.rnfs!.appendFile(path, base64, 'base64');
+      await rnfs.appendFile(path, base64, 'base64');
     } else {
-      await this.rnfs!.writeFile(path, base64, 'base64');
+      await rnfs.writeFile(path, base64, 'base64');
     }
   }
 
   async delete(path: string): Promise<void> {
-    await this.ensureModules();
-    await this.rnfs!.unlink(path);
+    const rnfs = await this.getModules();
+    await rnfs.unlink(path);
   }
 
   async exists(path: string): Promise<boolean> {
-    await this.ensureModules();
-    return this.rnfs!.exists(path);
+    const rnfs = await this.getModules();
+    return rnfs.exists(path);
   }
 
   async stat(path: string): Promise<FileInfo> {
-    await this.ensureModules();
-    const stats = await this.rnfs!.stat(path);
+    const rnfs = await this.getModules();
+    const stats = await rnfs.stat(path);
 
     return {
       name: stats.name,
@@ -149,9 +150,9 @@ export class AndroidFileSystemAdapter extends BaseFileSystemAdapter {
   }
 
   async list(dirPath: string): Promise<DirectoryListing> {
-    await this.ensureModules();
+    const rnfs = await this.getModules();
     const entries: FileInfo[] = [];
-    const stats = await this.rnfs!.readDir(dirPath);
+    const stats = await rnfs.readDir(dirPath);
 
     for (const stat of stats) {
       entries.push({
@@ -172,49 +173,49 @@ export class AndroidFileSystemAdapter extends BaseFileSystemAdapter {
   }
 
   async mkdir(path: string, recursive?: boolean): Promise<void> {
-    await this.ensureModules();
-    
+    const rnfs = await this.getModules();
+
     if (recursive) {
       // Create parent directories one by one
       const parts = path.split('/').filter(Boolean);
       let currentPath = '/';
-      
+
       for (const part of parts) {
         currentPath = `${currentPath}${part}/`;
         const exists = await this.exists(currentPath);
         if (!exists) {
-          await this.rnfs!.mkdir(currentPath);
+          await rnfs.mkdir(currentPath);
         }
       }
     } else {
-      await this.rnfs!.mkdir(path);
+      await rnfs.mkdir(path);
     }
   }
 
   async rmdir(path: string, _recursive?: boolean): Promise<void> {
-    await this.ensureModules();
+    const rnfs = await this.getModules();
     // RNFS unlink handles both files and directories
-    await this.rnfs!.unlink(path);
+    await rnfs.unlink(path);
   }
 
   async copy(source: string, destination: string): Promise<void> {
-    await this.ensureModules();
-    await this.rnfs!.copyFile(source, destination);
+    const rnfs = await this.getModules();
+    await rnfs.copyFile(source, destination);
   }
 
   async move(source: string, destination: string): Promise<void> {
-    await this.ensureModules();
-    await this.rnfs!.moveFile(source, destination);
+    const rnfs = await this.getModules();
+    await rnfs.moveFile(source, destination);
   }
 
   async getDocumentsPath(): Promise<string> {
-    await this.ensureModules();
-    return this.rnfs!.DocumentDirectoryPath;
+    const rnfs = await this.getModules();
+    return rnfs.DocumentDirectoryPath;
   }
 
   async getCachePath(): Promise<string> {
-    await this.ensureModules();
-    return this.rnfs!.CachesDirectoryPath;
+    const rnfs = await this.getModules();
+    return rnfs.CachesDirectoryPath;
   }
 
   /**
@@ -268,7 +269,6 @@ export class AndroidFileSystemAdapter extends BaseFileSystemAdapter {
     const lastSlash = filePath.lastIndexOf('/');
     return lastSlash > 0 ? filePath.substring(0, lastSlash) : '/';
   }
-
 }
 
 /**

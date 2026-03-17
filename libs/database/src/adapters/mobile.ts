@@ -1,7 +1,7 @@
 /**
  * Mobile database adapter
  * Uses react-native-sqlite-storage for SQLite operations on mobile platforms
- * 
+ *
  * Note: This adapter is designed for React Native (Android/iOS)
  * The react-native-sqlite-storage package must be installed and linked
  */
@@ -14,13 +14,8 @@ import { BaseDatabaseAdapter, DatabaseConfig } from './types';
  * where the native module is not available
  */
 interface SQLiteDatabase {
-  executeSql(
-    sql: string,
-    params?: unknown[],
-  ): Promise<[SQLiteResultSet]>;
-  transaction(
-    fn: (tx: SQLiteTransaction) => void,
-  ): Promise<SQLiteTransaction>;
+  executeSql(sql: string, params?: unknown[]): Promise<[SQLiteResultSet]>;
+  transaction(fn: (tx: SQLiteTransaction) => void): Promise<SQLiteTransaction>;
   close(): Promise<void>;
 }
 
@@ -29,7 +24,7 @@ interface SQLiteTransaction {
     sql: string,
     params?: unknown[],
     success?: (tx: SQLiteTransaction, results: SQLiteResultSet) => void,
-    error?: (tx: SQLiteTransaction, error: Error) => boolean,
+    error?: (tx: SQLiteTransaction, error: Error) => boolean
   ): void;
 }
 
@@ -45,13 +40,13 @@ interface SQLiteResultSet {
 
 /**
  * Mobile SQLite adapter using react-native-sqlite-storage
- * 
+ *
  * Features:
  * - Async/Promise-based API
  * - Works on both Android and iOS
  * - Foreign key constraint enforcement
  * - Transaction support
- * 
+ *
  * @example
  * ```typescript
  * const adapter = new MobileDatabaseAdapter({
@@ -83,7 +78,7 @@ export class MobileDatabaseAdapter extends BaseDatabaseAdapter {
       // Dynamic import for React Native
       // @ts-expect-error - react-native-sqlite-storage types not available at compile time
       const SQLite = await import('react-native-sqlite-storage');
-      
+
       // Enable promise-based API
       SQLite.enablePromise(true);
 
@@ -124,10 +119,10 @@ export class MobileDatabaseAdapter extends BaseDatabaseAdapter {
    * Execute a SQL statement (INSERT, UPDATE, DELETE, CREATE, etc.)
    */
   async execute(sql: string, params?: unknown[]): Promise<void> {
-    this.ensureConnected();
+    const db = this.ensureConnected();
 
     try {
-      await this.db!.executeSql(sql, params || []);
+      await db.executeSql(sql, params || []);
     } catch (error) {
       throw new Error(
         `Failed to execute SQL: ${error instanceof Error ? error.message : String(error)}\nSQL: ${sql}`
@@ -139,16 +134,16 @@ export class MobileDatabaseAdapter extends BaseDatabaseAdapter {
    * Execute a SQL query and return all results
    */
   async query<T = unknown>(sql: string, params?: unknown[]): Promise<T[]> {
-    this.ensureConnected();
+    const db = this.ensureConnected();
 
     try {
-      const [results] = await this.db!.executeSql(sql, params || []);
+      const [results] = await db.executeSql(sql, params || []);
       const rows: T[] = [];
-      
+
       for (let i = 0; i < results.rows.length; i++) {
         rows.push(results.rows.item(i) as T);
       }
-      
+
       return rows;
     } catch (error) {
       throw new Error(
@@ -164,7 +159,7 @@ export class MobileDatabaseAdapter extends BaseDatabaseAdapter {
     this.ensureConnected();
 
     await this.execute('BEGIN TRANSACTION');
-    
+
     try {
       const result = await fn();
       await this.execute('COMMIT');
@@ -178,10 +173,12 @@ export class MobileDatabaseAdapter extends BaseDatabaseAdapter {
   /**
    * Ensure the database is connected before operations
    */
-  private ensureConnected(): void {
-    if (!this.connected || !this.db) {
+  private ensureConnected(): SQLiteDatabase {
+    const db = this.db;
+    if (!this.connected || !db) {
       throw new Error('Database is not connected. Call open() first.');
     }
+    return db;
   }
 }
 

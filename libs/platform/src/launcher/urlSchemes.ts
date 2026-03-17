@@ -7,10 +7,10 @@ import { EmulatorLaunchConfig } from './types';
 
 /**
  * Known iOS emulator URL schemes
- * 
+ *
  * Note: These URL schemes need to be added to your app's
  * Info.plist under LSApplicationQueriesSchemes
- * 
+ *
  * @example
  * ```xml
  * <key>LSApplicationQueriesSchemes</key>
@@ -122,9 +122,9 @@ export const IOS_EMULATOR_SCHEMES: Record<string, EmulatorLaunchConfig> = {
  * Get all known iOS URL schemes
  */
 export function getIOSUrlSchemes(): string[] {
-  return Object.values(IOS_EMULATOR_SCHEMES)
-    .filter(config => config.ios?.urlScheme)
-    .map(config => config.ios!.urlScheme.replace('://', ''));
+  return Object.values(IOS_EMULATOR_SCHEMES).flatMap((config) =>
+    config.ios?.urlScheme ? [config.ios.urlScheme.replace('://', '')] : []
+  );
 }
 
 /**
@@ -155,8 +155,8 @@ export function getAllEmulatorConfigs(): EmulatorLaunchConfig[] {
  */
 export function generatePlistSchemes(): string {
   const schemes = getIOSUrlSchemes();
-  const items = schemes.map(scheme => `    <string>${scheme}</string>`).join('\n');
-  
+  const items = schemes.map((scheme) => `    <string>${scheme}</string>`).join('\n');
+
   return `<key>LSApplicationQueriesSchemes</key>
 <array>
 ${items}
