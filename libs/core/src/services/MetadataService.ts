@@ -5,10 +5,7 @@
 import type { Game, GameMetadata } from '../models/Game';
 import type { DatabaseAdapter } from '@emuz/database';
 import type { FileSystemAdapter } from '@emuz/platform';
-import type {
-  IMetadataService,
-  MetadataProgress,
-} from './types';
+import type { IMetadataService, MetadataProgress } from './types';
 
 /**
  * Metadata provider interface
@@ -26,12 +23,23 @@ export class MetadataService implements IMetadataService {
   private providers: MetadataProvider[] = [];
   private coverCacheDir: string;
 
+  /** In-memory cache: gameId → metadata (null means "looked up, not found") */
+  private readonly identityCache = new Map<string, GameMetadata | null>();
+  /** In-memory cache: "query:platformId" → search results */
+  private readonly searchCache = new Map<string, GameMetadata[]>();
+
   constructor(
     private readonly db: DatabaseAdapter,
     private readonly fs: FileSystemAdapter,
     coverCacheDir?: string
   ) {
     this.coverCacheDir = coverCacheDir ?? '.emuz/covers';
+  }
+
+  /** Clear all in-memory caches (useful for testing) */
+  clearCache(): void {
+    this.identityCache.clear();
+    this.searchCache.clear();
   }
 
   /**
@@ -42,29 +50,49 @@ export class MetadataService implements IMetadataService {
   }
 
   /**
-   * Identify a game and fetch its metadata
+   * Identify a game and fetch its metadata.
+   * Returns cached result immediately if already scraped (in-memory or DB).
    */
   async identifyGame(game: Game): Promise<GameMetadata | null> {
-    // Try to identify by hash first
-    if (game.fileHash) {
-      const hashResult = await this.searchByHash(game.fileHash);
-      if (hashResult) return hashResult;
+    // 1. In-memory cache hit
+    if (this.identityCache.has(game.id)) {
+      return this.identityCache.get(game.id) ?? null;
     }
 
-    // Fall back to title search
+    // 2. DB-level cache: game already has metadata stored
+    const existing = await this.getExistingMetadata(game.id);
+    if (existing) {
+      this.identityCache.set(game.id, existing);
+      return existing;
+    }
+
+    // 3. Try hash-based lookup
+    if (game.fileHash) {
+      const hashResult = await this.searchByHash(game.fileHash);
+      if (hashResult) {
+        this.identityCache.set(game.id, hashResult);
+        return hashResult;
+      }
+    }
+
+    // 4. Fall back to title search
     const searchQuery = this.cleanTitleForSearch(game.title);
     const results = await this.searchMetadata(searchQuery, game.platformId);
+    const result = results.length > 0 ? results[0] : null;
 
-    if (results.length === 0) return null;
-
-    // Return best match (first result)
-    return results[0];
+    this.identityCache.set(game.id, result);
+    return result;
   }
 
   /**
-   * Search for game metadata by title
+   * Search for game metadata by title.
+   * Results are cached in-memory by query+platformId key.
    */
   async searchMetadata(query: string, platformId?: string): Promise<GameMetadata[]> {
+    const cacheKey = `${query}:${platformId ?? ''}`;
+    const cached = this.searchCache.get(cacheKey);
+    if (cached) return cached;
+
     const allResults: GameMetadata[] = [];
 
     for (const provider of this.providers) {
@@ -78,12 +106,15 @@ export class MetadataService implements IMetadataService {
 
     // Deduplicate by title
     const seen = new Set<string>();
-    return allResults.filter((meta) => {
+    const results = allResults.filter((meta) => {
       const key = `${meta.title?.toLowerCase()}-${meta.developer?.toLowerCase()}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     });
+
+    this.searchCache.set(cacheKey, results);
+    return results;
   }
 
   /**
@@ -110,10 +141,11 @@ export class MetadataService implements IMetadataService {
 
       // Update game record
       const now = Math.floor(Date.now() / 1000);
-      await this.db.execute(
-        'UPDATE games SET cover_path = ?, updated_at = ? WHERE id = ?',
-        [coverPath, now, gameId]
-      );
+      await this.db.execute('UPDATE games SET cover_path = ?, updated_at = ? WHERE id = ?', [
+        coverPath,
+        now,
+        gameId,
+      ]);
 
       return coverPath;
     } catch (error) {
@@ -196,6 +228,40 @@ export class MetadataService implements IMetadataService {
 
     progress.phase = 'complete';
     yield { ...progress };
+  }
+
+  /**
+   * Check if the game already has metadata stored in the DB.
+   * Returns the stored metadata if description is present, null otherwise.
+   */
+  private async getExistingMetadata(gameId: string): Promise<GameMetadata | null> {
+    interface GameMetaRow {
+      title: string;
+      description: string | null;
+      developer: string | null;
+      publisher: string | null;
+      release_date: string | null;
+      genre: string | null;
+      rating: number | null;
+    }
+
+    const rows = await this.db.query<GameMetaRow>(
+      'SELECT title, description, developer, publisher, release_date, genre, rating FROM games WHERE id = ? AND description IS NOT NULL',
+      [gameId]
+    );
+
+    if (rows.length === 0) return null;
+
+    const row = rows[0];
+    return {
+      title: row.title,
+      description: row.description ?? undefined,
+      developer: row.developer ?? undefined,
+      publisher: row.publisher ?? undefined,
+      releaseDate: row.release_date ?? undefined,
+      genre: row.genre ?? undefined,
+      rating: row.rating ?? undefined,
+    };
   }
 
   /**
@@ -315,10 +381,7 @@ export class MetadataService implements IMetadataService {
     params.push(Math.floor(Date.now() / 1000));
     params.push(gameId);
 
-    await this.db.execute(
-      `UPDATE games SET ${updates.join(', ')} WHERE id = ?`,
-      params
-    );
+    await this.db.execute(`UPDATE games SET ${updates.join(', ')} WHERE id = ?`, params);
   }
 }
 

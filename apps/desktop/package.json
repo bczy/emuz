@@ -29,6 +29,7 @@
     "@emuz/i18n": "workspace:*",
     "@emuz/platform": "workspace:*",
     "@emuz/ui": "workspace:*",
+    "@tanstack/react-query": "^5.0.0",
     "better-sqlite3": "^11.3.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
