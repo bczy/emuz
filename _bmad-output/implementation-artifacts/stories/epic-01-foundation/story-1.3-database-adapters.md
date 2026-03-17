@@ -1,6 +1,6 @@
 # Story 1.3: Database Platform Adapters
 
-**Status**: Done (tests pending)
+**Status**: Done
 **Epic**: Epic 1 — Foundation
 **Estimate**: 3h
 **Priority**: Critical
@@ -16,7 +16,7 @@ As a developer, I want a unified `DatabaseAdapter` interface with desktop (`bett
 - [x] Mobile adapter (`react-native-sqlite-storage`) implemented — async/promise
 - [x] Adapter factory selects correct implementation at runtime
 - [x] Connection management (open, close, transaction)
-- [ ] Unit tests for both adapters (80% coverage required)
+- [x] Unit tests for both adapters (80% coverage required)
 
 ## Technical Notes
 
