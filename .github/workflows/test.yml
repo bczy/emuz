@@ -9,43 +9,44 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         node-version: [22.x]
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 9
-      
+
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
-      
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
+
       - name: Build packages
         run: pnpm nx run-many -t build --parallel=3
-      
+
       - name: Run unit tests
         run: pnpm nx run-many -t test --parallel=3 --coverage
-      
+
       - name: Run lint
         run: pnpm nx run-many -t lint --parallel=3
-      
+
       - name: Upload coverage reports
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage/libs/*/lcov.info
           fail_ci_if_error: false
           verbose: true
@@ -53,29 +54,29 @@ jobs:
   build-desktop:
     runs-on: ${{ matrix.os }}
     needs: test
-    
+
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 9
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22.x
           cache: 'pnpm'
-      
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
+
       - name: Build desktop app
         run: pnpm nx build desktop
         env:
