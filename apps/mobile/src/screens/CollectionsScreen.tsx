@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 
-import type { Collection, Game } from '@emuz/core';
+import type { Collection } from '@emuz/core';
 import { useLibraryStore } from '@emuz/core';
 
 /**
@@ -20,7 +20,7 @@ import { useLibraryStore } from '@emuz/core';
  */
 export default function CollectionsScreen() {
   const navigation = useNavigation();
-  const { collections, games, createCollection, deleteCollection } = useLibraryStore();
+  const { collections, createCollection, deleteCollection } = useLibraryStore();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState('');

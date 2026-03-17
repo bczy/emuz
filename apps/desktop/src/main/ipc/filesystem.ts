@@ -15,7 +15,7 @@ export function registerFilesystemHandlers(): void {
   ipcMain.handle('fs:read', async (_event, filePath: string): Promise<string> => {
     try {
       return await fs.promises.readFile(filePath, 'utf-8');
-    } catch (error) {
+    } catch {
       throw new Error(`Failed to read file: ${filePath}`);
     }
   });
@@ -25,7 +25,7 @@ export function registerFilesystemHandlers(): void {
     try {
       const buffer = await fs.promises.readFile(filePath);
       return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
-    } catch (error) {
+    } catch {
       throw new Error(`Failed to read binary file: ${filePath}`);
     }
   });
@@ -35,7 +35,7 @@ export function registerFilesystemHandlers(): void {
     try {
       await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
       await fs.promises.writeFile(filePath, content, 'utf-8');
-    } catch (error) {
+    } catch {
       throw new Error(`Failed to write file: ${filePath}`);
     }
   });
@@ -45,7 +45,7 @@ export function registerFilesystemHandlers(): void {
     try {
       await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
       await fs.promises.writeFile(filePath, Buffer.from(data));
-    } catch (error) {
+    } catch {
       throw new Error(`Failed to write binary file: ${filePath}`);
     }
   });
@@ -98,7 +98,7 @@ export function registerFilesystemHandlers(): void {
   ipcMain.handle('fs:mkdir', async (_event, dirPath: string): Promise<void> => {
     try {
       await fs.promises.mkdir(dirPath, { recursive: true });
-    } catch (error) {
+    } catch {
       throw new Error(`Failed to create directory: ${dirPath}`);
     }
   });
@@ -118,7 +118,7 @@ export function registerFilesystemHandlers(): void {
         isFile: entry.isFile(),
         isDirectory: entry.isDirectory(),
       }));
-    } catch (error) {
+    } catch {
       throw new Error(`Failed to list directory: ${dirPath}`);
     }
   });
@@ -128,7 +128,7 @@ export function registerFilesystemHandlers(): void {
     try {
       await fs.promises.mkdir(path.dirname(dest), { recursive: true });
       await fs.promises.copyFile(src, dest);
-    } catch (error) {
+    } catch {
       throw new Error(`Failed to copy file from ${src} to ${dest}`);
     }
   });
@@ -138,7 +138,7 @@ export function registerFilesystemHandlers(): void {
     try {
       await fs.promises.mkdir(path.dirname(dest), { recursive: true });
       await fs.promises.rename(src, dest);
-    } catch (error) {
+    } catch {
       throw new Error(`Failed to move file from ${src} to ${dest}`);
     }
   });

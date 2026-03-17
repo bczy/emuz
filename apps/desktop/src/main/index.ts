@@ -10,7 +10,7 @@ import { registerAllHandlers, initializeDatabase, closeDatabase } from './ipc';
 // Inline replacements for @electron-toolkit/utils (avoids early app.isPackaged access)
 const is = { get dev() { return !app.isPackaged; } };
 const electronApp = { setAppUserModelId: (id: string) => { if (process.platform === 'win32') app.setAppUserModelId(id); } };
-const optimizer = { watchWindowShortcuts: (_win: BrowserWindow) => {} };
+const optimizer = { watchWindowShortcuts: (_win: BrowserWindow) => { /* noop */ } };
 
 // Keep a global reference of the window object
 let mainWindow: BrowserWindow | null = null;

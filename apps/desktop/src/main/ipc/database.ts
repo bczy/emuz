@@ -61,7 +61,7 @@ export function getDatabase(): Database.Database {
 export function registerDatabaseHandlers(): void {
   // Initialize database
   ipcMain.handle('db:init', async (): Promise<{ path: string }> => {
-    const database = initializeDatabase();
+    initializeDatabase();
     return { path: getDatabasePath() };
   });
   

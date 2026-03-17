@@ -5,15 +5,12 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 
 import type { Genre, Game } from '@emuz/core';
 import { useLibraryStore } from '@emuz/core';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Genre icons mapping
 const genreIcons: Record<string, string> = {
