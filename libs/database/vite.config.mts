@@ -28,6 +28,7 @@ export default defineConfig(() => ({
       reportsDirectory: '../../coverage/libs/database',
       provider: 'v8' as const,
       reporter: ['text', 'lcov'],
+      include: ['src/**/*.{ts,tsx}'],
     },
   },
   // Configuration for building your library.
@@ -51,10 +52,7 @@ export default defineConfig(() => ({
     rollupOptions: {
       // External packages that should not be bundled into your library.
       // Native modules for different platforms are externalized
-      external: [
-        'better-sqlite3',
-        'react-native-sqlite-storage',
-      ],
+      external: ['better-sqlite3', 'react-native-sqlite-storage'],
     },
   },
 }));

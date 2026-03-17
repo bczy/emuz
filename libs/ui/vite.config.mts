@@ -28,6 +28,7 @@ export default defineConfig(() => ({
       reportsDirectory: '../../coverage/libs/ui',
       provider: 'v8' as const,
       reporter: ['text', 'lcov'],
+      include: ['src/**/*.{ts,tsx}'],
     },
   },
   // Configuration for building your library.
