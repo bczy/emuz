@@ -54,6 +54,43 @@ pnpm nx test core --coverage         # Test with coverage
 pnpm nx test core --watch            # Test in watch mode
 ```
 
+## Nx Caching
+
+All `build`, `test`, and `lint` targets use Nx local cache (`cache: true` in `nx.json`).
+
+### Cached targets
+
+| Target  | Inputs                     | Outputs                  | Notes                               |
+| ------- | -------------------------- | ------------------------ | ----------------------------------- |
+| `build` | production (no test files) | `dist/{projectRoot}`     | Depends on `^build` of dependencies |
+| `test`  | default (all files)        | `coverage/{projectRoot}` | Pass `--coverage` to generate lcov  |
+| `lint`  | default + ESLint configs   | none                     | Only exit-code is cached            |
+
+### Rules for apps and libs (NON-NEGOTIABLE)
+
+- Every app and lib **must** have a `project.json` with an explicit `outputs` entry on the `test`
+  target so Nx can restore coverage files correctly on a cache hit.
+- Coverage `reportsDirectory` in `vite.config.mts` / `jest.config.js` must resolve to
+  `<workspace-root>/coverage/{projectRoot}` — e.g. `../../coverage/libs/core` for `libs/core`.
+- `sharedGlobals` in `nx.json` includes `package.json` and `pnpm-lock.yaml`; any dependency
+  change busts all caches workspace-wide.
+- Lint is run with `--max-warnings=0` in CI and in the pre-commit hook.
+
+### Running locally
+
+```bash
+pnpm test                        # fast (no coverage); uses cache
+pnpm test:coverage               # with coverage; cache restores lcov files on hit
+pnpm nx test core --coverage     # single project with coverage
+pnpm nx run-many -t lint --parallel=3 --max-warnings=0  # strict lint
+pnpm nx reset                    # clear local Nx cache if stale
+```
+
+### CI cross-run caching
+
+CI persists `.nx/cache/` via `actions/cache@v4`, keyed on `pnpm-lock.yaml` hash + commit SHA
+with a lock-hash fallback. Unchanged tasks are skipped across runs without Nx Cloud.
+
 ## Development Rules (NON-NEGOTIABLE)
 
 ### TDD — Test-First Development

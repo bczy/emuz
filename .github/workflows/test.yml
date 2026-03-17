@@ -34,20 +34,29 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Restore Nx cache
+        uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: nx-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            nx-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            nx-${{ runner.os }}-
+
       - name: Build packages
         run: pnpm nx run-many -t build --parallel=3
 
-      - name: Run unit tests
+      - name: Run unit tests with coverage
         run: pnpm nx run-many -t test --parallel=3 --coverage
 
       - name: Run lint
-        run: pnpm nx run-many -t lint --parallel=3
+        run: pnpm nx run-many -t lint --parallel=3 --max-warnings=0
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: coverage/libs/*/lcov.info
+          files: coverage/**/lcov.info
           fail_ci_if_error: false
           verbose: true
 
@@ -76,6 +85,15 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Restore Nx cache
+        uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: nx-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            nx-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            nx-${{ runner.os }}-
 
       - name: Build desktop app
         run: pnpm nx build desktop
