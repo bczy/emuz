@@ -3,12 +3,7 @@
  * Uses URL schemes to launch emulator apps
  */
 
-import {
-  BaseLauncher,
-  EmulatorLaunchConfig,
-  LaunchOptions,
-  LaunchResult,
-} from './types';
+import { BaseLauncher, EmulatorLaunchConfig, LaunchOptions, LaunchResult } from './types';
 
 /**
  * Type definitions for React Native Linking module
@@ -20,18 +15,18 @@ interface LinkingModule {
 
 /**
  * iOS launcher using URL schemes
- * 
+ *
  * Features:
  * - URL scheme-based app launching
  * - App installation checking via canOpenURL
  * - App Store redirect for missing apps
  * - Deep link parameter passing
- * 
+ *
  * iOS Limitations:
  * - Cannot directly pass file paths due to sandbox
  * - Must use app groups or document providers for file sharing
  * - URL schemes must be whitelisted in Info.plist (LSApplicationQueriesSchemes)
- * 
+ *
  * @example
  * ```typescript
  * const launcher = new IOSLauncher();
@@ -42,13 +37,13 @@ export class IOSLauncher extends BaseLauncher {
   private linking: LinkingModule | null = null;
 
   /**
-   * Lazy-load React Native Linking module
+   * Lazy-load React Native Linking module, returns the guaranteed Linking module
    */
-  private async ensureModules(): Promise<void> {
-    if (!this.linking) {
-      const { Linking } = await import('react-native');
-      this.linking = Linking;
-    }
+  private async getModules(): Promise<LinkingModule> {
+    if (this.linking) return this.linking;
+    const { Linking } = await import('react-native');
+    this.linking = Linking;
+    return Linking;
   }
 
   /**
@@ -56,7 +51,7 @@ export class IOSLauncher extends BaseLauncher {
    * On iOS, emulatorPath should be the URL scheme
    */
   async launch(options: LaunchOptions): Promise<LaunchResult> {
-    await this.ensureModules();
+    const linking = await this.getModules();
 
     try {
       // On iOS, we use URL schemes
@@ -64,7 +59,7 @@ export class IOSLauncher extends BaseLauncher {
       const urlScheme = options.emulatorPath;
 
       // Check if the URL scheme can be opened
-      const canOpen = await this.linking!.canOpenURL(urlScheme);
+      const canOpen = await linking.canOpenURL(urlScheme);
       if (!canOpen) {
         return this.notInstalledResult();
       }
@@ -75,28 +70,23 @@ export class IOSLauncher extends BaseLauncher {
       const romName = options.romPath.split('/').pop() || '';
       const url = `${urlScheme}open?rom=${encodeURIComponent(romName)}`;
 
-      await this.linking!.openURL(url);
+      await linking.openURL(url);
 
       return this.successResult({ urlScheme, romName });
     } catch (error) {
-      return this.errorResult(
-        error instanceof Error ? error.message : String(error)
-      );
+      return this.errorResult(error instanceof Error ? error.message : String(error));
     }
   }
 
   /**
    * Launch using a pre-configured emulator config
    */
-  async launchWithConfig(
-    config: EmulatorLaunchConfig,
-    romPath: string
-  ): Promise<LaunchResult> {
+  async launchWithConfig(config: EmulatorLaunchConfig, romPath: string): Promise<LaunchResult> {
     if (!config.ios) {
       return this.errorResult('No iOS configuration for this emulator');
     }
 
-    await this.ensureModules();
+    const linking = await this.getModules();
 
     try {
       // Check if the app is installed
@@ -105,7 +95,7 @@ export class IOSLauncher extends BaseLauncher {
         // Optionally open App Store
         if (config.ios.appStoreId) {
           const appStoreUrl = `https://apps.apple.com/app/id${config.ios.appStoreId}`;
-          await this.linking!.openURL(appStoreUrl);
+          await linking.openURL(appStoreUrl);
           return {
             status: 'not_installed',
             error: 'Opening App Store to install emulator',
@@ -119,16 +109,14 @@ export class IOSLauncher extends BaseLauncher {
       const romName = romPath.split('/').pop() || '';
       const url = `${config.ios.urlScheme}open?rom=${encodeURIComponent(romName)}`;
 
-      await this.linking!.openURL(url);
+      await linking.openURL(url);
 
       return this.successResult({
         urlScheme: config.ios.urlScheme,
         romName,
       });
     } catch (error) {
-      return this.errorResult(
-        error instanceof Error ? error.message : String(error)
-      );
+      return this.errorResult(error instanceof Error ? error.message : String(error));
     }
   }
 
@@ -140,11 +128,11 @@ export class IOSLauncher extends BaseLauncher {
       return false;
     }
 
-    await this.ensureModules();
+    const linking = await this.getModules();
 
     try {
       // canOpenURL requires the scheme to be in LSApplicationQueriesSchemes
-      return await this.linking!.canOpenURL(config.ios.urlScheme);
+      return await linking.canOpenURL(config.ios.urlScheme);
     } catch {
       return false;
     }
@@ -154,16 +142,14 @@ export class IOSLauncher extends BaseLauncher {
    * Open the App Store page for an emulator
    */
   async openAppStore(appStoreId: string): Promise<LaunchResult> {
-    await this.ensureModules();
+    const linking = await this.getModules();
 
     try {
       const url = `https://apps.apple.com/app/id${appStoreId}`;
-      await this.linking!.openURL(url);
+      await linking.openURL(url);
       return this.successResult({ appStoreUrl: url });
     } catch (error) {
-      return this.errorResult(
-        error instanceof Error ? error.message : String(error)
-      );
+      return this.errorResult(error instanceof Error ? error.message : String(error));
     }
   }
 }

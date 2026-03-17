@@ -3,12 +3,7 @@
  * Uses React Native Linking and Intent system
  */
 
-import {
-  BaseLauncher,
-  EmulatorLaunchConfig,
-  LaunchOptions,
-  LaunchResult,
-} from './types';
+import { BaseLauncher, EmulatorLaunchConfig, LaunchOptions, LaunchResult } from './types';
 
 /**
  * Type definitions for React Native modules
@@ -34,13 +29,13 @@ interface SendIntentModule {
 
 /**
  * Android launcher using Intent system
- * 
+ *
  * Features:
  * - Intent-based app launching
  * - Package installation checking
  * - ROM file passing via Intent extras or data URI
  * - Deep link support
- * 
+ *
  * @example
  * ```typescript
  * const launcher = new AndroidLauncher();
@@ -52,22 +47,23 @@ export class AndroidLauncher extends BaseLauncher {
   private sendIntent: SendIntentModule | null = null;
 
   /**
-   * Lazy-load React Native modules
+   * Lazy-load React Native modules, returns the guaranteed Linking module
    */
-  private async ensureModules(): Promise<void> {
-    if (!this.linking) {
-      const { Linking } = await import('react-native');
-      this.linking = Linking;
+  private async getModules(): Promise<LinkingModule> {
+    if (this.linking) return this.linking;
+    const { Linking } = await import('react-native');
+    this.linking = Linking;
 
-      try {
-        // react-native-send-intent is optional but provides better control
-        // @ts-expect-error - Optional native module
-        this.sendIntent = await import('react-native-send-intent');
-      } catch {
-        // SendIntent not available, will use Linking fallback
-        this.sendIntent = null;
-      }
+    try {
+      // react-native-send-intent is optional but provides better control
+      // @ts-expect-error - Optional native module
+      this.sendIntent = await import('react-native-send-intent');
+    } catch {
+      // SendIntent not available, will use Linking fallback
+      this.sendIntent = null;
     }
+
+    return Linking;
   }
 
   /**
@@ -75,7 +71,7 @@ export class AndroidLauncher extends BaseLauncher {
    * Uses the emulatorPath as package name on Android
    */
   async launch(options: LaunchOptions): Promise<LaunchResult> {
-    await this.ensureModules();
+    const linking = await this.getModules();
 
     try {
       // On Android, emulatorPath is the package name
@@ -91,29 +87,24 @@ export class AndroidLauncher extends BaseLauncher {
       } else {
         // Fallback to Linking with file:// URI
         const uri = `file://${options.romPath}`;
-        await this.linking!.openURL(uri);
+        await linking.openURL(uri);
       }
 
       return this.successResult({ packageName });
     } catch (error) {
-      return this.errorResult(
-        error instanceof Error ? error.message : String(error)
-      );
+      return this.errorResult(error instanceof Error ? error.message : String(error));
     }
   }
 
   /**
    * Launch using a pre-configured emulator config
    */
-  async launchWithConfig(
-    config: EmulatorLaunchConfig,
-    romPath: string
-  ): Promise<LaunchResult> {
+  async launchWithConfig(config: EmulatorLaunchConfig, romPath: string): Promise<LaunchResult> {
     if (!config.android) {
       return this.errorResult('No Android configuration for this emulator');
     }
 
-    await this.ensureModules();
+    const linking = await this.getModules();
 
     try {
       // Check if the app is installed
@@ -147,7 +138,7 @@ export class AndroidLauncher extends BaseLauncher {
         // Fallback to opening the ROM file
         // Android will show app chooser
         const uri = `file://${romPath}`;
-        await this.linking!.openURL(uri);
+        await linking.openURL(uri);
       }
 
       return this.successResult({
@@ -155,9 +146,7 @@ export class AndroidLauncher extends BaseLauncher {
         activity: config.android.activityName,
       });
     } catch (error) {
-      return this.errorResult(
-        error instanceof Error ? error.message : String(error)
-      );
+      return this.errorResult(error instanceof Error ? error.message : String(error));
     }
   }
 
@@ -169,7 +158,7 @@ export class AndroidLauncher extends BaseLauncher {
       return false;
     }
 
-    await this.ensureModules();
+    const linking = await this.getModules();
 
     if (this.sendIntent) {
       try {
@@ -183,7 +172,7 @@ export class AndroidLauncher extends BaseLauncher {
     // This is less reliable but works without native module
     try {
       const url = `market://details?id=${config.android.packageName}`;
-      return await this.linking!.canOpenURL(url);
+      return await linking.canOpenURL(url);
     } catch {
       return false;
     }
@@ -194,7 +183,7 @@ export class AndroidLauncher extends BaseLauncher {
    */
   private getMimeType(path: string): string {
     const ext = path.split('.').pop()?.toLowerCase();
-    
+
     // Map ROM extensions to MIME types
     const mimeTypes: Record<string, string> = {
       nes: 'application/x-nes-rom',
