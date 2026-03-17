@@ -12,12 +12,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 
-import type { MainTabScreenProps } from '../navigation/types';
 import type { Game, Platform } from '@emuz/core';
 import { useLibraryStore } from '@emuz/core';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2;
 
 /**
  * Home Screen - Daijishou-style dashboard with widgets

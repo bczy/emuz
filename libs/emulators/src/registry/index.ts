@@ -44,11 +44,13 @@ export function searchEmulators(criteria: EmulatorSearchCriteria): EmulatorDefin
   let results = [...emulatorRegistry];
 
   if (criteria.platformId) {
-    results = results.filter((e) => e.platformIds.includes(criteria.platformId!));
+    const platformId = criteria.platformId;
+    results = results.filter((e) => e.platformIds.includes(platformId));
   }
 
   if (criteria.hostPlatform) {
-    results = results.filter((e) => e.hostPlatforms.includes(criteria.hostPlatform!));
+    const hostPlatform = criteria.hostPlatform;
+    results = results.filter((e) => e.hostPlatforms.includes(hostPlatform));
   }
 
   if (criteria.isRetroarchCore !== undefined) {

@@ -138,7 +138,7 @@ export class LauncherService {
   async launchGame(
     romPath: string,
     emulatorId: string,
-    platformId: string
+    _platformId: string
   ): Promise<LaunchResult> {
     const emulator = knownEmulators.find((e) => e.id === emulatorId);
     if (!emulator) {

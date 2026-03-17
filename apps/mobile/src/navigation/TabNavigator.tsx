@@ -22,7 +22,7 @@ interface TabIconProps {
   emoji: string;
 }
 
-const TabIcon: React.FC<TabIconProps> = ({ focused, color, emoji }) => (
+const TabIcon: React.FC<TabIconProps> = ({ focused, color: _color, emoji }) => (
   <View style={styles.iconContainer}>
     <Text style={[styles.icon, { opacity: focused ? 1 : 0.6 }]}>
       {emoji}

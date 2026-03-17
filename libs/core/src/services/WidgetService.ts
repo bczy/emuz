@@ -193,7 +193,7 @@ export class WidgetService implements IWidgetService {
    * Get data for a widget by ID and type.
    * The _id parameter is part of the interface but not needed for current data providers.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   async getWidgetData(_id: string, type: WidgetType): Promise<unknown> {
     switch (type) {
       case 'recent_games': {

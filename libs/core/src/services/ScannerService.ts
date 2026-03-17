@@ -450,7 +450,9 @@ export class ScannerService implements IScannerService {
    */
   private getFileExtension(path: string): string {
     const parts = path.split('.');
-    return parts.length > 1 ? `.${parts.pop()!.toLowerCase()}` : '';
+    if (parts.length <= 1) return '';
+    const ext = parts.pop();
+    return ext !== undefined ? `.${ext.toLowerCase()}` : '';
   }
 
   /**
