@@ -53,7 +53,7 @@ export const CREATE_EMULATORS_TABLE = `
 CREATE TABLE IF NOT EXISTS emulators (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
-  platform_ids TEXT NOT NULL DEFAULT '[]',
+  platforms TEXT NOT NULL DEFAULT '[]',
   executable_path TEXT,
   package_name TEXT,
   url_scheme TEXT,

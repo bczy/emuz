@@ -1,6 +1,13 @@
 /**
- * Database adapter interface
- * Provides a unified API for SQLite operations across platforms
+ * @deprecated Use the Drizzle ORM instance (`DrizzleDb`) from `@emuz/database/schema` instead.
+ *
+ * This interface is retained as a compatibility shim during the transition to Drizzle ORM
+ * (Story 1.7 / ADR-013). It will be removed in v1.0.
+ *
+ * Migration guide:
+ *   - Desktop: `import { drizzle } from 'drizzle-orm/better-sqlite3'`
+ *   - Mobile:  `import { drizzle } from 'drizzle-orm/op-sqlite'`
+ *   - Both accept the schema from `@emuz/database/schema`
  */
 export interface DatabaseAdapter {
   /**

@@ -189,7 +189,42 @@ export class DesktopDatabaseAdapter extends BaseDatabaseAdapter {
 
 /**
  * Create a desktop database adapter
+ * @deprecated Use {@link createDrizzleDesktopDb} for new code.
  */
 export function createDesktopAdapter(config: DatabaseConfig): DesktopDatabaseAdapter {
   return new DesktopDatabaseAdapter(config);
+}
+
+/**
+ * Create a typed Drizzle database instance for desktop (better-sqlite3).
+ *
+ * @example
+ * ```typescript
+ * import { createDrizzleDesktopDb } from '@emuz/database';
+ *
+ * const db = await createDrizzleDesktopDb({ path: './emuz.db' });
+ * // db is BetterSQLite3Database<DrizzleSchema>
+ * ```
+ */
+export async function createDrizzleDesktopDb(
+  config: DatabaseConfig
+): Promise<
+  import('drizzle-orm/better-sqlite3').BetterSQLite3Database<
+    import('../schema/index').DrizzleSchema
+  >
+> {
+  const Database = await import('better-sqlite3').then((m) => m.default);
+  const { drizzle } = await import('drizzle-orm/better-sqlite3');
+  const { drizzleSchema } = await import('../schema/index');
+
+  const sqlite = new Database(config.path);
+
+  if (config.wal !== false) {
+    sqlite.pragma('journal_mode = WAL');
+  }
+  if (config.foreignKeys !== false) {
+    sqlite.pragma('foreign_keys = ON');
+  }
+
+  return drizzle(sqlite, { schema: drizzleSchema });
 }

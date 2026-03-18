@@ -292,16 +292,19 @@ export const platformSeeds: Omit<PlatformRow, 'created_at' | 'updated_at'>[] = [
 /**
  * Generate INSERT statements for platform seeds
  */
+function sqlStr(value: string | null | undefined): string {
+  if (value == null) return 'NULL';
+  return `'${value.replace(/'/g, "''")}'`;
+}
+
 export function getPlatformSeedSQL(): string {
   const now = Math.floor(Date.now() / 1000);
   const values = platformSeeds
     .map(
       (p) =>
-        `('${p.id}', '${p.name}', ${p.short_name ? `'${p.short_name}'` : 'NULL'}, ${
-          p.manufacturer ? `'${p.manufacturer}'` : 'NULL'
-        }, ${p.generation ?? 'NULL'}, ${p.release_year ?? 'NULL'}, NULL, NULL, ${
-          p.color ? `'${p.color}'` : 'NULL'
-        }, '${p.rom_extensions}', ${now}, ${now})`
+        `(${sqlStr(p.id)}, ${sqlStr(p.name)}, ${sqlStr(p.short_name)}, ${sqlStr(p.manufacturer)}, ${
+          p.generation ?? 'NULL'
+        }, ${p.release_year ?? 'NULL'}, NULL, NULL, ${sqlStr(p.color)}, ${sqlStr(p.rom_extensions)}, ${now}, ${now})`
     )
     .join(',\n  ');
 
