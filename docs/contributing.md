@@ -286,40 +286,40 @@ export type MyModel = z.infer<typeof MyModelSchema>;
 
 ### 2. Database Schema (libs/database/src/schema)
 
-Add table definitions:
+Add the table definition using Drizzle ORM in `libs/database/src/schema/index.ts`:
 
 ```typescript
-export const myTable = {
-  name: 'my_table',
-  columns: {
-    id: 'TEXT PRIMARY KEY',
-    name: 'TEXT NOT NULL',
-    created_at: 'INTEGER NOT NULL',
-  },
-  indexes: ['name'],
-};
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+
+export const myTable = sqliteTable('my_table', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+});
 ```
 
-### 3. Migrations (libs/database/src/migrations)
-
-Create a new migration file:
+Then add it to `drizzleSchema` in the same file:
 
 ```typescript
-export const migration_002_add_my_table: Migration = {
-  version: 2,
-  up: async (db) => {
-    await db.execute(`
-      CREATE TABLE my_table (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        created_at INTEGER NOT NULL
-      )
-    `);
-  },
-  down: async (db) => {
-    await db.execute('DROP TABLE my_table');
-  },
-};
+export const drizzleSchema = {
+  // ...existing tables
+  myTable,
+} as const;
+```
+
+### 3. Migrations (libs/database/drizzle/)
+
+Generate a Drizzle Kit migration after updating the schema:
+
+```bash
+pnpm nx run database:migrate:generate
+```
+
+This produces a timestamped SQL file in `libs/database/drizzle/`. Commit it alongside your schema changes. For manual migrations, you can also push directly in development:
+
+```bash
+pnpm nx run database:migrate:push
 ```
 
 ### 4. Services (libs/core/src/services)

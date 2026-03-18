@@ -1,6 +1,6 @@
 # EmuZ Architecture
 
-> *A Daijishou-inspired cross-platform emulator frontend*
+> _A Daijishou-inspired cross-platform emulator frontend_
 
 ## Overview
 
@@ -14,8 +14,8 @@ EmuZ is a modern, cross-platform emulator frontend built with a focus on user ex
 ├──────────────────────────────────┬───────────────────────────────────────┤
 │        Desktop (Electron)        │         Mobile (React Native)         │
 │  ┌──────────────────────────┐    │    ┌──────────────────────────┐       │
-│  │    Renderer Process      │    │    │  React Native + Expo 54  │       │
-│  │  React 18 + react-router │    │    │  NativeWind 4.x          │       │
+│  │    Renderer Process      │    │    │  React Native 0.76+      │       │
+│  │  React 19 + react-router │    │    │  NativeWind 4.x          │       │
 │  │  TailwindCSS 4.x         │    │    │  React Navigation 7.x    │       │
 │  └──────────────────────────┘    │    └──────────────────────────┘       │
 │  ┌──────────────────────────┐    │                                       │
@@ -92,30 +92,32 @@ Leaf libs (no internal deps)
 
 ### Dependency Table
 
-| Package | Depends On (internal) | Dependents |
-|---|---|---|
-| `@emuz/database` | — | `@emuz/core`, `apps/desktop`, `apps/mobile` |
-| `@emuz/platform` | — | `@emuz/core`, `apps/desktop`, `apps/mobile` |
-| `@emuz/emulators` | — | `apps/desktop`, `apps/mobile` |
-| `@emuz/i18n` | — | `apps/desktop`, `apps/mobile` |
-| `@emuz/core` | `@emuz/database`, `@emuz/platform` | `@emuz/ui`, `apps/desktop`, `apps/mobile` |
-| `@emuz/ui` | `@emuz/core` | `apps/desktop`, `apps/mobile` |
-| `apps/desktop` | all 6 libs | — |
-| `apps/mobile` | all 6 libs | — |
+| Package           | Depends On (internal)              | Dependents                                  |
+| ----------------- | ---------------------------------- | ------------------------------------------- |
+| `@emuz/database`  | —                                  | `@emuz/core`, `apps/desktop`, `apps/mobile` |
+| `@emuz/platform`  | —                                  | `@emuz/core`, `apps/desktop`, `apps/mobile` |
+| `@emuz/emulators` | —                                  | `apps/desktop`, `apps/mobile`               |
+| `@emuz/i18n`      | —                                  | `apps/desktop`, `apps/mobile`               |
+| `@emuz/core`      | `@emuz/database`, `@emuz/platform` | `@emuz/ui`, `apps/desktop`, `apps/mobile`   |
+| `@emuz/ui`        | `@emuz/core`                       | `apps/desktop`, `apps/mobile`               |
+| `apps/desktop`    | all 6 libs                         | —                                           |
+| `apps/mobile`     | all 6 libs                         | —                                           |
 
 ## Package Structure
 
 ### Applications
 
 #### `apps/desktop` - Electron Desktop Application
+
 - **Framework**: Electron 33.x with electron-vite 2.x
-- **Renderer**: React 18 + react-router-dom 7 + TailwindCSS 4.x
+- **Renderer**: React 19.x + react-router-dom 7 + TailwindCSS 4.x
 - **State**: Zustand 5.x with React Query 5.x
 - **IPC channels**: `database`, `filesystem`, `launcher`
 - **Screens**: Home, Library, Platform, Collection, Genre, GameDetail, Settings, SetupWizard
 
 #### `apps/mobile` - React Native Mobile Application
-- **Framework**: React Native 0.81 + Expo 54 (bare workflow)
+
+- **Framework**: React Native 0.76+ (bare workflow)
 - **Styling**: NativeWind 4.x (Tailwind for React Native)
 - **Navigation**: React Navigation 7.x (`RootNavigator` + `TabNavigator`)
 - **Screens**: Home, Library, Platforms, PlatformDetail, Collections, CollectionDetail, Genres, GenreDetail, GameDetail, Search, ScanProgress, EmulatorConfig, Settings, Setup
@@ -123,39 +125,52 @@ Leaf libs (no internal deps)
 ### Libraries
 
 #### `libs/core` - Core Business Logic
+
 Contains all platform-agnostic business logic:
+
 - **Models**: Game, Platform, Emulator, Collection, Widget, Genre, Settings
 - **Services**: LibraryService, ScannerService, MetadataService, LaunchService, WidgetService, GenreService
 - **Stores**: Zustand stores for state management
 - **Hooks**: React hooks for accessing services
 
 #### `libs/database` - Database Layer
+
 SQLite-based persistence layer:
-- **Schema**: All table definitions using Drizzle-like types
-- **Migrations**: Versioned database migrations
-- **Adapters**: Platform-specific database implementations
-  - Desktop: better-sqlite3
-  - Mobile: react-native-sqlite-storage
+
+- **ORM**: Drizzle ORM (ADR-013) — typed schema in `schema/index.ts` (`drizzleSchema`, `DrizzleDb`)
+- **Schema**: Table definitions via `drizzle-orm/sqlite-core` (`sqliteTable`)
+- **Migrations**: Drizzle Kit migrations in `drizzle/` + legacy SQL in `migrations/`
+- **Adapters**: Platform-specific database adapters (legacy `DatabaseAdapter` interface — **deprecated**, use `DrizzleDb`)
+  - Desktop: `drizzle-orm/better-sqlite3`
+  - Mobile: `drizzle-orm/op-sqlite`
 
 #### `libs/ui` - UI Components
+
 Shared UI component library:
+
 - **Components**: Button, Card, GameCard, GameGrid, Sidebar, Widgets, etc.
 - **Themes**: Dark theme with Emerald Green (#10B981) accent
 - **Design System**: Typography, spacing, colors
 
 #### `libs/emulators` - Emulator Definitions
+
 Database of known emulators:
+
 - **Registry**: All supported emulators with metadata
 - **Detector**: Auto-detection logic per platform
 - **Launchers**: Command templates and launch logic
 
 #### `libs/platform` - Platform Abstractions
+
 Platform-specific implementations:
+
 - **Filesystem**: Unified file system API across platforms
 - **Launchers**: Process spawning / Intent launching
 
 #### `libs/i18n` - Internationalization
+
 Multi-language support:
+
 - **Locales**: EN, ES, FR, DE, JA, ZH
 - **Config**: i18next configuration
 
@@ -175,7 +190,7 @@ User Action → React Component → Store Action → Service Method → Database
 
 ### Service Layer
 
-Services provide the business logic layer:
+Services provide the business logic layer. All services accept a `DrizzleDb` instance and are defined by interfaces in `libs/core/src/services/types.ts`:
 
 ```typescript
 // Example: LibraryService
@@ -183,9 +198,10 @@ interface ILibraryService {
   getAllGames(options?: PaginationOptions): Promise<Game[]>;
   getGameById(id: string): Promise<Game | null>;
   searchGames(options: SearchOptions): Promise<Game[]>;
-  updateGame(id: string, updates: Partial<Game>): Promise<Game | null>;
+  updateGame(id: string, data: Partial<Game>): Promise<Game | null>;
   deleteGame(id: string): Promise<void>;
-  // ... more methods
+  toggleFavorite(gameId: string): Promise<void>;
+  // ... more methods — see docs/api.md
 }
 ```
 
@@ -193,17 +209,17 @@ interface ILibraryService {
 
 ### Core Tables
 
-| Table | Description |
-|-------|-------------|
-| `games` | Game entries with metadata |
-| `platforms` | Gaming platform definitions |
-| `emulators` | Configured emulators |
-| `collections` | User-defined game collections |
-| `collection_games` | Many-to-many collection↔game |
-| `scan_directories` | ROM scan locations |
-| `play_sessions` | Play history tracking |
-| `widgets` | Dashboard widget configuration |
-| `settings` | Application settings |
+| Table              | Description                                          |
+| ------------------ | ---------------------------------------------------- |
+| `games`            | Game entries with metadata                           |
+| `platforms`        | Gaming platform definitions                          |
+| `emulators`        | Configured emulators                                 |
+| `collections`      | User-defined game collections                        |
+| `collection_games` | Many-to-many collection↔game (composite PK)         |
+| `scan_directories` | ROM scan locations                                   |
+| `widgets`          | Dashboard widget configuration                       |
+| `genres`           | Game genre records (id, name, slug, iconName, color) |
+| `settings`         | Key-value application settings store                 |
 
 ### Entity Relationships
 
@@ -217,22 +233,26 @@ emulators ∞──∞ platforms
 ## Key Features
 
 ### Daijishou-Inspired Home Screen
+
 - Configurable widget system
 - Recent games, favorites, statistics widgets
 - Platform shortcuts with wallpapers
 
 ### Platform-Aware Design
+
 - Platform cards with background wallpapers
 - Genre-based organization
 - User collections
 
 ### Smart Library Management
+
 - Recursive ROM scanning
 - Hash-based game identification
 - Metadata scraping
 - Cover art management
 
 ### Emulator Integration
+
 - Auto-detection of installed emulators
 - Configurable command templates
 - Play session tracking
@@ -240,17 +260,17 @@ emulators ∞──∞ platforms
 
 ## Tech Stack Summary
 
-| Layer | Desktop | Mobile |
-|-------|---------|--------|
-| Framework | Electron 33.x | React Native 0.76+ |
-| UI | React 19.x | React Native + NativeWind |
-| Styling | TailwindCSS 4.x | NativeWind 4.x |
-| State | Zustand 5.x | Zustand 5.x |
-| Data | React Query 5.x | React Query 5.x |
-| Database | better-sqlite3 | react-native-sqlite-storage |
-| Build | Vite | Metro |
-| Monorepo | Nx 20.x | Nx 20.x |
-| Package Manager | pnpm 9.x | pnpm 9.x |
+| Layer           | Desktop                      | Mobile                    |
+| --------------- | ---------------------------- | ------------------------- |
+| Framework       | Electron 33.x                | React Native 0.76+        |
+| UI              | React 19.x                   | React Native + NativeWind |
+| Styling         | TailwindCSS 4.x              | NativeWind 4.x            |
+| State           | Zustand 5.x                  | Zustand 5.x               |
+| Data            | React Query 5.x              | React Query 5.x           |
+| Database        | better-sqlite3 + Drizzle ORM | op-sqlite + Drizzle ORM   |
+| Build           | Vite                         | Metro                     |
+| Monorepo        | Nx 20.x                      | Nx 20.x                   |
+| Package Manager | pnpm 9.x                     | pnpm 9.x                  |
 
 ## Build System
 
@@ -263,6 +283,7 @@ emulators ∞──∞ platforms
 - **Module format**: all libs use ESM (`"type": "module"`)
 
 ### Scripts
+
 ```bash
 # Development
 pnpm nx serve desktop      # Electron dev server (Vite + HMR)

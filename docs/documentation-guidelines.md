@@ -18,13 +18,13 @@ Documentation in EmuZ is written to be consumed by both humans and large languag
 
 ## Global Rules
 
-| Rule | Detail |
-|------|--------|
-| **Language** | English only — all READMEs, `docs/`, inline public API comments |
-| **Doc sync** | Update README and `docs/api.md` in the same PR as the code change |
-| **Anti-patterns** | Every README must have at least one anti-pattern entry |
-| **Types** | All exported functions and interfaces must show TypeScript signatures |
-| **Commands** | Every package must document its key Nx/pnpm commands |
+| Rule              | Detail                                                                |
+| ----------------- | --------------------------------------------------------------------- |
+| **Language**      | English only — all READMEs, `docs/`, inline public API comments       |
+| **Doc sync**      | Update README and `docs/api.md` in the same PR as the code change     |
+| **Anti-patterns** | Every README must have at least one anti-pattern entry                |
+| **Types**         | All exported functions and interfaces must show TypeScript signatures |
+| **Commands**      | Every package must document its key Nx/pnpm commands                  |
 
 ---
 
@@ -32,34 +32,39 @@ Documentation in EmuZ is written to be consumed by both humans and large languag
 
 Copy this template when creating a new library or app README.
 
-```markdown
-# @emuz/<name>  (or: EmuZ Desktop App / EmuZ Mobile App)
+````markdown
+# @emuz/<name> (or: EmuZ Desktop App / EmuZ Mobile App)
 
 > One sentence: what this package is and its single responsibility.
 
 ## Boundaries
 
 ### Owns
+
 - List of responsibilities this package holds
 
 ### Delegates
+
 - Explicit list of what this package does NOT do (and who does it instead)
 
 ## Integration Map
 
 ### Internal dependencies
-| Package | Used for |
-|---------|----------|
+
+| Package      | Used for                               |
+| ------------ | -------------------------------------- |
 | `@emuz/core` | example: models and service interfaces |
 
 ### Depended by
+
 - `apps/desktop` — (reason)
 - `@emuz/ui` — (reason)
 
 ### External dependencies
-| Package | Version | Role |
-|---------|---------|------|
-| `zod` | `^3.x` | Schema validation and type inference |
+
+| Package | Version | Role                                 |
+| ------- | ------- | ------------------------------------ |
+| `zod`   | `^3.x`  | Schema validation and type inference |
 
 ## Usage
 
@@ -78,6 +83,7 @@ pnpm nx test <name> --coverage
 # Lint
 pnpm nx lint <name>
 ```
+````
 
 ### Code
 
@@ -96,13 +102,14 @@ import { SomeExport } from '@emuz/<name>';
 
 ## Anti-Patterns
 
-| ❌ Do NOT | ✅ Do instead |
-|-----------|--------------|
+| ❌ Do NOT                      | ✅ Do instead                          |
+| ------------------------------ | -------------------------------------- |
 | `import fs from 'fs'` directly | Use `@emuz/platform` FileSystemAdapter |
 
 ## Constraints
 
 - Bullet list of non-negotiable architectural rules for this package
+
 ```
 
 ---
@@ -169,4 +176,5 @@ Non-negotiable rules that apply to this specific package. Reference `.specify/me
 - Full API reference: [docs/api.md](api.md)
 - System architecture: [docs/architecture.md](architecture.md)
 - Contributing guide (PR process): [docs/contributing.md](contributing.md)
-- Project constitution: [.specify/memory/constitution.md](../.specify/memory/constitution.md)
+- Project constitution: `CLAUDE.md` (root — non-negotiable development rules)
+```
