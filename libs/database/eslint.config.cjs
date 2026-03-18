@@ -11,6 +11,7 @@ module.exports = [
           ignoredFiles: [
             '{projectRoot}/eslint.config.{js,cjs,mjs,ts,cts,mts}',
             '{projectRoot}/vite.config.{js,ts,mjs,mts}',
+            '{projectRoot}/drizzle.config.{js,ts,mjs,mts}',
           ],
         },
       ],

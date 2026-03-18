@@ -12,6 +12,13 @@
       "options": {
         "config": "libs/database/vite.config.mts"
       }
+    },
+    "generate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm drizzle-kit generate",
+        "cwd": "libs/database"
+      }
     }
   }
 }
