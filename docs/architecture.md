@@ -211,7 +211,7 @@ interface ILibraryService {
 
 | Table              | Description                                          |
 | ------------------ | ---------------------------------------------------- |
-| `games`            | Game entries with metadata                           |
+| `games`            | Game entries with metadata incl. `rom_type` (Epic 7) |
 | `platforms`        | Gaming platform definitions                          |
 | `emulators`        | Configured emulators                                 |
 | `collections`      | User-defined game collections                        |
@@ -250,6 +250,7 @@ emulators ∞──∞ platforms
 - Hash-based game identification
 - Metadata scraping
 - Cover art management
+- ROM type classification: `'game'` vs `'homebrew'` (ADR-014)
 
 ### Emulator Integration
 

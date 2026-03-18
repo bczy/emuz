@@ -16,6 +16,7 @@
 - 📊 **Play Tracking** - Track your play time and history
 - 📂 **Collections** - Create custom game collections
 - 🏷️ **Genres** - Organize games by genre
+- 🎯 **ROM Classification** - Distinguish commercial games from homebrew content
 - ⚡ **Emulator Integration** - Launch games in RetroArch, Dolphin, PCSX2, and more
 - 🌍 **Multi-language** - EN, ES, FR, DE, JA, ZH support
 
