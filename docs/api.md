@@ -6,12 +6,14 @@ This document describes the public API for EmuZ libraries.
 
 ### Models
 
+All models are defined with Zod schemas in `libs/core/src/models`. The inferred TypeScript types are exported alongside their schemas.
+
 #### Game
 
 ```typescript
 interface Game {
-  id: string;
-  platformId: string;
+  id: string; // UUID
+  platformId: string; // UUID ref to Platform
   title: string;
   filePath: string;
   fileName: string;
@@ -23,13 +25,25 @@ interface Game {
   publisher?: string;
   releaseDate?: string;
   genre?: string;
-  rating?: number;
+  rating?: number; // 0–5
   playCount: number;
   playTime: number; // in seconds
   lastPlayedAt?: Date;
   isFavorite: boolean;
   createdAt: Date;
   updatedAt: Date;
+}
+
+// External metadata (from scrapers)
+interface GameMetadata {
+  title?: string;
+  description?: string;
+  developer?: string;
+  publisher?: string;
+  releaseDate?: string;
+  genre?: string;
+  coverUrl?: string; // URL (not a local path)
+  rating?: number; // 0–5
 }
 ```
 
@@ -39,7 +53,7 @@ interface Game {
 interface Platform {
   id: string;
   name: string;
-  shortName: string;
+  shortName?: string;
   manufacturer?: string;
   generation?: number;
   releaseYear?: number;
@@ -57,11 +71,15 @@ interface Platform {
 interface Emulator {
   id: string;
   name: string;
-  executablePath: string;
-  platforms: string[];
-  commandTemplate: string;
-  config?: Record<string, unknown>;
+  platforms: string[]; // platform IDs
+  executablePath?: string; // desktop
+  packageName?: string; // Android
+  urlScheme?: string; // iOS
+  iconPath?: string;
+  commandTemplate?: string;
+  corePath?: string; // RetroArch cores
   isDefault: boolean;
+  isInstalled: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -75,7 +93,6 @@ interface Collection {
   name: string;
   description?: string;
   coverPath?: string;
-  gameIds: string[];
   isSystem: boolean;
   sortOrder: number;
   createdAt: Date;
@@ -86,19 +103,14 @@ interface Collection {
 #### Widget
 
 ```typescript
-type WidgetType = 
-  | 'recent_games' 
-  | 'favorites' 
-  | 'stats' 
-  | 'platform_shortcuts'
-  | 'collection';
+type WidgetType = 'recent_games' | 'favorites' | 'stats' | 'platform_shortcuts' | 'collection';
 
 type WidgetSize = 'small' | 'medium' | 'large';
 
 interface Widget {
   id: string;
   type: WidgetType;
-  title: string;
+  title?: string;
   size: WidgetSize;
   position: number;
   config?: Record<string, unknown>;
@@ -112,13 +124,105 @@ interface Widget {
 
 ```typescript
 interface Genre {
-  id: string;
+  id: string; // UUID
   name: string;
+  slug: string; // lowercase kebab, e.g. 'action-rpg'
+  iconName?: string;
+  color?: string; // hex color, e.g. '#10B981'
   gameCount: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 ```
 
+---
+
 ### Services
+
+All service interfaces live in `libs/core/src/services/types.ts`. Concrete implementations accept a `DrizzleDb` instance from `@emuz/database`.
+
+#### Shared Option Types
+
+```typescript
+interface PaginationOptions {
+  limit?: number;
+  offset?: number;
+  page?: number;
+}
+
+interface SearchOptions extends PaginationOptions {
+  query?: string;
+  platformId?: string;
+  genreId?: string;
+  genre?: string;
+  favorite?: boolean;
+}
+
+interface ScanStatus {
+  isScanning: boolean;
+  currentDirectory?: string;
+  filesScanned: number;
+  gamesFound: number;
+}
+
+interface ScanProgress {
+  phase: 'scanning' | 'identifying' | 'complete' | 'error';
+  currentPath?: string;
+  fileName?: string;
+  progress?: number;
+  filesFound: number;
+  filesProcessed: number;
+  gamesAdded: number;
+  gamesUpdated: number;
+  errors: string[];
+}
+
+interface RomDirectory {
+  id: string;
+  path: string;
+  platformId?: string;
+  recursive: boolean;
+  enabled: boolean;
+  lastScanned?: Date;
+  createdAt: Date;
+}
+
+interface MetadataProgress {
+  phase: 'searching' | 'downloading' | 'complete' | 'error';
+  gameId: string;
+  gamesProcessed: number;
+  gamesTotal: number;
+  found: number;
+  notFound: number;
+  errors: string[];
+}
+
+interface PlaySession {
+  id: string;
+  gameId: string;
+  startedAt: Date;
+  endedAt?: Date;
+  duration: number;
+}
+
+interface CreateCollectionInput {
+  name: string;
+  description?: string;
+  coverPath?: string;
+  isSystem?: boolean;
+}
+
+interface CreateEmulatorInput {
+  name: string;
+  platforms: string[];
+  executablePath?: string;
+  packageName?: string;
+  urlScheme?: string;
+  iconPath?: string;
+  commandTemplate?: string;
+  corePath?: string;
+}
+```
 
 #### LibraryService
 
@@ -128,41 +232,29 @@ interface ILibraryService {
   getAllGames(options?: PaginationOptions): Promise<Game[]>;
   getGameById(id: string): Promise<Game | null>;
   getGamesByPlatform(platformId: string, options?: PaginationOptions): Promise<Game[]>;
-  searchGames(options: SearchOptions): Promise<Game[]>;
-  updateGame(id: string, updates: Partial<Game>): Promise<Game | null>;
+  searchGames(
+    options: SearchOptions | string | { query?: string; platformId?: string; genre?: string }
+  ): Promise<Game[]>;
+  updateGame(id: string, data: Partial<Game>): Promise<Game | null>;
   deleteGame(id: string): Promise<void>;
-  
-  // Favorites
-  getFavorites(options?: PaginationOptions): Promise<Game[]>;
-  addToFavorites(gameId: string): Promise<void>;
-  removeFromFavorites(gameId: string): Promise<void>;
-  
+  getGameCount(): Promise<number>;
+  getRecentGames(limit?: number): Promise<Game[]>;
+  getRecentlyPlayed(limit?: number): Promise<Game[]>;
+  recordPlaySession(gameId: string, duration: number): Promise<void>;
+
   // Collections
   getCollections(): Promise<Collection[]>;
-  getCollectionById(id: string): Promise<Collection | null>;
-  createCollection(input: CreateCollectionInput): Promise<Collection>;
-  updateCollection(id: string, updates: Partial<Collection>): Promise<Collection | null>;
+  createCollection(data: CreateCollectionInput): Promise<Collection>;
   deleteCollection(id: string): Promise<void>;
   addToCollection(collectionId: string, gameId: string): Promise<void>;
   removeFromCollection(collectionId: string, gameId: string): Promise<void>;
-  
-  // Play Tracking
-  recordPlaySession(gameId: string, duration: number): Promise<void>;
-  getRecentlyPlayed(limit?: number): Promise<Game[]>;
-}
+  getCollectionGames(collectionId: string): Promise<Game[]>;
 
-interface PaginationOptions {
-  page?: number;
-  limit?: number;
-}
-
-interface SearchOptions {
-  query: string;
-  platformId?: string;
-  genre?: string;
-  isFavorite?: boolean;
-  page?: number;
-  limit?: number;
+  // Favorites
+  toggleFavorite(gameId: string): Promise<void>;
+  addToFavorites(gameId: string): Promise<void>;
+  removeFromFavorites(gameId: string): Promise<void>;
+  getFavorites(): Promise<Game[]>;
 }
 ```
 
@@ -170,34 +262,47 @@ interface SearchOptions {
 
 ```typescript
 interface IScannerService {
-  // Directory Management
-  addDirectory(path: string, options?: AddDirectoryOptions): Promise<void>;
-  removeDirectory(path: string, options?: RemoveDirectoryOptions): Promise<void>;
-  getDirectories(): Promise<ScanDirectory[]>;
-  
+  // Directory management
+  addDirectory(path: string, options?: ScanOptions): Promise<RomDirectory>;
+  removeDirectory(path: string, options?: { removeGames?: boolean }): Promise<void>;
+  getDirectories(): Promise<RomDirectory[]>;
+  updateDirectory(id: string, data: Partial<RomDirectory>): Promise<void>;
+
   // Scanning
   scan(path: string, options?: ScanOptions): AsyncGenerator<ScanProgress>;
+  scanDirectory(path: string): AsyncGenerator<ScanProgress>;
+  scanAllDirectories(): AsyncGenerator<ScanProgress>;
   cancelScan(): void;
   getScanStatus(): ScanStatus;
-  
-  // Utilities
-  detectPlatformByExtension(extension: string): string | null;
+
+  // ROM detection
+  detectPlatform(filePath: string): Promise<Platform | null>;
+  detectPlatformByExtension(ext: string): string | null;
   calculateHash(filePath: string): Promise<string>;
 }
 
 interface ScanOptions {
-  platformId?: string;
   recursive?: boolean;
+  platformId?: string;
+  includeHidden?: boolean;
   skipExisting?: boolean;
 }
+```
 
-interface ScanProgress {
-  fileName: string;
-  filePath: string;
-  progress: number; // 0-100
-  filesScanned: number;
-  gamesFound: number;
-  currentDirectory: string;
+#### MetadataService
+
+```typescript
+interface IMetadataService {
+  // Identification
+  identifyGame(game: Game): Promise<GameMetadata | null>;
+  searchMetadata(query: string, platformId?: string): Promise<GameMetadata[]>;
+
+  // Artwork
+  downloadCover(gameId: string, url: string): Promise<string>;
+  getCoverPath(gameId: string): string;
+
+  // Batch operations
+  refreshMetadata(gameIds: string[]): AsyncGenerator<MetadataProgress>;
 }
 ```
 
@@ -205,28 +310,25 @@ interface ScanProgress {
 
 ```typescript
 interface ILaunchService {
-  // Emulators
-  getEmulators(options?: EmulatorFilter): Promise<Emulator[]>;
-  getDefaultEmulator(platformId: string): Promise<Emulator | null>;
-  detectEmulators(): Promise<DetectedEmulator[]>;
-  addEmulator(input: AddEmulatorInput): Promise<Emulator>;
-  updateEmulator(id: string, updates: Partial<Emulator>): Promise<Emulator | null>;
+  // Emulator management
+  getEmulators(options?: { platformId?: string }): Promise<Emulator[]>;
+  getEmulatorById(id: string): Promise<Emulator | null>;
+  detectEmulators(): Promise<Array<{ name: string; path: string }>>;
+  addEmulator(data: CreateEmulatorInput): Promise<Emulator>;
+  updateEmulator(id: string, data: Partial<Emulator>): Promise<void>;
   deleteEmulator(id: string): Promise<void>;
   setDefaultEmulator(emulatorId: string, platformId: string): Promise<void>;
-  
-  // Launching
-  launchGame(game: Game, emulatorId?: string): Promise<LaunchResult>;
-  buildCommand(emulator: Emulator, options: CommandOptions): string;
-  
-  // Sessions
-  endPlaySession(sessionId: string, duration: number): Promise<void>;
-  getPlayHistory(gameId: string, options?: HistoryOptions): Promise<PlaySession[]>;
-}
+  getDefaultEmulator(platformId: string): Promise<Emulator | null>;
 
-interface LaunchResult {
-  success: boolean;
-  sessionId?: string;
-  error?: string;
+  // Launching
+  launchGame(game: Game, emulatorId?: string): Promise<{ success: boolean }>;
+  buildCommand(emulator: Emulator, vars: { romPath: string; core?: string }): string;
+  buildLaunchCommand(game: Game, emulator: Emulator): string;
+
+  // Tracking
+  recordPlaySession(gameId: string, duration: number): Promise<void>;
+  endPlaySession(sessionId: string, duration: number): Promise<void>;
+  getPlayHistory(gameId: string, options?: { limit?: number }): Promise<PlaySession[]>;
 }
 ```
 
@@ -234,13 +336,14 @@ interface LaunchResult {
 
 ```typescript
 interface IWidgetService {
-  getWidgets(options?: WidgetFilter): Promise<Widget[]>;
-  addWidget(input: AddWidgetInput): Promise<Widget>;
-  updateWidget(id: string, updates: Partial<Widget>): Promise<Widget | null>;
+  getWidgets(options?: { visibleOnly?: boolean }): Promise<Widget[]>;
+  getWidgetById(id: string): Promise<Widget | null>;
+  addWidget(config: { type: Widget['type']; title?: string; size?: string }): Promise<Widget>;
   removeWidget(id: string): Promise<void>;
-  reorderWidgets(newOrder: string[]): Promise<void>;
-  getWidgetData(widgetId: string, type: WidgetType): Promise<WidgetData>;
-  getDefaultWidgets(): WidgetConfig[];
+  updateWidget(id: string, data: Partial<Widget>): Promise<Widget | null>;
+  reorderWidgets(widgetIds: string[]): Promise<void>;
+  getWidgetData(id: string, type: Widget['type']): Promise<unknown>;
+  getDefaultWidgets(): Array<{ type: Widget['type']; title?: string; size?: string }>;
 }
 ```
 
@@ -248,13 +351,31 @@ interface IWidgetService {
 
 ```typescript
 interface IGenreService {
-  getGenres(): Promise<Genre[]>;
+  getGenres(): Promise<Array<{ id: string; name: string; gameCount: number }>>;
   getGamesByGenre(genre: string, options?: PaginationOptions): Promise<Game[]>;
-  assignGenre(gameId: string, genre: string | null): Promise<void>;
-  getGenreStats(genre: string): Promise<GenreStats>;
-  extractGenreFromMetadata(metadata: string): string | null;
+  assignGenre(gameId: string, genreId: string | null): Promise<void>;
+  removeGenre(gameId: string, genreId: string): Promise<void>;
+  extractGenreFromMetadata(input: string | null): string | null;
+  getGenreStats(genre: string): Promise<{
+    totalGames: number;
+    totalPlayTime: number;
+    averageRating: number;
+  }>;
 }
 ```
+
+#### PlatformService
+
+```typescript
+interface IPlatformService {
+  getPlatforms(): Promise<Platform[]>;
+  getPlatformById(id: string): Promise<Platform | null>;
+  getPlatformByExtension(extension: string): Promise<Platform | null>;
+  getGameCountByPlatform(platformId: string): Promise<number>;
+}
+```
+
+---
 
 ### Stores (Zustand)
 
@@ -267,7 +388,7 @@ interface LibraryState {
   collections: Collection[];
   isLoading: boolean;
   error: string | null;
-  
+
   // Actions
   fetchGames: () => Promise<void>;
   fetchPlatforms: () => Promise<void>;
@@ -276,8 +397,6 @@ interface LibraryState {
   updateGame: (id: string, updates: Partial<Game>) => void;
   removeGame: (id: string) => void;
 }
-
-const useLibraryStore = create<LibraryState>(/* ... */);
 ```
 
 #### useSettingsStore
@@ -289,7 +408,7 @@ interface SettingsState {
   gridColumns: number;
   showHiddenFiles: boolean;
   scanDirectories: string[];
-  
+
   // Actions
   setTheme: (theme: SettingsState['theme']) => void;
   setLanguage: (language: string) => void;
@@ -309,7 +428,7 @@ interface UIState {
   searchQuery: string;
   selectedPlatform: string | null;
   selectedGenre: string | null;
-  
+
   // Actions
   toggleSidebar: () => void;
   setView: (view: UIState['currentView']) => void;
@@ -323,7 +442,28 @@ interface UIState {
 
 ## @emuz/database
 
-### DatabaseAdapter
+### Drizzle Schema (current)
+
+The canonical database API. Import from `@emuz/database/schema`:
+
+```typescript
+import { drizzle } from 'drizzle-orm/better-sqlite3'; // desktop
+import { drizzle } from 'drizzle-orm/op-sqlite'; // mobile
+import { drizzleSchema, type DrizzleDb } from '@emuz/database';
+
+// Desktop
+const sqlite = new Database('/path/to/emuz.db');
+const db: DrizzleDb = drizzle(sqlite, { schema: drizzleSchema });
+
+// Query example
+const games = await db.select().from(drizzleSchema.games).all();
+```
+
+Exported tables: `platforms`, `games`, `emulators`, `collections`, `collectionGames`, `widgets`, `genres`, `settings`, `scanDirectories`.
+
+### DatabaseAdapter (deprecated)
+
+> **Deprecated** — retained as a compatibility shim during the transition to Drizzle ORM (Story 1.7 / ADR-013). Will be removed in v1.0. Use `DrizzleDb` instead.
 
 ```typescript
 interface DatabaseAdapter {
@@ -332,35 +472,9 @@ interface DatabaseAdapter {
   isConnected(): boolean;
   execute(sql: string, params?: unknown[]): Promise<void>;
   query<T = unknown>(sql: string, params?: unknown[]): Promise<T[]>;
-  transaction<T>(fn: () => Promise<T>): Promise<T>;
+  queryOne<T = unknown>(sql: string, params?: unknown[]): Promise<T | null>;
+  transaction(fn: () => Promise<unknown>): Promise<unknown>;
 }
-```
-
-### Desktop Adapter
-
-```typescript
-import { createDesktopAdapter } from '@emuz/database';
-
-const adapter = await createDesktopAdapter({
-  path: '/path/to/database.db',
-  wal: true,
-  foreignKeys: true,
-});
-
-await adapter.open();
-```
-
-### Mobile Adapter
-
-```typescript
-import { createMobileAdapter } from '@emuz/database';
-
-const adapter = await createMobileAdapter({
-  name: 'emuz.db',
-  location: 'default',
-});
-
-await adapter.open();
 ```
 
 ---
@@ -424,39 +538,76 @@ type HostPlatform = 'windows' | 'macos' | 'linux' | 'android' | 'ios';
 
 ```typescript
 interface FileSystemAdapter {
-  readDir(path: string): Promise<FileEntry[]>;
-  readFile(path: string): Promise<Buffer>;
-  writeFile(path: string, data: Buffer): Promise<void>;
+  readText(path: string, options?: ReadOptions): Promise<string>;
+  readBinary(path: string): Promise<Uint8Array>;
+  writeText(path: string, content: string, options?: WriteOptions): Promise<void>;
+  writeBinary(path: string, content: Uint8Array, options?: WriteOptions): Promise<void>;
+  delete(path: string): Promise<void>;
   exists(path: string): Promise<boolean>;
-  stat(path: string): Promise<FileStat>;
-  mkdir(path: string): Promise<void>;
-  rm(path: string): Promise<void>;
-  copy(src: string, dest: string): Promise<void>;
-  move(src: string, dest: string): Promise<void>;
-  getDocumentsPath(): string;
-  getCachePath(): string;
+  stat(path: string): Promise<FileInfo>;
+  list(path: string): Promise<DirectoryListing>;
+  mkdir(path: string, recursive?: boolean): Promise<void>;
+  rmdir(path: string, recursive?: boolean): Promise<void>;
+  copy(source: string, destination: string): Promise<void>;
+  move(source: string, destination: string): Promise<void>;
+  scanForRoms(path: string, options?: ScanOptions): Promise<FileInfo[]>;
+  getDocumentsPath(): Promise<string>;
+  getCachePath(): Promise<string>;
+  requestReadPermission?(path: string): Promise<boolean>; // mobile only
+  requestWritePermission?(path: string): Promise<boolean>; // mobile only
 }
 
-interface FileEntry {
+interface FileInfo {
   name: string;
   path: string;
+  size: number;
   isDirectory: boolean;
+  modifiedAt: Date;
+  createdAt?: Date;
+  extension?: string;
+  mimeType?: string;
 }
 
-interface FileStat {
-  size: number;
-  mtime: Date;
-  isDirectory: boolean;
+interface DirectoryListing {
+  path: string;
+  entries: FileInfo[];
+  hasMore?: boolean;
+}
+
+interface ScanOptions {
+  extensions?: string[]; // e.g. ['nes', 'smc', 'gba']
+  recursive?: boolean;
+  maxDepth?: number;
+  limit?: number;
 }
 ```
 
-### LauncherAdapter
+### EmulatorLauncher
 
 ```typescript
-interface LauncherAdapter {
-  launch(command: string, options?: LaunchOptions): Promise<LaunchResult>;
-  isAvailable(path: string): boolean;
-  detectEmulators(): Promise<DetectedEmulator[]>;
+interface EmulatorLauncher {
+  launch(options: LaunchOptions): Promise<LaunchResult>;
+  launchWithConfig(config: EmulatorLaunchConfig, romPath: string): Promise<LaunchResult>;
+  isInstalled(config: EmulatorLaunchConfig): Promise<boolean>;
+  getAvailableEmulators?(platformId: string): Promise<EmulatorLaunchConfig[]>;
+}
+
+type LaunchStatus = 'success' | 'error' | 'not_found' | 'not_installed';
+
+interface LaunchResult {
+  status: LaunchStatus;
+  error?: string;
+  pid?: number; // desktop only
+  metadata?: Record<string, unknown>;
+}
+
+interface LaunchOptions {
+  romPath: string;
+  emulatorPath: string;
+  args?: string[];
+  workingDirectory?: string;
+  env?: Record<string, string>;
+  waitForExit?: boolean;
 }
 ```
 
@@ -480,7 +631,7 @@ interface ButtonProps {
 
 <Button variant="primary" size="md" onClick={handleClick}>
   Play Game
-</Button>
+</Button>;
 ```
 
 #### GameCard
@@ -494,11 +645,7 @@ interface GameCardProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-<GameCard
-  game={game}
-  onPress={handleGamePress}
-  showPlatformBadge
-/>
+<GameCard game={game} onPress={handleGamePress} showPlatformBadge />;
 ```
 
 #### GameGrid
@@ -513,11 +660,7 @@ interface GameGridProps {
   onLoadMore?: () => void;
 }
 
-<GameGrid
-  games={games}
-  columns={4}
-  onGamePress={handleGamePress}
-/>
+<GameGrid games={games} columns={4} onGamePress={handleGamePress} />;
 ```
 
 #### SearchBar
@@ -530,11 +673,7 @@ interface SearchBarProps {
   autoFocus?: boolean;
 }
 
-<SearchBar
-  value={searchQuery}
-  onChange={setSearchQuery}
-  placeholder="Search games..."
-/>
+<SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search games..." />;
 ```
 
 #### Sidebar
@@ -605,18 +744,16 @@ import { useTranslation, I18nProvider } from '@emuz/i18n';
 // Wrap app in provider
 <I18nProvider>
   <App />
-</I18nProvider>
+</I18nProvider>;
 
 // Use in components
 function MyComponent() {
   const { t, i18n } = useTranslation();
-  
+
   return (
     <div>
       <h1>{t('common.appName')}</h1>
-      <button onClick={() => i18n.changeLanguage('es')}>
-        Español
-      </button>
+      <button onClick={() => i18n.changeLanguage('es')}>Español</button>
     </div>
   );
 }
