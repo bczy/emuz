@@ -6,7 +6,11 @@
   "main": "./index.js",
   "types": "./index.d.ts",
   "dependencies": {
+    "@op-engineering/op-sqlite": "^8.0.0",
     "better-sqlite3": "^11.8.1",
-    "react-native-sqlite-storage": "^6.0.1"
+    "drizzle-orm": "^0.45.1"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.10"
   }
 }
