@@ -1,6 +1,6 @@
 # EmuZ — Product Requirements Document
 
-**Version**: 1.0.0 | **Status**: Active | **Migrated from**: spec.md + clarifications.md
+**Version**: 1.1.0 | **Status**: Active | **Last edited**: 2026-03-18 | **Changes**: Added `romType: 'software'` as 3rd classification (US-1.5, FR-8)
 
 > _"Yet another emulators and ROMs management front-end"_
 
@@ -44,7 +44,7 @@ Retro gamers face a fragmented experience:
 ### ✅ Included
 
 - Library management (scan, organize, collections, favorites)
-- ROM type classification (game vs. homebrew) with visual badge and sidebar filter
+- ROM type classification (game / homebrew / software) with visual badge and sidebar filter
 - Metadata scraping (hybrid: local DB + ScreenScraper)
 - Emulator launching (URL schemes + direct process spawn)
 - Daijishou-style interface (home widgets, platform wallpapers, genres)
@@ -137,17 +137,19 @@ Retro gamers face a fragmented experience:
 
 #### US-1.5 — ROM Type Classification
 
-**As a** user, **I want to** classify each ROM as a commercial game or a homebrew, **so that** I can organize and filter my collection based on the origin of the content.
+**As a** user, **I want to** classify each ROM as a commercial game, a homebrew, or software, **so that** I can organize, filter, and interact with each category according to its nature.
 
 **Acceptance Criteria:**
 
-- [ ] Each ROM has a `romType`: `'game' | 'homebrew'` (default: `'game'`)
+- [ ] Each ROM has a `romType`: `'game' | 'homebrew' | 'software'` (default: `'game'`)
 - [ ] User can change `romType` from the game detail screen
-- [ ] Sidebar and search offer a "Type" filter: game / homebrew / all
-- [ ] Visual badge distinguishes the two types (e.g., "HB" tag on GameCard)
-- [ ] Scanner can infer `romType` from the source folder name (e.g., a folder named `homebrews/` defaults new entries to `'homebrew'`)
+- [ ] Sidebar and search offer a "Type" filter: game / homebrew / software / all
+- [ ] Visual badge distinguishes each type (e.g., "HB" for homebrew, "SW" for software)
+- [ ] Scanner can infer `romType` from the source folder name (e.g., `homebrews/` → `'homebrew'`, `software/` → `'software'`)
 - [ ] `romType` is included in search/filter `SearchOptions`
 - [ ] Existing ROMs in the database are migrated with default `romType = 'game'`
+- [ ] `romType: 'software'` entries are hidden by default in the main game grid; accessible via dedicated "Software" section or explicit filter
+- [ ] `romType: 'software'` supports a distinct launch path (not constrained to standard game emulator flow)
 
 **Architecture ref**: `LibraryService.searchGames()`, ADR-014 (romType enum design), `libs/core/src/models/Game.ts`, `libs/database/src/schema/index.ts`
 
@@ -352,15 +354,16 @@ Retro gamers face a fragmented experience:
 
 ## Functional Requirements
 
-| ID   | Requirement                                                                     |
-| ---- | ------------------------------------------------------------------------------- |
-| FR-1 | Detect ROMs by file extension; support ZIP/7z/RAR archives; calculate checksums |
-| FR-2 | Local SQLite metadata DB; user can edit any field; metadata versioning          |
-| FR-3 | Emulator registry with per-platform definitions and launch command templates    |
-| FR-4 | Support all 5 target OS: iOS, Android, macOS, Linux, Windows                    |
-| FR-5 | 100+ gaming platforms (all Daijishou platforms)                                 |
-| FR-6 | Widget home screen with at least 4 widget types                                 |
-| FR-7 | Genre-based navigation with metadata-sourced genres                             |
+| ID   | Requirement                                                                                                                                                                       |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FR-1 | Detect ROMs by file extension; support ZIP/7z/RAR archives; calculate checksums                                                                                                   |
+| FR-2 | Local SQLite metadata DB; user can edit any field; metadata versioning                                                                                                            |
+| FR-3 | Emulator registry with per-platform definitions and launch command templates                                                                                                      |
+| FR-4 | Support all 5 target OS: iOS, Android, macOS, Linux, Windows                                                                                                                      |
+| FR-5 | 100+ gaming platforms (all Daijishou platforms)                                                                                                                                   |
+| FR-6 | Widget home screen with at least 4 widget types                                                                                                                                   |
+| FR-7 | Genre-based navigation with metadata-sourced genres                                                                                                                               |
+| FR-8 | `romType: 'software'` entries hidden from main grid by default; visible via "Software" section or explicit filter; support distinct launch path independent of game emulator flow |
 
 ---
 
