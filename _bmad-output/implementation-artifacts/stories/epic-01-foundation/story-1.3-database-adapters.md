@@ -24,3 +24,7 @@ As a developer, I want a unified `DatabaseAdapter` interface with desktop (`bett
 - **Dependencies**: Story 1.2
 - **Key files**: `libs/database/src/adapters/types.ts`, `libs/database/src/adapters/desktop.ts`, `libs/database/src/adapters/mobile.ts`
 - **Test requirement**: Mock `better-sqlite3` and `react-native-sqlite-storage` in Vitest
+
+## Superseded By
+
+> **Note**: This story's adapter implementations (`DesktopDatabaseAdapter` wrapping `better-sqlite3`, `MobileDatabaseAdapter` wrapping `react-native-sqlite-storage`) are superseded by **Story 1.7** (Drizzle ORM Migration). `react-native-sqlite-storage` will be replaced by `@op-engineering/op-sqlite`. The `DatabaseAdapter` interface is retained as a `@deprecated` shim during the transition period and will be removed in v1.0.

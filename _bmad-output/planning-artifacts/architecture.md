@@ -308,6 +308,33 @@ No automatic releases (resource conservation for v1.0).
 
 ---
 
+### ADR-013: Drizzle ORM + op-sqlite Migration
+
+**Status**: Accepted | **Date**: 2026-03
+
+**Context**: Stories 1.2 and 1.3 implemented raw SQL schema strings and a hand-rolled migration runner. Five core services construct SQL manually, perform snake_case↔camelCase conversions by hand, and cast to `unknown[]`. This is error-prone and untestable at the schema level.
+
+**Decision**: Adopt Drizzle ORM for all SQLite access in `@emuz/database` and `@emuz/core`.
+
+- **Desktop**: `drizzle-orm/better-sqlite3` (no new native dep)
+- **Mobile**: Replace `react-native-sqlite-storage` with `@op-engineering/op-sqlite` + `drizzle-orm/op-sqlite`
+  - `react-native-sqlite-storage` has no official Drizzle adapter and is in maintenance mode
+  - `op-sqlite` uses a synchronous JSI API mirroring `better-sqlite3` — both adapters become structurally symmetric
+- **Migrations**: Drizzle Kit (`drizzle-kit generate`) replaces the hand-rolled runner; versioned SQL files under `libs/database/drizzle/`
+- **Schema**: `libs/database/src/schema/index.ts` using `sqliteTable`, `.json()`, `integer({ mode: 'boolean' })`, `integer({ mode: 'timestamp' })`, `.references()` with CASCADE/SET NULL
+- **Transition**: `DatabaseAdapter` interface retained as a `@deprecated` shim; removed in v1.0
+- **Migration bridge**: A `stamp.ts` utility records the existing schema in `__drizzle_migrations` without re-running SQL on databases already created by Story 1.2
+
+**Trade-offs**:
+
+- `op-sqlite` requires `pod install` + Gradle sync (one-time breaking native change for mobile)
+- Drizzle does not support correlated subqueries; `WidgetService` position-reorder UPDATE stays as `db.run(sql\`…\`)` raw escape-hatch
+- `drizzle-kit` config (`libs/database/drizzle.config.ts`) must be added to the project
+
+**Files affected by Story 1.7**: `libs/database/package.json`, `libs/database/src/schema/index.ts`, `libs/database/src/adapters/desktop.ts`, `libs/database/src/adapters/mobile.ts`, `libs/database/drizzle.config.ts`, `libs/core/src/services/*.ts`
+
+---
+
 ## Project Structure
 
 ```
@@ -336,104 +363,163 @@ emuz/
 
 ## Database Schema
 
-```sql
-CREATE TABLE platforms (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    short_name TEXT,
-    manufacturer TEXT,
-    generation INTEGER,
-    release_year INTEGER,
-    icon_path TEXT,
-    wallpaper_path TEXT,
-    wallpaper_blur INTEGER DEFAULT 0,
-    color TEXT,
-    rom_extensions TEXT, -- JSON array
-    created_at INTEGER DEFAULT (strftime('%s', 'now')),
-    updated_at INTEGER DEFAULT (strftime('%s', 'now'))
+> **Note (ADR-013)**: The canonical schema definition moved from raw SQL strings to a Drizzle ORM TypeScript schema in `libs/database/src/schema/index.ts` as part of Story 1.7. The preview below reflects the intended Drizzle representation. Run `pnpm nx run database:generate` to produce versioned SQL migration files.
+
+```typescript
+// libs/database/src/schema/index.ts  (authoritative source after Story 1.7)
+import { sqliteTable, text, integer, real, primaryKey } from 'drizzle-orm/sqlite-core';
+
+export const platforms = sqliteTable('platforms', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  shortName: text('short_name'),
+  manufacturer: text('manufacturer'),
+  generation: integer('generation'),
+  releaseYear: integer('release_year'),
+  iconPath: text('icon_path'),
+  wallpaperPath: text('wallpaper_path'),
+  color: text('color'),
+  romExtensions: text('rom_extensions', { mode: 'json' }).$type<string[]>().notNull().default([]),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+export const games = sqliteTable('games', {
+  id: text('id').primaryKey(),
+  platformId: text('platform_id')
+    .notNull()
+    .references(() => platforms.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  filePath: text('file_path').notNull(),
+  fileName: text('file_name').notNull(),
+  fileSize: integer('file_size'),
+  fileHash: text('file_hash'),
+  coverPath: text('cover_path'),
+  description: text('description'),
+  developer: text('developer'),
+  publisher: text('publisher'),
+  releaseDate: text('release_date'),
+  genre: text('genre'),
+  rating: real('rating'),
+  playCount: integer('play_count').notNull().default(0),
+  playTime: integer('play_time').notNull().default(0),
+  lastPlayedAt: integer('last_played_at', { mode: 'timestamp' }),
+  isFavorite: integer('is_favorite', { mode: 'boolean' }).notNull().default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+export const emulators = sqliteTable('emulators', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  platformIds: text('platform_ids', { mode: 'json' }).$type<string[]>().notNull().default([]),
+  executablePath: text('executable_path'),
+  packageName: text('package_name'),
+  urlScheme: text('url_scheme'),
+  iconPath: text('icon_path'),
+  commandTemplate: text('command_template'),
+  corePath: text('core_path'),
+  isDefault: integer('is_default', { mode: 'boolean' }).notNull().default(false),
+  isInstalled: integer('is_installed', { mode: 'boolean' }).notNull().default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+export const collections = sqliteTable('collections', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  coverPath: text('cover_path'),
+  isSystem: integer('is_system', { mode: 'boolean' }).notNull().default(false),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+export const collectionGames = sqliteTable(
+  'collection_games',
+  {
+    collectionId: text('collection_id')
+      .notNull()
+      .references(() => collections.id, { onDelete: 'cascade' }),
+    gameId: text('game_id')
+      .notNull()
+      .references(() => games.id, { onDelete: 'cascade' }),
+    addedAt: integer('added_at', { mode: 'timestamp' })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.collectionId, t.gameId] }) })
 );
 
-CREATE TABLE games (
-    id TEXT PRIMARY KEY,
-    platform_id TEXT NOT NULL REFERENCES platforms(id),
-    title TEXT NOT NULL,
-    file_path TEXT NOT NULL,
-    file_name TEXT NOT NULL,
-    file_size INTEGER,
-    file_hash TEXT,
-    cover_path TEXT,
-    description TEXT,
-    developer TEXT, publisher TEXT,
-    release_date TEXT, genre TEXT,
-    players INTEGER, rating REAL,
-    favorite INTEGER DEFAULT 0,
-    play_count INTEGER DEFAULT 0,
-    play_time INTEGER DEFAULT 0,
-    last_played INTEGER,
-    created_at INTEGER DEFAULT (strftime('%s', 'now')),
-    updated_at INTEGER DEFAULT (strftime('%s', 'now'))
-);
+export const widgets = sqliteTable('widgets', {
+  id: text('id').primaryKey(),
+  type: text('type').notNull(),
+  title: text('title'),
+  size: text('size').notNull().default('medium'),
+  position: integer('position').notNull(),
+  config: text('config', { mode: 'json' }).$type<Record<string, unknown>>(),
+  isVisible: integer('is_visible', { mode: 'boolean' }).notNull().default(true),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
 
-CREATE TABLE emulators (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    executable_path TEXT NOT NULL,
-    version TEXT,
-    platform_ids TEXT, -- JSON array
-    launch_template TEXT,
-    is_default INTEGER DEFAULT 0,
-    created_at INTEGER DEFAULT (strftime('%s', 'now')),
-    updated_at INTEGER DEFAULT (strftime('%s', 'now'))
-);
+export const genres = sqliteTable('genres', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  slug: text('slug').notNull().unique(),
+  iconName: text('icon_name'),
+  color: text('color'),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
 
-CREATE TABLE collections (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    description TEXT, icon TEXT, color TEXT,
-    is_smart INTEGER DEFAULT 0,
-    smart_filter TEXT, -- JSON
-    sort_order INTEGER,
-    created_at INTEGER DEFAULT (strftime('%s', 'now')),
-    updated_at INTEGER DEFAULT (strftime('%s', 'now'))
-);
+export const settings = sqliteTable('settings', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
 
-CREATE TABLE game_collections (
-    game_id TEXT REFERENCES games(id) ON DELETE CASCADE,
-    collection_id TEXT REFERENCES collections(id) ON DELETE CASCADE,
-    added_at INTEGER DEFAULT (strftime('%s', 'now')),
-    PRIMARY KEY (game_id, collection_id)
-);
+export const scanDirectories = sqliteTable('scan_directories', {
+  id: text('id').primaryKey(),
+  path: text('path').notNull().unique(),
+  platformId: text('platform_id').references(() => platforms.id, { onDelete: 'set null' }),
+  isRecursive: integer('is_recursive', { mode: 'boolean' }).notNull().default(true),
+  lastScannedAt: integer('last_scanned_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
 
-CREATE TABLE rom_directories (
-    id TEXT PRIMARY KEY,
-    path TEXT NOT NULL UNIQUE,
-    platform_id TEXT REFERENCES platforms(id),
-    recursive INTEGER DEFAULT 1,
-    enabled INTEGER DEFAULT 1,
-    last_scanned INTEGER,
-    created_at INTEGER DEFAULT (strftime('%s', 'now'))
-);
-
-CREATE TABLE settings (
-    key TEXT PRIMARY KEY,
-    value TEXT,
-    updated_at INTEGER DEFAULT (strftime('%s', 'now'))
-);
-
-CREATE TABLE widgets (
-    id TEXT PRIMARY KEY,
-    type TEXT NOT NULL, -- 'recent', 'favorites', 'stats', 'platform', 'custom'
-    position INTEGER NOT NULL,
-    size TEXT DEFAULT 'medium',
-    config TEXT, -- JSON
-    created_at INTEGER DEFAULT (strftime('%s', 'now'))
-);
-
--- Indexes
-CREATE INDEX idx_games_platform ON games(platform_id);
-CREATE INDEX idx_games_title ON games(title);
-CREATE INDEX idx_games_favorite ON games(favorite);
-CREATE INDEX idx_games_last_played ON games(last_played);
+// Indexes generated by Drizzle Kit from .references() and .unique() declarations:
+// idx_games_platform_id, idx_games_title, idx_games_is_favorite,
+// idx_games_last_played_at, idx_collection_games_game_id, idx_genres_slug
 ```
 
 ---
