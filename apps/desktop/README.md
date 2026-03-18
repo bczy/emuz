@@ -5,6 +5,7 @@
 ## Boundaries
 
 ### Owns
+
 - Electron **main process**: window creation, IPC handler registration, database initialization, app lifecycle
 - Electron **renderer process**: React 19 UI, TailwindCSS 4 styling, client-side routing
 - Preload script: exposes a safe, typed IPC bridge to the renderer via `contextBridge`
@@ -12,6 +13,7 @@
 - Platform-specific window chrome settings (macOS `hiddenInset` title bar, etc.)
 
 ### Delegates
+
 - Business logic (game management, scanning, launch) → `@emuz/core` services (invoked from the main process via IPC handlers)
 - Database access → `@emuz/database` desktop adapter (main process only)
 - File system and process operations → `@emuz/platform` desktop adapters (main process only)
@@ -22,27 +24,29 @@
 ## Integration Map
 
 ### Internal dependencies
-| Package | Used by | For |
-|---------|---------|-----|
-| `@emuz/core` | main process | Services (`LibraryService`, `ScannerService`, `LaunchService`) |
-| `@emuz/database` | main process | `createDesktopAdapter` — SQLite via `better-sqlite3` |
-| `@emuz/platform` | main process | `createDesktopFSAdapter`, `createDesktopLauncherAdapter` |
-| `@emuz/ui` | renderer process | All visual components |
-| `@emuz/emulators` | renderer + main | Emulator definitions and registry |
-| `@emuz/i18n` | renderer process | `I18nProvider`, `useTranslation` |
+
+| Package           | Used by          | For                                                            |
+| ----------------- | ---------------- | -------------------------------------------------------------- |
+| `@emuz/core`      | main process     | Services (`LibraryService`, `ScannerService`, `LaunchService`) |
+| `@emuz/database`  | main process     | `createDesktopAdapter` — SQLite via `better-sqlite3`           |
+| `@emuz/platform`  | main process     | `createDesktopFSAdapter`, `createDesktopLauncherAdapter`       |
+| `@emuz/ui`        | renderer process | All visual components                                          |
+| `@emuz/emulators` | renderer + main  | Emulator definitions and registry                              |
+| `@emuz/i18n`      | renderer process | `I18nProvider`, `useTranslation`                               |
 
 ### Depended by
 
 _Top-level application — nothing depends on `apps/desktop`._
 
 ### External dependencies
-| Package | Version | Role |
-|---------|---------|------|
-| `electron` | `^33.x` | Desktop runtime (Chromium + Node.js) |
-| `vite` | `^5.x` | Renderer build tool and dev server |
-| `react` | `^19.x` | UI framework (renderer process) |
-| `react-router-dom` | `^6.x` | Client-side routing in the renderer |
-| `tailwindcss` | `^4.x` | Utility-first CSS (renderer only) |
+
+| Package            | Version | Role                                 |
+| ------------------ | ------- | ------------------------------------ |
+| `electron`         | `^33.x` | Desktop runtime (Chromium + Node.js) |
+| `vite`             | `^5.x`  | Renderer build tool and dev server   |
+| `react`            | `^19.x` | UI framework (renderer process)      |
+| `react-router-dom` | `^6.x`  | Client-side routing in the renderer  |
+| `tailwindcss`      | `^4.x`  | Utility-first CSS (renderer only)    |
 
 ## Usage
 
@@ -69,11 +73,11 @@ pnpm nx package desktop
 
 Communication between renderer and main process uses three typed IPC channels:
 
-| Channel | Direction | Purpose |
-|---------|-----------|---------|
-| `database` | renderer → main | All read/write operations (games, platforms, collections) |
-| `fs` | renderer → main | Directory browsing, file stat |
-| `launcher` | renderer → main | Launch a game, detect installed emulators |
+| Channel    | Direction       | Purpose                                                                    |
+| ---------- | --------------- | -------------------------------------------------------------------------- |
+| `database` | renderer → main | All read/write operations (games, platforms, collections, romType updates) |
+| `fs`       | renderer → main | Directory browsing, file stat                                              |
+| `launcher` | renderer → main | Launch a game, detect installed emulators                                  |
 
 ```typescript
 // In renderer: call main process via preload bridge
@@ -83,13 +87,13 @@ const result = await window.api.launcher.launchGame(game, emulatorId);
 
 ## Anti-Patterns
 
-| ❌ Do NOT | ✅ Do instead |
-|-----------|--------------|
-| Import `better-sqlite3` in the **renderer** process | SQLite only runs in the main process; use the `database` IPC channel |
-| Import `fs` or `child_process` in the renderer | File/process access must go through the `fs` / `launcher` IPC channels |
+| ❌ Do NOT                                              | ✅ Do instead                                                               |
+| ------------------------------------------------------ | --------------------------------------------------------------------------- |
+| Import `better-sqlite3` in the **renderer** process    | SQLite only runs in the main process; use the `database` IPC channel        |
+| Import `fs` or `child_process` in the renderer         | File/process access must go through the `fs` / `launcher` IPC channels      |
 | Disable `contextIsolation` or enable `nodeIntegration` | Security-critical settings — these must remain `false`/`true` as configured |
-| Call `@emuz/core` services directly from the renderer | Services run in the main process; renderer communicates via IPC |
-| Put business logic in IPC handlers | Handlers should be thin wrappers that delegate to `@emuz/core` services |
+| Call `@emuz/core` services directly from the renderer  | Services run in the main process; renderer communicates via IPC             |
+| Put business logic in IPC handlers                     | Handlers should be thin wrappers that delegate to `@emuz/core` services     |
 
 ## Constraints
 

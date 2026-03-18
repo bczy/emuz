@@ -223,6 +223,7 @@ Every agent or LLM that changes a story's implementation or status **must** keep
 - Desktop uses IPC bridge between Electron main and renderer processes
 - Platform adapters in `@emuz/platform` abstract filesystem differences
 - Database layer uses Drizzle ORM (ADR-013): `DrizzleDb` from `@emuz/database`; legacy `DatabaseAdapter` is deprecated
+- ROM type classification (ADR-014): `romType: 'game' | 'homebrew'` on every `Game` — additive column, default `'game'`
 - Zustand stores live in `@emuz/core`; components consume via hooks
 - Navigation: React Navigation (mobile) / Electron router (desktop)
 - Full ADR list: [\_bmad-output/planning-artifacts/architecture.md](_bmad-output/planning-artifacts/architecture.md)
