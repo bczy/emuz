@@ -7,7 +7,20 @@
       "Bash(grep -r \"label\\\\|github\" /home/trambz/git/emuz/.github/agents --include=*.md)",
       "Bash(git -C /home/trambz/git/emuz rm .github/agents/speckit.*.md .github/prompts/speckit.*.md)",
       "Bash(gh repo:*)",
-      "Bash(gh label:*)"
-    ]
+      "Bash(gh label:*)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); t=d.get\\(''''targets'''',{}\\).get\\(''''test'''',{}\\); print\\(''''core test outputs:'''', t.get\\(''''outputs''''\\)\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); t=d.get\\(''''targets'''',{}\\).get\\(''''test'''',{}\\); print\\(''''desktop test outputs:'''', t.get\\(''''outputs''''\\)\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''''Status:'''', d[''''status''''], d[''''conclusion'''']\\); [print\\(f\"\"  {j[''''name'''']}: {j[''''conclusion'''']}\"\"\\) for j in d[''''jobs'''']]\")",
+      "Read(//tmp/**)",
+      "WebFetch(domain:composio.dev)",
+      "Bash(find /home/trambz/git/emuz/libs/core -name *.test.ts -type f)",
+      "Bash(find /home/trambz/git/emuz -name *ADR* -o -name *adr*)",
+      "Bash(grep -h \"^## Story\\\\|^# Story\\\\|**Status**:\" /home/trambz/git/emuz/_bmad-output/implementation-artifacts/stories/*/*.md)",
+      "Bash(find /home/trambz/git/emuz -path */libs/core/src/__tests__/* -name *.test.ts)",
+      "Bash(ls -la /home/trambz/git/emuz/libs/database/*.config.ts)",
+      "Bash(python3 -c \"import json,sys; j=json.load\\(sys.stdin\\); print\\(j[''''entries''''][0][''''tag'''']\\)\")",
+      "Bash(perl -pi -e 's/\\\\bgame!\\\\.\\(\\\\w\\)/game?.$1/g; s/\\\\bupdated!\\\\.\\(\\\\w\\)/updated?.$1/g; s/\\\\bg!\\\\.\\(\\\\w\\)/g?.$1/g; s/\\\\bfound!\\\\.\\(\\\\w\\)/found?.$1/g; s/\\\\bplatform!\\\\.\\(\\\\w\\)/platform?.$1/g' libs/core/src/__tests__/LibraryService.drizzle.test.ts libs/core/src/__tests__/ScannerService.drizzle.test.ts libs/core/src/__tests__/WidgetService.drizzle.test.ts)"
+    ],
+    "additionalDirectories": ["/tmp"]
   }
 }
