@@ -1,6 +1,7 @@
 {
   "permissions": {
     "allow": [
+      "Bash",
       "Bash(grep \"^\\\\*\\\\*Status\\\\*\\\\*:\" /home/trambz/git/emuz/_bmad-output/implementation-artifacts/stories/*/*.md)",
       "Bash(find /home/trambz/git/emuz/.github -type f -exec wc -l {} +)",
       "Bash(find /home/trambz/git/emuz -type f \\\\\\(-name ISSUE_TEMPLATE -o -name PR_TEMPLATE* -o -name labels.yml -o -name FUNDING.yml -o -name CODEOWNERS -o -name .github/*.md \\\\\\))",
