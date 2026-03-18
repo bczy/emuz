@@ -1,29 +1,21 @@
 /**
  * WidgetService - Manages home screen widgets (Daijishou-inspired)
+ *
+ * Refactored to use Drizzle ORM query builder (Story 1.7 / ADR-013).
+ * No raw SQL strings — except one intentional escape-hatch (see removeWidget).
  */
 
 import { v4 as uuidv4 } from 'uuid';
+import { eq, asc, max, sql, and, count, sum, isNotNull } from 'drizzle-orm';
 import type { Widget, WidgetType } from '../models/Widget';
-import type { DatabaseAdapter } from '@emuz/database';
+import type { DrizzleDb } from '@emuz/database/schema';
+import { widgets, games, platforms } from '@emuz/database/schema';
 import type { IWidgetService } from './types';
 
-/**
- * Database row types
- */
-interface WidgetRow {
-  id: string;
-  type: string;
-  title: string | null;
-  size: string;
-  position: number;
-  config: string | null;
-  is_visible: number;
-  created_at: number;
-  updated_at: number;
-}
+type WidgetRow = typeof widgets.$inferSelect;
 
 /**
- * Convert database row to Widget model
+ * Convert Drizzle row to Widget model
  */
 function rowToWidget(row: WidgetRow): Widget {
   return {
@@ -32,78 +24,59 @@ function rowToWidget(row: WidgetRow): Widget {
     title: row.title ?? undefined,
     size: row.size as Widget['size'],
     position: row.position,
-    config: row.config ? JSON.parse(row.config) : undefined,
-    isVisible: Boolean(row.is_visible),
-    createdAt: new Date(row.created_at * 1000),
-    updatedAt: new Date(row.updated_at * 1000),
+    config: row.config ?? undefined,
+    isVisible: row.isVisible,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
   };
 }
 
 /**
- * WidgetService implementation
+ * WidgetService implementation using Drizzle ORM
  */
 export class WidgetService implements IWidgetService {
-  constructor(private readonly db: DatabaseAdapter) {}
+  constructor(private readonly db: DrizzleDb) {}
 
-  /**
-   * Get all widgets, optionally filtered to visible only
-   */
   async getWidgets(options?: { visibleOnly?: boolean }): Promise<Widget[]> {
     if (options?.visibleOnly) {
-      const rows = await this.db.query<WidgetRow>(
-        'SELECT * FROM widgets WHERE is_visible = 1 ORDER BY position ASC',
-        []
-      );
+      const rows = await this.db
+        .select()
+        .from(widgets)
+        .where(eq(widgets.isVisible, true))
+        .orderBy(asc(widgets.position));
       return rows.map(rowToWidget);
     }
 
-    const rows = await this.db.query<WidgetRow>(
-      'SELECT * FROM widgets ORDER BY position ASC',
-      []
-    );
+    const rows = await this.db.select().from(widgets).orderBy(asc(widgets.position));
     return rows.map(rowToWidget);
   }
 
-  /**
-   * Get a widget by ID
-   */
   async getWidgetById(id: string): Promise<Widget | null> {
-    const rows = await this.db.query<WidgetRow>(
-      'SELECT * FROM widgets WHERE id = ?',
-      [id]
-    );
+    const rows = await this.db.select().from(widgets).where(eq(widgets.id, id));
     return rows.length > 0 ? rowToWidget(rows[0]) : null;
   }
 
-  /**
-   * Add a new widget
-   *
-   * Query order: MAX(position) query → INSERT execute → SELECT widget query
-   */
   async addWidget(config: { type: WidgetType; title?: string; size?: string }): Promise<Widget> {
     const id = uuidv4();
-    const now = Math.floor(Date.now() / 1000);
+    const now = new Date();
     const size = config.size ?? 'medium';
 
-    // Get max position
-    const maxPosResult = await this.db.query<{ max_position: number | null }>(
-      'SELECT MAX(position) as max_position FROM widgets'
-    );
-    const position = ((maxPosResult ?? [])[0]?.max_position ?? -1) + 1;
+    const maxPosResult = await this.db.select({ maxPosition: max(widgets.position) }).from(widgets);
+    const position = (maxPosResult[0]?.maxPosition ?? -1) + 1;
 
-    await this.db.execute(
-      `INSERT INTO widgets (id, type, title, size, position, is_visible, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, config.type, config.title ?? null, size, position, 1, now, now]
-    );
+    await this.db.insert(widgets).values({
+      id,
+      type: config.type,
+      title: config.title ?? null,
+      size,
+      position,
+      isVisible: true,
+      createdAt: now,
+      updatedAt: now,
+    });
 
-    // Fetch the newly created widget
-    const rows = await this.db.query<WidgetRow>(
-      'SELECT * FROM widgets WHERE id = ?',
-      [id]
-    );
-
-    if (rows && rows.length > 0) {
+    const rows = await this.db.select().from(widgets).where(eq(widgets.id, id));
+    if (rows.length > 0) {
       return rowToWidget(rows[0]);
     }
 
@@ -114,143 +87,120 @@ export class WidgetService implements IWidgetService {
       size: size as Widget['size'],
       position,
       isVisible: true,
-      createdAt: new Date(now * 1000),
-      updatedAt: new Date(now * 1000),
+      createdAt: now,
+      updatedAt: now,
     };
   }
 
-  /**
-   * Remove a widget and reorder remaining widgets
-   */
   async removeWidget(id: string): Promise<void> {
-    await this.db.execute('DELETE FROM widgets WHERE id = ?', [id]);
+    await this.db.delete(widgets).where(eq(widgets.id, id));
 
-    // Reorder remaining widgets to fill gaps
-    await this.db.execute(
-      `UPDATE widgets SET position = (SELECT COUNT(*) FROM widgets w2 WHERE w2.position < widgets.position)`,
-      []
+    // drizzle-escape-hatch: correlated subquery not expressible in Drizzle query builder.
+    // Reorders remaining widgets to fill gaps after deletion.
+    this.db.run(
+      sql`UPDATE widgets SET position = (SELECT COUNT(*) FROM widgets w2 WHERE w2.position < widgets.position)`
     );
   }
 
-  /**
-   * Update a widget and return the updated record
-   */
   async updateWidget(id: string, data: Partial<Widget>): Promise<Widget | null> {
-    const updates: string[] = [];
-    const params: (string | number | null)[] = [];
+    const now = new Date();
+    const updates: Partial<typeof widgets.$inferInsert> = { updatedAt: now };
 
-    if (data.title !== undefined) {
-      updates.push('title = ?');
-      params.push(data.title ?? null);
-    }
-    if (data.size !== undefined) {
-      updates.push('size = ?');
-      params.push(data.size);
-    }
-    if (data.position !== undefined) {
-      updates.push('position = ?');
-      params.push(data.position);
-    }
-    if (data.config !== undefined) {
-      updates.push('config = ?');
-      params.push(data.config ? JSON.stringify(data.config) : null);
-    }
-    if (data.isVisible !== undefined) {
-      updates.push('is_visible = ?');
-      params.push(data.isVisible ? 1 : 0);
-    }
+    if (data.title !== undefined) updates.title = data.title ?? null;
+    if (data.size !== undefined) updates.size = data.size;
+    if (data.position !== undefined) updates.position = data.position;
+    if (data.config !== undefined) updates.config = data.config ?? null;
+    if (data.isVisible !== undefined) updates.isVisible = data.isVisible;
 
-    if (updates.length === 0) return this.getWidgetById(id);
+    if (Object.keys(updates).length === 1) return this.getWidgetById(id); // only updatedAt
 
-    updates.push('updated_at = ?');
-    params.push(Math.floor(Date.now() / 1000));
-    params.push(id);
-
-    await this.db.execute(
-      `UPDATE widgets SET ${updates.join(', ')} WHERE id = ?`,
-      params
-    );
-
+    await this.db.update(widgets).set(updates).where(eq(widgets.id, id));
     return this.getWidgetById(id);
   }
 
-  /**
-   * Reorder widgets atomically
-   */
   async reorderWidgets(widgetIds: string[]): Promise<void> {
-    await this.db.transaction(async () => {
-      const now = Math.floor(Date.now() / 1000);
+    const now = new Date();
+    this.db.transaction((tx) => {
       for (let i = 0; i < widgetIds.length; i++) {
-        await this.db.execute(
-          'UPDATE widgets SET position = ?, updated_at = ? WHERE id = ?',
-          [i, now, widgetIds[i]]
-        );
+        tx.update(widgets)
+          .set({ position: i, updatedAt: now })
+          .where(eq(widgets.id, widgetIds[i]))
+          .run();
       }
     });
   }
 
-  /**
-   * Get data for a widget by ID and type.
-   * The _id parameter is part of the interface but not needed for current data providers.
-   */
-   
   async getWidgetData(_id: string, type: WidgetType): Promise<unknown> {
     switch (type) {
       case 'recent_games': {
-        const rows = await this.db.query<{ id: string; title: string; last_played_at: number | null }>(
-          `SELECT * FROM games WHERE last_played_at IS NOT NULL ORDER BY last_played_at DESC LIMIT 10`,
-          []
-        );
+        const rows = await this.db
+          .select()
+          .from(games)
+          .where(isNotNull(games.lastPlayedAt))
+          .orderBy(sql`${games.lastPlayedAt} DESC`)
+          .limit(10);
         return { games: rows };
       }
 
       case 'favorites': {
-        const rows = await this.db.query<{ id: string; title: string; is_favorite: number }>(
-          `SELECT * FROM games WHERE is_favorite = 1 ORDER BY title ASC LIMIT 10`,
-          []
-        );
+        const rows = await this.db
+          .select()
+          .from(games)
+          .where(eq(games.isFavorite, true))
+          .orderBy(asc(games.title))
+          .limit(10);
         return { games: rows };
       }
 
       case 'stats': {
-        const rows = await this.db.query<{
-          total_games: number;
-          total_platforms: number;
-          total_play_time: number;
-          games_played: number;
-        }>(
-          `SELECT
-             COUNT(*) as total_games,
-             COUNT(DISTINCT platform_id) as total_platforms,
-             SUM(play_time) as total_play_time,
-             COUNT(CASE WHEN play_count > 0 THEN 1 END) as games_played
-           FROM games`,
-          []
-        );
+        const rows = await this.db
+          .select({
+            totalGames: count(),
+            totalPlatforms: count(games.platformId),
+            totalPlayTime: sum(games.playTime),
+          })
+          .from(games);
+        const playedRows = await this.db
+          .select({ gamesPlayed: count() })
+          .from(games)
+          .where(sql`${games.playCount} > 0`);
+        const platformRows = await this.db
+          .selectDistinct({ platformId: games.platformId })
+          .from(games);
         const row = rows[0];
         return {
           stats: {
-            totalGames: row?.total_games ?? 0,
-            totalPlatforms: row?.total_platforms ?? 0,
-            totalPlayTime: row?.total_play_time ?? 0,
-            gamesPlayed: row?.games_played ?? 0,
+            totalGames: row?.totalGames ?? 0,
+            totalPlatforms: platformRows.length,
+            totalPlayTime: Number(row?.totalPlayTime ?? 0),
+            gamesPlayed: playedRows[0]?.gamesPlayed ?? 0,
           },
         };
       }
 
       case 'platform_shortcuts': {
-        const rows = await this.db.query<{ id: string; name: string; game_count: number }>(
-          `SELECT p.id, p.name, COUNT(g.id) as game_count FROM platforms p LEFT JOIN games g ON g.platform_id = p.id GROUP BY p.id HAVING game_count > 0 ORDER BY game_count DESC LIMIT 10`,
-          []
-        );
+        const rows = await this.db
+          .select({
+            id: platforms.id,
+            name: platforms.name,
+            gameCount: count(games.id),
+          })
+          .from(platforms)
+          .leftJoin(games, eq(games.platformId, platforms.id))
+          .groupBy(platforms.id)
+          .having(sql`COUNT(${games.id}) > 0`)
+          .orderBy(sql`COUNT(${games.id}) DESC`)
+          .limit(10);
         return { platforms: rows };
       }
 
       case 'continue_playing': {
-        const rows = await this.db.query<{ id: string; title: string }>(
-          `SELECT * FROM games WHERE last_played_at IS NOT NULL AND play_time > 0 ORDER BY last_played_at DESC LIMIT 5`,
-          []
-        );
+        const rows = await this.db
+          .select()
+          .from(games)
+          .where(and(isNotNull(games.lastPlayedAt), sql`${games.playTime} > 0`))
+          .orderBy(sql`${games.lastPlayedAt} DESC`)
+          .limit(5);
         return { games: rows };
       }
 
@@ -259,9 +209,6 @@ export class WidgetService implements IWidgetService {
     }
   }
 
-  /**
-   * Get default widget configuration
-   */
   getDefaultWidgets(): Array<{ type: WidgetType; title?: string; size?: string }> {
     return [
       { type: 'continue_playing', title: 'Continue Playing', size: 'large' },
@@ -276,6 +223,6 @@ export class WidgetService implements IWidgetService {
 /**
  * Create a new WidgetService instance
  */
-export function createWidgetService(db: DatabaseAdapter): IWidgetService {
+export function createWidgetService(db: DrizzleDb): IWidgetService {
   return new WidgetService(db);
 }

@@ -1,11 +1,15 @@
 /**
  * GenreService - Manages game genres (Daijishou-inspired)
+ *
+ * Refactored to use Drizzle ORM query builder (Story 1.7 / ADR-013).
+ * No raw SQL strings.
  */
 
+import { eq, asc, count, sum, avg, isNotNull } from 'drizzle-orm';
 import type { Game } from '../models/Game';
-import type { DatabaseAdapter } from '@emuz/database';
+import type { DrizzleDb } from '@emuz/database/schema';
+import { games } from '@emuz/database/schema';
 import type { IGenreService, PaginationOptions } from './types';
-import { toDate, toOptionalDate } from '../utils/db';
 
 /**
  * Simplified Genre shape returned by getGenres
@@ -16,54 +20,26 @@ export interface GenreInfo {
   gameCount: number;
 }
 
-/**
- * Database row types
- */
-interface GenreCountRow {
-  genre: string | null;
-  count: number;
-}
-
-interface GameRow {
-  id: string;
-  platform_id: string;
-  title: string;
-  file_path: string;
-  file_name: string;
-  cover_path: string | null;
-  genre: string | null;
-  play_count: number;
-  play_time: number;
-  last_played_at: number | null;
-  is_favorite: number;
-  created_at: number;
-  updated_at: number;
-}
-
-interface GenreStatsRow {
-  total_games: number;
-  total_play_time: number;
-  avg_rating: number | null;
-}
+type GameRow = typeof games.$inferSelect;
 
 /**
- * Convert database row to Game model
+ * Convert Drizzle row to Game model
  */
 function rowToGame(row: GameRow): Game {
   return {
     id: row.id,
-    platformId: row.platform_id,
+    platformId: row.platformId,
     title: row.title,
-    filePath: row.file_path,
-    fileName: row.file_name,
-    coverPath: row.cover_path ?? undefined,
+    filePath: row.filePath,
+    fileName: row.fileName,
+    coverPath: row.coverPath ?? undefined,
     genre: row.genre ?? undefined,
-    playCount: row.play_count,
-    playTime: row.play_time,
-    lastPlayedAt: toOptionalDate(row.last_played_at),
-    isFavorite: Boolean(row.is_favorite),
-    createdAt: toDate(row.created_at),
-    updatedAt: toDate(row.updated_at),
+    playCount: row.playCount,
+    playTime: row.playTime,
+    lastPlayedAt: row.lastPlayedAt ?? undefined,
+    isFavorite: row.isFavorite,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
   };
 }
 
@@ -84,37 +60,32 @@ function normalizeGenreName(raw: string): string {
   const upper = trimmed.toUpperCase();
   const lower = trimmed.toLowerCase();
 
-  // Check if the string is entirely uppercase or entirely lowercase
   const isAllUpper = trimmed === upper;
   const isAllLower = trimmed === lower;
 
   if (isAllUpper || isAllLower) {
     if (trimmed.length <= 3) {
-      // Short abbreviation: uppercase all
       return upper;
     }
-    // Longer: capitalize first letter, lowercase the rest
     return trimmed.charAt(0).toUpperCase() + lower.slice(1);
   }
 
-  // Mixed case: capitalize first letter, keep rest as-is
   return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
 }
 
 /**
- * GenreService implementation
+ * GenreService implementation using Drizzle ORM
  */
 export class GenreService implements IGenreService {
-  constructor(private readonly db: DatabaseAdapter) {}
+  constructor(private readonly db: DrizzleDb) {}
 
-  /**
-   * Get all genres with game counts (derived from the games table)
-   */
   async getGenres(): Promise<GenreInfo[]> {
-    const rows = await this.db.query<GenreCountRow>(
-      `SELECT genre, COUNT(*) as count FROM games WHERE genre IS NOT NULL GROUP BY genre ORDER BY genre ASC`,
-      []
-    );
+    const rows = await this.db
+      .select({ genre: games.genre, count: count() })
+      .from(games)
+      .where(isNotNull(games.genre))
+      .groupBy(games.genre)
+      .orderBy(asc(games.genre));
 
     return rows
       .filter((row) => row.genre !== null && row.genre !== '')
@@ -125,77 +96,64 @@ export class GenreService implements IGenreService {
       }));
   }
 
-  /**
-   * Get games by genre (direct string match)
-   */
   async getGamesByGenre(genre: string, options?: PaginationOptions): Promise<Game[]> {
     const limit = options?.limit ?? 100;
-    const offset = options?.page !== undefined
-      ? (options.page - 1) * limit
-      : (options?.offset ?? 0);
+    const offset =
+      options?.page !== undefined ? (options.page - 1) * limit : (options?.offset ?? 0);
 
-    const rows = await this.db.query<GameRow>(
-      `SELECT * FROM games WHERE genre = ? ORDER BY title ASC LIMIT ? OFFSET ?`,
-      [genre, limit, offset]
-    );
+    const rows = await this.db
+      .select()
+      .from(games)
+      .where(eq(games.genre, genre))
+      .orderBy(asc(games.title))
+      .limit(limit)
+      .offset(offset);
 
     return rows.map(rowToGame);
   }
 
-  /**
-   * Assign a genre to a game (pass null to clear)
-   */
   async assignGenre(gameId: string, genreId: string | null): Promise<void> {
-    const now = Math.floor(Date.now() / 1000);
-    await this.db.execute(
-      'UPDATE games SET genre = ?, updated_at = ? WHERE id = ?',
-      [genreId, now, gameId]
-    );
+    await this.db
+      .update(games)
+      .set({ genre: genreId, updatedAt: new Date() })
+      .where(eq(games.id, gameId));
   }
 
-  /**
-   * Remove genre from a game
-   */
   async removeGenre(gameId: string, _genreId: string): Promise<void> {
-    const now = Math.floor(Date.now() / 1000);
-    await this.db.execute(
-      'UPDATE games SET genre = NULL, updated_at = ? WHERE id = ?',
-      [now, gameId]
-    );
+    await this.db
+      .update(games)
+      .set({ genre: null, updatedAt: new Date() })
+      .where(eq(games.id, gameId));
   }
 
-  /**
-   * Get statistics for a specific genre
-   */
   async getGenreStats(genre: string): Promise<{
     totalGames: number;
     totalPlayTime: number;
     averageRating: number;
   }> {
-    const rows = await this.db.query<GenreStatsRow>(
-      `SELECT COUNT(*) as total_games, SUM(play_time) as total_play_time, AVG(rating) as avg_rating FROM games WHERE genre = ?`,
-      [genre]
-    );
+    const rows = await this.db
+      .select({
+        totalGames: count(),
+        totalPlayTime: sum(games.playTime),
+        avgRating: avg(games.rating),
+      })
+      .from(games)
+      .where(eq(games.genre, genre));
 
     const row = rows[0];
     return {
-      totalGames: row?.total_games ?? 0,
-      totalPlayTime: row?.total_play_time ?? 0,
-      averageRating: row?.avg_rating ?? 0,
+      totalGames: row?.totalGames ?? 0,
+      totalPlayTime: Number(row?.totalPlayTime ?? 0),
+      averageRating: Number(row?.avgRating ?? 0),
     };
   }
 
-  /**
-   * Extract genre from a raw genre string.
-   * Accepts a string | null. Trims, normalizes, splits on " / " to take the first part.
-   */
   extractGenreFromMetadata(input: string | null): string | null {
     if (input === null || input === undefined) return null;
 
     const trimmed = input.trim();
     if (!trimmed) return null;
 
-    // Split on " / " and take the first part
     const firstPart = trimmed.split(' / ')[0].trim();
     if (!firstPart) return null;
 
@@ -206,6 +164,6 @@ export class GenreService implements IGenreService {
 /**
  * Create a new GenreService instance
  */
-export function createGenreService(db: DatabaseAdapter): IGenreService {
+export function createGenreService(db: DrizzleDb): IGenreService {
   return new GenreService(db);
 }
