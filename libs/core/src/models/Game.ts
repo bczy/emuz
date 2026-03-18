@@ -24,6 +24,10 @@ export const GameSchema = z.object({
   isFavorite: z.boolean().default(false),
   createdAt: z.date(),
   updatedAt: z.date(),
+  // Denormalized platform fields populated by JOIN in LibraryService.getAllGames()
+  platformName: z.string().optional(),
+  platformShortName: z.string().optional(),
+  platformManufacturer: z.string().optional(),
 });
 
 export type Game = z.infer<typeof GameSchema>;

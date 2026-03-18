@@ -6,11 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Game } from '../models/Game';
 import type { Emulator } from '../models/Emulator';
 import type { DatabaseAdapter } from '@emuz/database';
-import type {
-  ILaunchService,
-  CreateEmulatorInput,
-  PlaySession,
-} from './types';
+import type { ILaunchService, CreateEmulatorInput, PlaySession } from './types';
 import { toDate, buildUpdateQuery } from '../utils/db';
 
 /**
@@ -48,7 +44,14 @@ function rowToEmulator(row: EmulatorRow): Emulator {
   return {
     id: row.id,
     name: row.name,
-    platforms: JSON.parse(row.platforms) as string[],
+    platforms: (() => {
+      try {
+        const parsed = JSON.parse(row.platforms);
+        return Array.isArray(parsed) ? (parsed as string[]) : [];
+      } catch {
+        return [];
+      }
+    })(),
     executablePath: row.executable_path ?? undefined,
     packageName: row.package_name ?? undefined,
     urlScheme: row.url_scheme ?? undefined,
@@ -109,9 +112,7 @@ export class LaunchService implements ILaunchService {
       return rows.map(rowToEmulator);
     }
 
-    const rows = await this.db.query<EmulatorRow>(
-      'SELECT * FROM emulators ORDER BY name ASC'
-    );
+    const rows = await this.db.query<EmulatorRow>('SELECT * FROM emulators ORDER BY name ASC');
     return rows.map(rowToEmulator);
   }
 
@@ -119,10 +120,7 @@ export class LaunchService implements ILaunchService {
    * Get an emulator by ID
    */
   async getEmulatorById(id: string): Promise<Emulator | null> {
-    const rows = await this.db.query<EmulatorRow>(
-      'SELECT * FROM emulators WHERE id = ?',
-      [id]
-    );
+    const rows = await this.db.query<EmulatorRow>('SELECT * FROM emulators WHERE id = ?', [id]);
     return rows.length > 0 ? rowToEmulator(rows[0]) : null;
   }
 
@@ -167,10 +165,7 @@ export class LaunchService implements ILaunchService {
     );
 
     // Fetch the newly created emulator from DB
-    const rows = await this.db.query<EmulatorRow>(
-      'SELECT * FROM emulators WHERE id = ?',
-      [id]
-    );
+    const rows = await this.db.query<EmulatorRow>('SELECT * FROM emulators WHERE id = ?', [id]);
 
     if (rows.length > 0) {
       return rowToEmulator(rows[0]);
@@ -199,21 +194,33 @@ export class LaunchService implements ILaunchService {
   async updateEmulator(id: string, data: Partial<Emulator>): Promise<void> {
     const fields: Array<[string, string | number | null]> = [
       ...(data.name !== undefined ? [['name', data.name] as [string, string]] : []),
-      ...(data.platforms !== undefined ? [['platforms', JSON.stringify(data.platforms)] as [string, string]] : []),
-      ...(data.executablePath !== undefined ? [['executable_path', data.executablePath ?? null] as [string, string | null]] : []),
-      ...(data.packageName !== undefined ? [['package_name', data.packageName ?? null] as [string, string | null]] : []),
-      ...(data.urlScheme !== undefined ? [['url_scheme', data.urlScheme ?? null] as [string, string | null]] : []),
-      ...(data.commandTemplate !== undefined ? [['command_template', data.commandTemplate ?? null] as [string, string | null]] : []),
-      ...(data.corePath !== undefined ? [['core_path', data.corePath ?? null] as [string, string | null]] : []),
+      ...(data.platforms !== undefined
+        ? [['platforms', JSON.stringify(data.platforms)] as [string, string]]
+        : []),
+      ...(data.executablePath !== undefined
+        ? [['executable_path', data.executablePath ?? null] as [string, string | null]]
+        : []),
+      ...(data.packageName !== undefined
+        ? [['package_name', data.packageName ?? null] as [string, string | null]]
+        : []),
+      ...(data.urlScheme !== undefined
+        ? [['url_scheme', data.urlScheme ?? null] as [string, string | null]]
+        : []),
+      ...(data.commandTemplate !== undefined
+        ? [['command_template', data.commandTemplate ?? null] as [string, string | null]]
+        : []),
+      ...(data.corePath !== undefined
+        ? [['core_path', data.corePath ?? null] as [string, string | null]]
+        : []),
     ];
 
     const query = buildUpdateQuery(fields);
     if (!query) return;
 
-    await this.db.execute(
-      `UPDATE emulators SET ${query.setClauses} WHERE id = ?`,
-      [...query.params, id]
-    );
+    await this.db.execute(`UPDATE emulators SET ${query.setClauses} WHERE id = ?`, [
+      ...query.params,
+      id,
+    ]);
   }
 
   /**
@@ -236,10 +243,10 @@ export class LaunchService implements ILaunchService {
         [now, `%"${platformId}"%`]
       );
       // Set the new default
-      await this.db.execute(
-        'UPDATE emulators SET is_default = 1, updated_at = ? WHERE id = ?',
-        [now, emulatorId]
-      );
+      await this.db.execute('UPDATE emulators SET is_default = 1, updated_at = ? WHERE id = ?', [
+        now,
+        emulatorId,
+      ]);
     });
   }
 
@@ -266,10 +273,9 @@ export class LaunchService implements ILaunchService {
     let emulator: Emulator | null = null;
 
     if (emulatorId) {
-      const rows = await this.db.query<EmulatorRow>(
-        'SELECT * FROM emulators WHERE id = ?',
-        [emulatorId]
-      );
+      const rows = await this.db.query<EmulatorRow>('SELECT * FROM emulators WHERE id = ?', [
+        emulatorId,
+      ]);
       emulator = rows.length > 0 ? rowToEmulator(rows[0]) : null;
     } else {
       emulator = await this.getDefaultEmulator(game.platformId);
@@ -331,11 +337,7 @@ export class LaunchService implements ILaunchService {
   /**
    * Parse command template into arguments array
    */
-  private parseCommandTemplate(
-    template: string,
-    romPath: string,
-    corePath?: string
-  ): string[] {
+  private parseCommandTemplate(template: string, romPath: string, corePath?: string): string[] {
     const processed = template
       .replace('{rom}', romPath)
       .replace('{core}', corePath ?? '')
@@ -385,10 +387,11 @@ export class LaunchService implements ILaunchService {
     const now = Math.floor(Date.now() / 1000);
 
     // Update the session record
-    await this.db.execute(
-      'UPDATE play_sessions SET ended_at = ?, duration = ? WHERE id = ?',
-      [now, duration, sessionId]
-    );
+    await this.db.execute('UPDATE play_sessions SET ended_at = ?, duration = ? WHERE id = ?', [
+      now,
+      duration,
+      sessionId,
+    ]);
 
     // Update game play time
     await this.db.execute(

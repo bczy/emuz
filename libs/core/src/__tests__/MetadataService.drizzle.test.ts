@@ -12,6 +12,8 @@ import type { DrizzleDb } from '@emuz/database/schema';
 import { MetadataService } from '../services/MetadataService';
 import type { MetadataProvider } from '../services/MetadataService';
 
+const GAME_ID = 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa';
+
 let sqlite: InstanceType<typeof Database>;
 let db: DrizzleDb;
 let svc: MetadataService;
@@ -42,7 +44,7 @@ function seedGame(d: DrizzleDb): void {
     .run();
   d.insert(schema.games)
     .values({
-      id: 'g1',
+      id: GAME_ID,
       platformId: 'nes',
       title: 'Mega Man',
       filePath: '/f.nes',
@@ -99,7 +101,7 @@ describe('MetadataService (Drizzle)', () => {
   it('identifyGame returns null if no metadata found', async () => {
     seedGame(db);
     const game = {
-      id: 'g1',
+      id: GAME_ID,
       platformId: 'nes',
       title: 'Unknown ROM',
       filePath: '/f.nes',
@@ -118,7 +120,7 @@ describe('MetadataService (Drizzle)', () => {
     seedGame(db);
     db.update(schema.games).set({ description: 'Classic action game' }).run();
     const game = {
-      id: 'g1',
+      id: GAME_ID,
       platformId: 'nes',
       title: 'Mega Man',
       filePath: '/f.nes',
@@ -177,12 +179,12 @@ describe('MetadataService (Drizzle)', () => {
     });
     vi.stubGlobal('fetch', mockFetch);
 
-    const coverPath = await svc.downloadCover('g1', 'https://example.com/cover.png');
+    const coverPath = await svc.downloadCover(GAME_ID, 'https://example.com/cover.png');
     expect(mockFs.writeBinary).toHaveBeenCalledWith(
-      expect.stringContaining('g1'),
+      expect.stringContaining(GAME_ID),
       expect.any(Uint8Array)
     );
-    expect(coverPath).toContain('g1');
+    expect(coverPath).toContain(GAME_ID);
 
     vi.unstubAllGlobals();
   });
@@ -190,7 +192,7 @@ describe('MetadataService (Drizzle)', () => {
   it('downloadCover throws if fetch fails', async () => {
     seedGame(db);
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404 }));
-    await expect(svc.downloadCover('g1', 'https://example.com/cover.png')).rejects.toThrow(
+    await expect(svc.downloadCover(GAME_ID, 'https://example.com/cover.png')).rejects.toThrow(
       'Failed to download cover'
     );
     vi.unstubAllGlobals();
@@ -206,7 +208,7 @@ describe('MetadataService (Drizzle)', () => {
     svc.registerProvider(mockProvider);
 
     const progress = [];
-    for await (const p of svc.refreshMetadata(['g1'])) {
+    for await (const p of svc.refreshMetadata([GAME_ID])) {
       progress.push(p);
     }
     const last = progress[progress.length - 1];
@@ -224,6 +226,40 @@ describe('MetadataService (Drizzle)', () => {
     expect(last.errors.length).toBeGreaterThan(0);
   });
 
+  describe('path and UUID safety (P-05)', () => {
+    it('throws when coverCacheDir is a relative path', () => {
+      expect(() => new MetadataService(db, mockFs as any, '.emuz/covers')).toThrow(/absolute/i);
+    });
+
+    it('accepts an absolute coverCacheDir on Unix', () => {
+      expect(() => new MetadataService(db, mockFs as any, '/tmp/covers')).not.toThrow();
+    });
+
+    it('rejects a gameId containing path traversal in downloadCover', async () => {
+      const safeSvc = new MetadataService(db, mockFs as any, '/tmp/covers');
+      await expect(
+        safeSvc.downloadCover('../../etc/passwd', 'https://example.com/cover.png')
+      ).rejects.toThrow(/invalid gameId/i);
+    });
+
+    it('accepts a valid UUID in downloadCover', async () => {
+      seedGame(db);
+      const fakeBuffer = new ArrayBuffer(8);
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          arrayBuffer: vi.fn().mockResolvedValue(fakeBuffer),
+        })
+      );
+      const safeSvc = new MetadataService(db, mockFs as any, '/tmp/covers');
+      await expect(
+        safeSvc.downloadCover(GAME_ID, 'https://example.com/cover.png')
+      ).resolves.not.toThrow();
+      vi.unstubAllGlobals();
+    });
+  });
+
   it('identifyGame uses provider when no DB metadata', async () => {
     seedGame(db);
     const mockProvider: MetadataProvider = {
@@ -233,7 +269,7 @@ describe('MetadataService (Drizzle)', () => {
     };
     svc.registerProvider(mockProvider);
     const game = {
-      id: 'g1',
+      id: GAME_ID,
       platformId: 'nes',
       title: 'Mega Man (USA)',
       filePath: '/f.nes',

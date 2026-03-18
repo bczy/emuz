@@ -23,6 +23,36 @@ const mockFs = {
   readBinary: vi.fn(),
 };
 
+function seedPlatforms(d: DrizzleDb): void {
+  d.insert(schema.platforms)
+    .values({
+      id: 'nes',
+      name: 'Nintendo Entertainment System',
+      romExtensions: ['.nes'],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .run();
+  d.insert(schema.platforms)
+    .values({
+      id: 'snes',
+      name: 'Super Nintendo',
+      romExtensions: ['.sfc', '.smc'],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .run();
+  d.insert(schema.platforms)
+    .values({
+      id: 'gba',
+      name: 'Game Boy Advance',
+      romExtensions: ['.gba'],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .run();
+}
+
 function setupTables(d: DrizzleDb): void {
   d.run(
     sql`CREATE TABLE IF NOT EXISTS platforms (id TEXT PRIMARY KEY, name TEXT NOT NULL, short_name TEXT, manufacturer TEXT, generation INTEGER, release_year INTEGER, icon_path TEXT, wallpaper_path TEXT, color TEXT, rom_extensions TEXT NOT NULL DEFAULT '[]', created_at INTEGER, updated_at INTEGER)`
@@ -39,6 +69,7 @@ beforeEach(() => {
   sqlite = new Database(':memory:');
   db = drizzle(sqlite, { schema });
   setupTables(db);
+  seedPlatforms(db);
   svc = new ScannerService(db, mockFs);
   vi.clearAllMocks();
 });
@@ -135,6 +166,30 @@ describe('ScannerService (Drizzle)', () => {
   it('detectPlatform returns null for unknown extension', async () => {
     const platform = await svc.detectPlatform('/roms/game.xyz');
     expect(platform).toBeNull();
+  });
+
+  it('detectPlatform returns real platform name from DB, not synthetic uppercase (P-20)', async () => {
+    const platform = await svc.detectPlatform('/roms/game.nes');
+    expect(platform?.name).toBe('Nintendo Entertainment System');
+  });
+
+  it('detectPlatform returns null when platform is not in DB (P-20)', async () => {
+    // .ps1 maps to 'ps1' which is not seeded in beforeEach
+    const platform = await svc.detectPlatform('/roms/game.bin');
+    expect(platform).toBeNull();
+  });
+
+  it('scan skips games when platform is not in DB (P-20)', async () => {
+    // .ps1 / .bin maps to 'ps1' — not in seed platforms
+    mockFs.readDir.mockResolvedValue([
+      { name: 'game.bin', path: '/roms/game.bin', isDirectory: false },
+    ]);
+    const progress = [];
+    for await (const p of svc.scan('/roms', { recursive: false })) {
+      progress.push(p);
+    }
+    const rows = db.select().from(schema.games).all();
+    expect(rows).toHaveLength(0);
   });
 
   it('scan skips existing files when skipExisting=true', async () => {
