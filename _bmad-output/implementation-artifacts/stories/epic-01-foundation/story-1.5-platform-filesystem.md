@@ -12,9 +12,9 @@ As a developer, I want a `FilesystemAdapter` interface with Android (SAF), iOS (
 ## Acceptance Criteria
 
 - [x] `libs/platform` package created with `@emuz/platform` scope
-- [x] `FilesystemAdapter` interface: `readDir`, `readFile`, `exists`, `stat`, `requestPermission`
+- [x] `FilesystemAdapter` interface: `list`, `readText`, `readBinary`, `exists`, `stat` (`requestPermission` is optional on mobile adapters only)
 - [x] Desktop adapter: `libs/platform/src/filesystem/desktop.ts` (Node.js fs)
-- [x] Android adapter: SAF via `react-native-saf-x`, persisted URI permissions
+- [x] Android adapter: `react-native-fs` (Android 10 and below); SAF via `react-native-saf-x` with persisted URI permissions deferred to Epic 5
 - [x] iOS adapter: Documents folder + Files app import
 - [x] Factory function selects adapter based on `Platform.OS`
 - [x] Unit tests for desktop adapter (Android/iOS require device)

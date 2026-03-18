@@ -11,7 +11,7 @@ As a developer, I want a `LauncherAdapter` interface with Android (Intents), iOS
 
 ## Acceptance Criteria
 
-- [x] `LauncherAdapter` interface: `launch(game, emulator): Promise<void>`
+- [x] `LauncherAdapter` interface: `launch(options: LaunchOptions): Promise<LaunchResult>`
 - [x] Desktop launcher: `child_process.spawn` detached, stdio ignored
 - [x] Android launcher: Intent system via `react-native` Linking + native module
 - [x] iOS launcher: URL scheme registry (`retroarch://`, `delta://`, `provenance://`)
