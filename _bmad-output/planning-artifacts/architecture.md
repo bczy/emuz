@@ -335,6 +335,42 @@ No automatic releases (resource conservation for v1.0).
 
 ---
 
+### ADR-014: romType as Enum on the Game Model
+
+**Status**: Accepted | **Date**: 2026-03 | **Epic**: Epic 7 — ROM Categorization
+
+**Context**: Users want to distinguish commercial ROMs from community-created homebrews. The current `Game` model has no field for this distinction. A filtering mechanism is needed at the model, service, and UI layers.
+
+**Decision**: Add `romType: z.enum(['game', 'homebrew']).default('game')` to `GameSchema` in `libs/core/src/models/Game.ts` and a corresponding `text('rom_type').notNull().default('game')` column to the `games` Drizzle table.
+
+**Why enum over boolean (`isHomebrew`)**:
+
+- Extensible without a breaking migration: a third value (e.g. `'demo'`, `'hack'`) can be added later with an additive migration
+- Semantically clearer in filter UI and i18n keys (`romType.game`, `romType.homebrew`)
+- Consistent with the pattern used by `PlatformCategories` (string enum) and `SystemCollections` (string enum)
+
+**Migration strategy**: Additive column with `DEFAULT 'game'` — zero data loss for existing libraries. All pre-existing rows receive `romType = 'game'` automatically. The Drizzle migration file is generated via `pnpm nx run database:generate`.
+
+**Scanner heuristic**: `ScannerService` optionally infers `romType = 'homebrew'` when the ROM's source directory path contains `homebrew` (case-insensitive). This is a hint, not a guarantee; the user can always override from the game detail screen.
+
+**Trade-offs**:
+
+- Small overhead: one extra text column (~8 bytes per row), negligible at scale
+- No fuzzy/ML classification — type assignment is either explicit (user) or heuristic (folder name); accuracy depends on the user's folder structure
+
+**Files to modify (Epic 7)**:
+
+- `libs/core/src/models/Game.ts` — add `romType` to `GameSchema`
+- `libs/database/src/schema/index.ts` — add column to `games` table
+- `libs/database/drizzle/` — new migration file
+- `libs/core/src/services/LibraryService.ts` — filter support
+- `libs/core/src/services/types.ts` — add `romType` to `SearchOptions`
+- `libs/ui/src/components/GameCard/` — `romType` badge
+- `libs/ui/src/components/Sidebar/` — filter entry
+- `libs/i18n/src/locales/en/` — `romType.game`, `romType.homebrew` keys
+
+---
+
 ## Project Structure
 
 ```
