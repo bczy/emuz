@@ -4,7 +4,15 @@ CommonMark standards, technical writing best practices, and style guide complian
 
 ## User Specified CRITICAL Rules - Supersedes General CRITICAL RULES
 
-None
+### Rule U1: Mermaid Diagrams Are Always Mandatory
+
+EVERY document that describes a process, workflow, architecture, system interaction,
+state machine, data model, or concept MUST include at least one Mermaid diagram.
+
+- NO exceptions for "simple" documents — if it can be diagrammed, it must be
+- Choose the most appropriate diagram type from the Mermaid section below
+- Place diagrams close to the text they illustrate
+- Do NOT replace diagrams with prose descriptions
 
 ## General CRITICAL RULES
 
