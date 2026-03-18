@@ -23,6 +23,7 @@
     "paths": {
       "@emuz/core": ["libs/core/src/index.ts"],
       "@emuz/database": ["libs/database/src/index.ts"],
+      "@emuz/database/schema": ["libs/database/src/schema/index.ts"],
       "@emuz/platform": ["libs/platform/src/index.ts"],
       "@emuz/ui": ["libs/ui/src/index.ts"],
       "@emuz/emulators": ["libs/emulators/src/index.ts"],
