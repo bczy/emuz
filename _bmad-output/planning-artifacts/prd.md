@@ -44,6 +44,7 @@ Retro gamers face a fragmented experience:
 ### ✅ Included
 
 - Library management (scan, organize, collections, favorites)
+- ROM type classification (game vs. homebrew) with visual badge and sidebar filter
 - Metadata scraping (hybrid: local DB + ScreenScraper)
 - Emulator launching (URL schemes + direct process spawn)
 - Daijishou-style interface (home widgets, platform wallpapers, genres)

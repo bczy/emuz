@@ -5,6 +5,7 @@
 ## Boundaries
 
 ### Owns
+
 - React Native screens and navigation (React Navigation 7 stack + bottom tabs)
 - App root (`index.js`, `App.tsx`, `AppProviders`)
 - Metro bundler configuration for pnpm monorepo workspace resolution
@@ -14,6 +15,7 @@
 - Mobile platform service adapters (`FileService`, `LauncherService`, `StorageService`)
 
 ### Delegates
+
 - Business logic (library, scan, launch) → `@emuz/core` services and stores
 - Database access → `@emuz/database` mobile adapter (`react-native-sqlite-storage`)
 - File I/O → `@emuz/platform` mobile adapters
@@ -24,28 +26,30 @@
 ## Integration Map
 
 ### Internal dependencies
-| Package | Used for |
-|---------|----------|
-| `@emuz/core` | All services + Zustand stores + model types |
-| `@emuz/database` | `createMobileAdapter` — SQLite on-device storage |
-| `@emuz/platform` | `createMobileFSAdapter`, `createMobileLauncherAdapter` |
-| `@emuz/ui` | All shared screen components |
-| `@emuz/emulators` | Emulator registry for launch target selection |
-| `@emuz/i18n` | `I18nProvider`, `useTranslation` |
+
+| Package           | Used for                                               |
+| ----------------- | ------------------------------------------------------ |
+| `@emuz/core`      | All services + Zustand stores + model types            |
+| `@emuz/database`  | `createMobileAdapter` — SQLite on-device storage       |
+| `@emuz/platform`  | `createMobileFSAdapter`, `createMobileLauncherAdapter` |
+| `@emuz/ui`        | All shared screen components                           |
+| `@emuz/emulators` | Emulator registry for launch target selection          |
+| `@emuz/i18n`      | `I18nProvider`, `useTranslation`                       |
 
 ### Depended by
 
 _Top-level application — nothing depends on `apps/mobile`._
 
 ### External dependencies
-| Package | Version | Role |
-|---------|---------|------|
-| `react-native` | `^0.81` | Cross-platform mobile runtime |
-| `expo` | `^54.x` | Dev tooling, build system, managed config |
-| `@react-navigation/native` | `^7.x` | Navigation container |
-| `@react-navigation/bottom-tabs` | `^7.x` | Bottom tab navigator |
-| `nativewind` | `^4.x` | Tailwind utility classes for React Native |
-| `react-native-sqlite-storage` | `^6.x` | On-device SQLite (via `@emuz/database`) |
+
+| Package                         | Version | Role                                      |
+| ------------------------------- | ------- | ----------------------------------------- |
+| `react-native`                  | `^0.81` | Cross-platform mobile runtime             |
+| `expo`                          | `^54.x` | Dev tooling, build system, managed config |
+| `@react-navigation/native`      | `^7.x`  | Navigation container                      |
+| `@react-navigation/bottom-tabs` | `^7.x`  | Bottom tab navigator                      |
+| `nativewind`                    | `^4.x`  | Tailwind utility classes for React Native |
+| `react-native-sqlite-storage`   | `^6.x`  | On-device SQLite (via `@emuz/database`)   |
 
 ## Usage
 
@@ -107,7 +111,7 @@ apps/mobile/
 │   │   └── types.ts
 │   ├── screens/             # One file per screen
 │   │   ├── HomeScreen.tsx         # Daijishou-style widget dashboard
-│   │   ├── LibraryScreen.tsx      # Game grid with sort/filter
+│   │   ├── LibraryScreen.tsx      # Game grid with sort/filter (platform, genre, romType)
 │   │   ├── PlatformsScreen.tsx
 │   │   ├── GenresScreen.tsx
 │   │   ├── CollectionsScreen.tsx
@@ -131,19 +135,21 @@ apps/mobile/
 ## Emulator Launch
 
 ### Android (Intent system)
+
 Games are launched via Android package intents: RetroArch, Dolphin, PPSSPP, DuckStation. Intent package names are sourced from `@emuz/emulators` `EmulatorDefinition.androidPackages`.
 
 ### iOS (URL schemes)
+
 Games are launched via URL schemes: RetroArch (`retroarch://`), Delta (`delta://`), PPSSPP (`ppsspp://`), Provenance. URL schemes are sourced from `@emuz/emulators` `EmulatorDefinition.iosUrlScheme`.
 
 ## Anti-Patterns
 
-| ❌ Do NOT | ✅ Do instead |
-|-----------|--------------|
-| Put business logic in screens or navigation | Business logic belongs in `@emuz/core` services; screens only call hooks |
-| Import `@emuz/database` directly in screens | Database access goes through `@emuz/core` services |
-| Use hardcoded colors in `StyleSheet.create` | Use NativeWind `className` with design token classes |
-| Use `import fs from 'fs'` or Node.js APIs | React Native has no Node.js — use `@emuz/platform` mobile adapters |
+| ❌ Do NOT                                                 | ✅ Do instead                                                                                |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Put business logic in screens or navigation               | Business logic belongs in `@emuz/core` services; screens only call hooks                     |
+| Import `@emuz/database` directly in screens               | Database access goes through `@emuz/core` services                                           |
+| Use hardcoded colors in `StyleSheet.create`               | Use NativeWind `className` with design token classes                                         |
+| Use `import fs from 'fs'` or Node.js APIs                 | React Native has no Node.js — use `@emuz/platform` mobile adapters                           |
 | Configure Metro to use `disableHierarchicalLookup: false` | The monorepo requires `disableHierarchicalLookup: true` to prevent duplicate React instances |
 
 ## Constraints

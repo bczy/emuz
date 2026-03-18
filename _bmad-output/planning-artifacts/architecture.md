@@ -445,6 +445,7 @@ export const games = sqliteTable('games', {
   playTime: integer('play_time').notNull().default(0),
   lastPlayedAt: integer('last_played_at', { mode: 'timestamp' }),
   isFavorite: integer('is_favorite', { mode: 'boolean' }).notNull().default(false),
+  romType: text('rom_type').notNull().default('game'), // 'game' | 'homebrew' — ADR-014
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .$defaultFn(() => new Date()),
