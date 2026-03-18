@@ -5,9 +5,20 @@ import * as path from 'path';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
 
-export default defineConfig(() => ({
+export default defineConfig(({ mode }) => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/libs/database',
+  resolve:
+    mode === 'test'
+      ? {
+          alias: {
+            '@op-engineering/op-sqlite': path.join(
+              import.meta.dirname,
+              'src/__mocks__/op-sqlite.ts'
+            ),
+          },
+        }
+      : {},
   plugins: [
     nxViteTsPaths(),
     nxCopyAssetsPlugin(['*.md']),
@@ -52,7 +63,7 @@ export default defineConfig(() => ({
     rollupOptions: {
       // External packages that should not be bundled into your library.
       // Native modules for different platforms are externalized
-      external: ['better-sqlite3', 'react-native-sqlite-storage'],
+      external: ['better-sqlite3', '@op-engineering/op-sqlite', 'drizzle-orm', /^drizzle-orm\/.*/],
     },
   },
 }));

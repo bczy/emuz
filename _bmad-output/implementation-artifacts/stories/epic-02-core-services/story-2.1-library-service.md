@@ -15,7 +15,7 @@ As a user, I want my games, platforms, and collections persisted and queryable, 
 - [x] `getAllGames()` — returns all games with platform join
 - [x] `getGameById(id)` — returns single game or null
 - [x] `getGamesByPlatform(platformId)` — filtered list
-- [x] `searchGames(query)` — fuzzy search via fuse.js
+- [x] `searchGames(query)` — SQL LIKE search with wildcard escaping; fuse.js fuzzy search deferred to Epic 6
 - [x] `updateGame(id, data)` — partial update
 - [x] `deleteGame(id)` — soft or hard delete
 - [x] Collection CRUD: `getCollections`, `createCollection`, `addToCollection`, `removeFromCollection`
