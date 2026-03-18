@@ -25,6 +25,7 @@ interface Game {
   publisher?: string;
   releaseDate?: string;
   genre?: string;
+  romType: 'game' | 'homebrew'; // default: 'game'
   rating?: number; // 0–5
   playCount: number;
   playTime: number; // in seconds
@@ -155,6 +156,7 @@ interface SearchOptions extends PaginationOptions {
   platformId?: string;
   genreId?: string;
   genre?: string;
+  romType?: 'game' | 'homebrew'; // filter by ROM type (Epic 7 / ADR-014)
   favorite?: boolean;
 }
 
@@ -255,6 +257,9 @@ interface ILibraryService {
   addToFavorites(gameId: string): Promise<void>;
   removeFromFavorites(gameId: string): Promise<void>;
   getFavorites(): Promise<Game[]>;
+
+  // ROM Type (Epic 7 / ADR-014)
+  updateRomType(gameId: string, romType: 'game' | 'homebrew'): Promise<void>;
 }
 ```
 
@@ -428,6 +433,7 @@ interface UIState {
   searchQuery: string;
   selectedPlatform: string | null;
   selectedGenre: string | null;
+  selectedRomType: 'game' | 'homebrew' | null; // ROM type filter (Epic 7)
 
   // Actions
   toggleSidebar: () => void;
@@ -435,6 +441,7 @@ interface UIState {
   setSort: (by: UIState['sortBy'], order: UIState['sortOrder']) => void;
   setSearchQuery: (query: string) => void;
   setSelectedPlatform: (platformId: string | null) => void;
+  setSelectedRomType: (romType: 'game' | 'homebrew' | null) => void;
 }
 ```
 
@@ -642,6 +649,7 @@ interface GameCardProps {
   onPress?: (game: Game) => void;
   onLongPress?: (game: Game) => void;
   showPlatformBadge?: boolean;
+  showRomTypeBadge?: boolean; // shows "HB" badge when romType === 'homebrew'
   size?: 'sm' | 'md' | 'lg';
 }
 
@@ -684,8 +692,10 @@ interface SidebarProps {
   collections: Collection[];
   selectedPlatform?: string;
   selectedCollection?: string;
+  selectedRomType?: 'game' | 'homebrew' | null; // ROM type filter (Epic 7)
   onPlatformSelect: (platformId: string) => void;
   onCollectionSelect: (collectionId: string) => void;
+  onRomTypeSelect: (romType: 'game' | 'homebrew' | null) => void;
 }
 ```
 
@@ -763,5 +773,6 @@ function MyComponent() {
 
 - `common`: Common strings (app name, buttons, etc.)
 - `games`: Game-related strings
+- `library`: Library strings including `romType.game`, `romType.homebrew`, `romType.all` (Epic 7)
 - `platforms`: Platform names and descriptions
 - `settings`: Settings labels and descriptions
