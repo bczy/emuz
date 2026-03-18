@@ -222,17 +222,21 @@ Every agent or LLM that changes a story's implementation or status **must** keep
 
 - Desktop uses IPC bridge between Electron main and renderer processes
 - Platform adapters in `@emuz/platform` abstract filesystem differences
-- Database adapters pattern: same interface for better-sqlite3 and react-native-sqlite-storage
+- Database layer uses Drizzle ORM (ADR-013): `DrizzleDb` from `@emuz/database`; legacy `DatabaseAdapter` is deprecated
 - Zustand stores live in `@emuz/core`; components consume via hooks
 - Navigation: React Navigation (mobile) / Electron router (desktop)
-- Full ADR list: `_bmad-output/planning-artifacts/architecture.md`
+- Full ADR list: [\_bmad-output/planning-artifacts/architecture.md](_bmad-output/planning-artifacts/architecture.md)
 
 ## Reference Docs
 
-- Architecture (BMAD): `_bmad-output/planning-artifacts/architecture.md`
-- PRD (BMAD): `_bmad-output/planning-artifacts/prd.md`
-- Stories (BMAD): `_bmad-output/implementation-artifacts/stories/`
-- Architecture: `docs/architecture.md`
-- API reference: `docs/api.md`
-- Emulator integration: `docs/emulator-integration.md`
-- Documentation guidelines (README standards): `docs/documentation-guidelines.md`
+| Document                     | Path                                                                                                |
+| ---------------------------- | --------------------------------------------------------------------------------------------------- |
+| Architecture (BMAD)          | [\_bmad-output/planning-artifacts/architecture.md](_bmad-output/planning-artifacts/architecture.md) |
+| PRD (BMAD)                   | [\_bmad-output/planning-artifacts/prd.md](_bmad-output/planning-artifacts/prd.md)                   |
+| Stories (BMAD)               | [\_bmad-output/implementation-artifacts/stories/](_bmad-output/implementation-artifacts/stories/)   |
+| Architecture                 | [docs/architecture.md](docs/architecture.md)                                                        |
+| API reference                | [docs/api.md](docs/api.md)                                                                          |
+| Emulator integration         | [docs/emulator-integration.md](docs/emulator-integration.md)                                        |
+| Contributing guide           | [docs/contributing.md](docs/contributing.md)                                                        |
+| AI tools (Context7 / Nx MCP) | [docs/ai-tools.md](docs/ai-tools.md)                                                                |
+| Documentation guidelines     | [docs/documentation-guidelines.md](docs/documentation-guidelines.md)                                |
