@@ -83,10 +83,26 @@ describe('LaunchService', () => {
       expect(emulators[0].name).toBe('RetroArch');
     });
 
-    it('should filter emulators by platform', async () => {
+    it('should return empty platforms array when platforms column contains invalid JSON', async () => {
       mockAdapter.query.mockResolvedValueOnce([
-        createMockEmulatorRow({ platforms: '["nes"]' }),
+        createMockEmulatorRow({ platforms: 'not-valid-json{{' }),
       ]);
+
+      const emulators = await service.getEmulators();
+
+      expect(emulators[0].platforms).toEqual([]);
+    });
+
+    it('should return empty platforms array when platforms column is JSON null', async () => {
+      mockAdapter.query.mockResolvedValueOnce([createMockEmulatorRow({ platforms: 'null' })]);
+
+      const emulators = await service.getEmulators();
+
+      expect(emulators[0].platforms).toEqual([]);
+    });
+
+    it('should filter emulators by platform', async () => {
+      mockAdapter.query.mockResolvedValueOnce([createMockEmulatorRow({ platforms: '["nes"]' })]);
 
       await service.getEmulators({ platformId: 'nes' });
 
@@ -122,9 +138,7 @@ describe('LaunchService', () => {
   describe('addEmulator', () => {
     it('should add a new emulator', async () => {
       mockAdapter.execute.mockResolvedValueOnce(undefined);
-      mockAdapter.query.mockResolvedValueOnce([
-        createMockEmulatorRow({ id: 'mock-uuid-launch' }),
-      ]);
+      mockAdapter.query.mockResolvedValueOnce([createMockEmulatorRow({ id: 'mock-uuid-launch' })]);
 
       const emulator = await service.addEmulator({
         name: 'Custom Emulator',
@@ -209,9 +223,7 @@ describe('LaunchService', () => {
     };
 
     it('should launch game with default emulator', async () => {
-      mockAdapter.query.mockResolvedValueOnce([
-        createMockEmulatorRow({ is_default: 1 }),
-      ]);
+      mockAdapter.query.mockResolvedValueOnce([createMockEmulatorRow({ is_default: 1 })]);
       mockLauncher.launch.mockResolvedValueOnce({ success: true });
 
       const result = await service.launchGame(mockGame);
@@ -221,25 +233,20 @@ describe('LaunchService', () => {
     });
 
     it('should launch game with specified emulator', async () => {
-      mockAdapter.query.mockResolvedValueOnce([
-        createMockEmulatorRow({ id: 'specific-emu' }),
-      ]);
+      mockAdapter.query.mockResolvedValueOnce([createMockEmulatorRow({ id: 'specific-emu' })]);
       mockLauncher.launch.mockResolvedValueOnce({ success: true });
 
       await service.launchGame(mockGame, 'specific-emu');
 
-      expect(mockAdapter.query).toHaveBeenCalledWith(
-        expect.stringContaining('WHERE id = ?'),
-        ['specific-emu']
-      );
+      expect(mockAdapter.query).toHaveBeenCalledWith(expect.stringContaining('WHERE id = ?'), [
+        'specific-emu',
+      ]);
     });
 
     it('should throw error if no emulator available', async () => {
       mockAdapter.query.mockResolvedValueOnce([]);
 
-      await expect(service.launchGame(mockGame)).rejects.toThrow(
-        'No emulator available'
-      );
+      await expect(service.launchGame(mockGame)).rejects.toThrow('No emulator available');
     });
 
     it('should record play session start', async () => {

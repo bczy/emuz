@@ -12,6 +12,12 @@ import { games } from '@emuz/database/schema';
 import type { FileSystemAdapter } from '@emuz/platform';
 import type { IMetadataService, MetadataProgress } from './types';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isAbsolutePath(p: string): boolean {
+  return p.startsWith('/') || /^[A-Za-z]:[\\/]/.test(p);
+}
+
 /**
  * Metadata provider interface
  */
@@ -38,6 +44,9 @@ export class MetadataService implements IMetadataService {
     private readonly fs: FileSystemAdapter,
     coverCacheDir?: string
   ) {
+    if (coverCacheDir !== undefined && !isAbsolutePath(coverCacheDir)) {
+      throw new Error(`coverCacheDir must be an absolute path, got: "${coverCacheDir}"`);
+    }
     this.coverCacheDir = coverCacheDir ?? '.emuz/covers';
   }
 
@@ -106,6 +115,9 @@ export class MetadataService implements IMetadataService {
   }
 
   async downloadCover(gameId: string, url: string): Promise<string> {
+    if (!UUID_RE.test(gameId)) {
+      throw new Error(`Invalid gameId: "${gameId}" — must be a UUID`);
+    }
     const cacheDir = this.coverCacheDir;
     await this.ensureDirectory(cacheDir);
 

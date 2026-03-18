@@ -2,33 +2,29 @@
 
 <div align="center">
   <h3>🎮 A Daijishou-inspired cross-platform emulator frontend</h3>
-  <p>Organize, browse, and launch your retro game collection with style.</p>
+  <p>Organize, browse, and launch your retro game, shoftware or demo collection with style.</p>
 </div>
 
 ---
 
 ## ✨ Features
 
-- 🎮 **Universal Game Library** - Manage ROMs across 100+ retro platforms
-- 🏠 **Widget Dashboard** - Daijishou-style home screen with customizable widgets
-- 🖼️ **Platform Wallpapers** - Beautiful platform backgrounds like Daijishou
 - 🔍 **Smart Scanning** - Automatic ROM detection and organization
-- 📊 **Play Tracking** - Track your play time and history
-- 📂 **Collections** - Create custom game collections
-- 🏷️ **Genres** - Organize games by genre
-- 🎯 **ROM Classification** - Distinguish commercial games from homebrew content
-- ⚡ **Emulator Integration** - Launch games in RetroArch, Dolphin, PCSX2, and more
-- 🌍 **Multi-language** - EN, ES, FR, DE, JA, ZH support
+- 📂 **Collections** - Create custom rom collections
+- 🏷️ **Genres** - Organize roms by genre
+- 🎯 **ROM Classification** - Distinguish games, software and homebrew content
 
 ## 📱 Platforms
 
-| Platform   | Status   |
-| ---------- | -------- |
-| 🖥️ Windows | ✅ Ready |
-| 🍎 macOS   | ✅ Ready |
-| 🐧 Linux   | ✅ Ready |
-| 🤖 Android | ✅ Ready |
-| 📱 iOS     | ✅ Ready |
+🖥️ Windows
+
+🍎 macOS
+
+🐧 Linux
+
+🤖 Android
+
+📱 iOS
 
 ## 🛠️ Tech Stack
 

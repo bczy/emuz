@@ -9,10 +9,28 @@ import { v4 as uuidv4 } from 'uuid';
 import { eq, asc } from 'drizzle-orm';
 import type { Platform } from '../models/Platform';
 import type { DrizzleDb } from '@emuz/database/schema';
-import { games, scanDirectories } from '@emuz/database/schema';
+import { games, scanDirectories, platforms as platformsTable } from '@emuz/database/schema';
 import type { IScannerService, ScanOptions, ScanProgress, ScanStatus, RomDirectory } from './types';
 
 type ScanDirRow = typeof scanDirectories.$inferSelect;
+type PlatformRow = typeof platformsTable.$inferSelect;
+
+function rowToPlatform(row: PlatformRow): Platform {
+  return {
+    id: row.id,
+    name: row.name,
+    shortName: row.shortName ?? undefined,
+    manufacturer: row.manufacturer ?? undefined,
+    generation: row.generation ?? undefined,
+    releaseYear: row.releaseYear ?? undefined,
+    iconPath: row.iconPath ?? undefined,
+    wallpaperPath: row.wallpaperPath ?? undefined,
+    color: row.color ?? undefined,
+    romExtensions: row.romExtensions ?? [],
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
 
 /**
  * Convert Drizzle row to RomDirectory model
@@ -188,18 +206,16 @@ export class ScannerService implements IScannerService {
   }
 
   async detectPlatform(filePath: string): Promise<Platform | null> {
-    const ext = this.getFileExtension(filePath);
-    const platformId = this.detectPlatformByExtension(ext);
-
+    const platformId = this.detectPlatformByExtension(this.getFileExtension(filePath));
     if (!platformId) return null;
 
-    return {
-      id: platformId,
-      name: platformId.toUpperCase(),
-      romExtensions: [ext.replace('.', '')],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    const [row] = await this.db
+      .select()
+      .from(platformsTable)
+      .where(eq(platformsTable.id, platformId))
+      .limit(1);
+
+    return row ? rowToPlatform(row) : null;
   }
 
   async *scan(path: string, options?: ScanOptions): AsyncGenerator<ScanProgress> {
@@ -285,7 +301,24 @@ export class ScannerService implements IScannerService {
         }
 
         const ext = this.getFileExtension(file.name);
-        const platformId = options?.platformId ?? this.detectPlatformByExtension(ext) ?? 'unknown';
+        const rawPlatformId = options?.platformId ?? this.detectPlatformByExtension(ext);
+        if (!rawPlatformId) {
+          this.filesScanned++;
+          continue;
+        }
+
+        // Verify platform exists in DB to avoid FK violations
+        const [platformRow] = await this.db
+          .select({ id: platformsTable.id })
+          .from(platformsTable)
+          .where(eq(platformsTable.id, rawPlatformId))
+          .limit(1);
+        if (!platformRow) {
+          this.filesScanned++;
+          continue;
+        }
+
+        const platformId = platformRow.id;
         const title = this.extractTitleFromFileName(file.name);
 
         const id = uuidv4();

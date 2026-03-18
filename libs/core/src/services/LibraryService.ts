@@ -10,16 +10,18 @@ import { eq, desc, asc, like, and, isNotNull, max, count, sql } from 'drizzle-or
 import type { Game } from '../models/Game';
 import type { Collection } from '../models/Collection';
 import type { DrizzleDb } from '@emuz/database/schema';
-import { games, collections, collectionGames } from '@emuz/database/schema';
+import { games, collections, collectionGames, platforms } from '@emuz/database/schema';
 import type { ILibraryService, PaginationOptions, CreateCollectionInput } from './types';
 
 type GameRow = typeof games.$inferSelect;
 type CollectionRow = typeof collections.$inferSelect;
 
+type PlatformData = { name: string | null; shortName: string | null; manufacturer: string | null };
+
 /**
  * Convert Drizzle row to Game model
  */
-function rowToGame(row: GameRow): Game {
+function rowToGame(row: GameRow, platform?: PlatformData): Game {
   return {
     id: row.id,
     platformId: row.platformId,
@@ -41,6 +43,9 @@ function rowToGame(row: GameRow): Game {
     isFavorite: row.isFavorite,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    platformName: platform?.name ?? undefined,
+    platformShortName: platform?.shortName ?? undefined,
+    platformManufacturer: platform?.manufacturer ?? undefined,
   };
 }
 
@@ -80,13 +85,25 @@ export class LibraryService implements ILibraryService {
       options?.page !== undefined ? (options.page - 1) * limit : (options?.offset ?? 0);
 
     const rows = await this.db
-      .select()
+      .select({
+        game: games,
+        platformName: platforms.name,
+        platformShortName: platforms.shortName,
+        platformManufacturer: platforms.manufacturer,
+      })
       .from(games)
+      .leftJoin(platforms, eq(games.platformId, platforms.id))
       .orderBy(asc(games.title))
       .limit(limit)
       .offset(offset);
 
-    return rows.map(rowToGame);
+    return rows.map((r) =>
+      rowToGame(r.game, {
+        name: r.platformName,
+        shortName: r.platformShortName,
+        manufacturer: r.platformManufacturer,
+      })
+    );
   }
 
   async getGameById(id: string): Promise<Game | null> {
@@ -96,7 +113,8 @@ export class LibraryService implements ILibraryService {
 
   async getGamesByPlatform(platformId: string, options?: PaginationOptions): Promise<Game[]> {
     const limit = options?.limit ?? 100;
-    const offset = options?.offset ?? 0;
+    const offset =
+      options?.page !== undefined ? (options.page - 1) * limit : (options?.offset ?? 0);
 
     const rows = await this.db
       .select()
@@ -106,7 +124,7 @@ export class LibraryService implements ILibraryService {
       .limit(limit)
       .offset(offset);
 
-    return rows.map(rowToGame);
+    return rows.map((row) => rowToGame(row));
   }
 
   async searchGames(
@@ -131,7 +149,7 @@ export class LibraryService implements ILibraryService {
       .where(and(...conditions))
       .orderBy(asc(games.title));
 
-    return rows.map(rowToGame);
+    return rows.map((row) => rowToGame(row));
   }
 
   async updateGame(id: string, data: Partial<Game>): Promise<Game | null> {
@@ -173,7 +191,7 @@ export class LibraryService implements ILibraryService {
       .where(isNotNull(games.lastPlayedAt))
       .orderBy(desc(games.lastPlayedAt))
       .limit(limit);
-    return rows.map(rowToGame);
+    return rows.map((row) => rowToGame(row));
   }
 
   async getRecentlyPlayed(limit = 10): Promise<Game[]> {
@@ -326,7 +344,7 @@ export class LibraryService implements ILibraryService {
       .from(games)
       .where(eq(games.isFavorite, true))
       .orderBy(asc(games.title));
-    return rows.map(rowToGame);
+    return rows.map((row) => rowToGame(row));
   }
 }
 

@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { sql } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
 import * as schema from '@emuz/database/schema';
 import type { DrizzleDb } from '@emuz/database/schema';
 import { LibraryService } from '../services/LibraryService';
@@ -229,5 +229,41 @@ describe('LibraryService (Drizzle)', () => {
     const { createLibraryService } = await import('../services/LibraryService');
     const s = createLibraryService(db);
     expect(await s.getGameCount()).toBe(0);
+  });
+
+  it('getAllGames includes platformName from LEFT JOIN (P-12)', async () => {
+    seedGame(db);
+    const results = await svc.getAllGames();
+    expect(results[0].platformName).toBe('NES');
+  });
+
+  it('getAllGames includes platformShortName and platformManufacturer from JOIN (P-12)', async () => {
+    // Update the platform with short name and manufacturer
+    db.update(schema.platforms)
+      .set({ shortName: 'NES', manufacturer: 'Nintendo' })
+      .where(eq(schema.platforms.id, 'nes'))
+      .run();
+    seedGame(db);
+    const results = await svc.getAllGames();
+    expect(results[0].platformShortName).toBe('NES');
+    expect(results[0].platformManufacturer).toBe('Nintendo');
+  });
+
+  it('getGamesByPlatform uses page parameter correctly (P-13)', async () => {
+    seedGame(db);
+    seedGame(db, {
+      id: 'g2',
+      title: 'Contra',
+      filePath: '/roms/contra.nes',
+      fileName: 'contra.nes',
+    });
+    seedGame(db, { id: 'g3', title: 'Zelda', filePath: '/roms/zelda.nes', fileName: 'zelda.nes' });
+
+    const page1 = await svc.getGamesByPlatform('nes', { page: 1, limit: 2 });
+    const page2 = await svc.getGamesByPlatform('nes', { page: 2, limit: 2 });
+
+    expect(page1).toHaveLength(2);
+    expect(page2).toHaveLength(1);
+    expect(page1.map((g) => g.id)).not.toEqual(page2.map((g) => g.id));
   });
 });
