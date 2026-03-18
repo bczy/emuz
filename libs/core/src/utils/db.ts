@@ -1,9 +1,15 @@
 /**
  * Database utility helpers
+ *
+ * @deprecated These helpers were needed for manual SQLite row mapping.
+ * With Drizzle ORM (Story 1.7 / ADR-013), timestamp columns use
+ * `integer({ mode: 'timestamp' })` for automatic Date↔Unix-seconds conversion,
+ * making these utilities unnecessary. They will be removed in v1.0.
  */
 
 /**
  * Convert a Unix timestamp (seconds) to a Date.
+ * @deprecated Use Drizzle `integer({ mode: 'timestamp' })` column mode instead.
  */
 export function toDate(ts: number): Date {
   return new Date(ts * 1000);
@@ -11,6 +17,7 @@ export function toDate(ts: number): Date {
 
 /**
  * Convert a nullable Unix timestamp (seconds) to an optional Date.
+ * @deprecated Use Drizzle `integer({ mode: 'timestamp' })` column mode instead.
  */
 export function toOptionalDate(ts: number | null | undefined): Date | undefined {
   return ts != null ? new Date(ts * 1000) : undefined;
@@ -21,6 +28,8 @@ export function toOptionalDate(ts: number | null | undefined): Date | undefined 
  *
  * Automatically appends `updated_at = <now>`.
  * Returns null if no fields are provided (caller should skip the UPDATE).
+ *
+ * @deprecated Use Drizzle's typed `.set({})` update builder instead of manual SQL construction.
  *
  * @example
  * const result = buildUpdateQuery([['title', 'New Title'], ['rating', 9]]);
