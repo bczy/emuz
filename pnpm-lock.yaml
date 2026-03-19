@@ -135,15 +135,15 @@ importers:
       '@emuz/platform':
         specifier: workspace:*
         version: link:../../libs/platform
+      '@emuz/storage':
+        specifier: workspace:*
+        version: link:../../libs/storage
       '@emuz/ui':
         specifier: workspace:*
         version: link:../../libs/ui
       '@tanstack/react-query':
         specifier: ^5.0.0
         version: 5.90.16(react@18.3.1)
-      better-sqlite3:
-        specifier: ^11.3.0
-        version: 11.10.0
       react:
         specifier: 18.3.1
         version: 18.3.1
@@ -356,6 +356,9 @@ importers:
       '@emuz/platform':
         specifier: workspace:*
         version: link:../platform
+      '@emuz/storage':
+        specifier: workspace:*
+        version: link:../storage
       drizzle-orm:
         specifier: ^0.45.1
         version: 0.45.1(@op-engineering/op-sqlite@8.0.3(react-native@0.81.5(@babel/core@7.28.5)(@react-native-community/cli@20.1.0(typescript@5.7.3))(@react-native/metro-config@0.76.5(@babel/core@7.28.5))(@types/react@18.3.27)(react@19.1.0))(react@19.1.0))(@types/better-sqlite3@7.6.13)(better-sqlite3@11.10.0)
@@ -393,6 +396,9 @@ importers:
       drizzle-orm:
         specifier: ^0.45.1
         version: 0.45.1(@op-engineering/op-sqlite@8.0.3(react-native@0.81.5(@babel/core@7.28.5)(@react-native-community/cli@20.1.0(typescript@5.7.3))(@react-native/metro-config@0.76.5(@babel/core@7.28.5))(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(@types/better-sqlite3@7.6.13)(better-sqlite3@11.10.0)
+      vitest:
+        specifier: ^4.0.0
+        version: 4.0.16(@types/node@22.19.3)(@vitest/ui@4.0.16)(jiti@2.4.2)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)
     devDependencies:
       drizzle-kit:
         specifier: ^0.31.10
@@ -417,6 +423,15 @@ importers:
       react-native-fs:
         specifier: ^2.20.0
         version: 2.20.0(react-native@0.76.5(@babel/core@7.28.5)(@babel/preset-env@7.28.5(@babel/core@7.28.5))(@react-native-community/cli-server-api@20.1.0)(@types/react@18.3.27)(encoding@0.1.13)(react@19.1.0))
+
+  libs/storage:
+    devDependencies:
+      typescript:
+        specifier: ~5.7.2
+        version: 5.7.3
+      vitest:
+        specifier: ^4.0.0
+        version: 4.0.16(@types/node@22.19.3)(@vitest/ui@4.0.16)(jiti@2.4.2)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)
 
   libs/ui:
     dependencies:
@@ -16466,7 +16481,7 @@ snapshots:
   config-file-ts@0.2.8-rc1:
     dependencies:
       glob: 10.5.0
-      typescript: 5.7.3
+      typescript: 5.9.3
 
   confusing-browser-globals@1.0.11: {}
 
