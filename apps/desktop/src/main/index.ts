@@ -5,12 +5,24 @@
 
 import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import { join } from 'path';
-import { registerAllHandlers, initializeDatabase, closeDatabase } from './ipc';
+import { registerAllHandlers, initializeFlatDb, closeFlatDb } from './ipc';
 
 // Inline replacements for @electron-toolkit/utils (avoids early app.isPackaged access)
-const is = { get dev() { return !app.isPackaged; } };
-const electronApp = { setAppUserModelId: (id: string) => { if (process.platform === 'win32') app.setAppUserModelId(id); } };
-const optimizer = { watchWindowShortcuts: (_win: BrowserWindow) => { /* noop */ } };
+const is = {
+  get dev() {
+    return !app.isPackaged;
+  },
+};
+const electronApp = {
+  setAppUserModelId: (id: string) => {
+    if (process.platform === 'win32') app.setAppUserModelId(id);
+  },
+};
+const optimizer = {
+  watchWindowShortcuts: (_win: BrowserWindow) => {
+    /* noop */
+  },
+};
 
 // Keep a global reference of the window object
 let mainWindow: BrowserWindow | null = null;
@@ -68,7 +80,7 @@ function createWindow(): void {
 /**
  * App lifecycle handlers
  */
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.emuz.app');
 
@@ -78,8 +90,8 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window);
   });
 
-  // Initialize database
-  initializeDatabase();
+  // Initialize flat-file storage
+  await initializeFlatDb();
 
   // Register all IPC handlers
   registerAllHandlers();
@@ -104,8 +116,8 @@ app.on('window-all-closed', () => {
 
 // Handle app before quit
 app.on('before-quit', () => {
-  // Close database connection
-  closeDatabase();
+  // Close flat-file storage and flush pending writes
+  void closeFlatDb();
 });
 
 /**

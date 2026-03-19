@@ -4,11 +4,11 @@
  */
 
 export { registerFilesystemHandlers } from './filesystem';
-export { registerDatabaseHandlers, initializeDatabase, closeDatabase, getDatabase } from './database';
+export { registerStorageHandlers, initializeFlatDb, closeFlatDb, getFlatDb } from './storage';
 export { registerLauncherHandlers } from './launcher';
 
 import { registerFilesystemHandlers } from './filesystem';
-import { registerDatabaseHandlers } from './database';
+import { registerStorageHandlers } from './storage';
 import { registerLauncherHandlers } from './launcher';
 
 /**
@@ -16,8 +16,8 @@ import { registerLauncherHandlers } from './launcher';
  */
 export function registerAllHandlers(): void {
   registerFilesystemHandlers();
-  registerDatabaseHandlers();
+  registerStorageHandlers();
   registerLauncherHandlers();
-  
+
   console.log('All IPC handlers registered');
 }

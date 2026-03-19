@@ -8,7 +8,8 @@
   "dependencies": {
     "@op-engineering/op-sqlite": "^8.0.0",
     "better-sqlite3": "^11.8.1",
-    "drizzle-orm": "^0.45.1"
+    "drizzle-orm": "^0.45.1",
+    "vitest": "^4.0.0"
   },
   "devDependencies": {
     "drizzle-kit": "^0.31.10"
