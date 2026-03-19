@@ -1,0 +1,54 @@
+{
+  "workflow_version": "1.2.0",
+  "timestamps": {
+    "started": "2026-03-19T00:00:00.000Z",
+    "last_updated": "2026-03-19T12:00:00.000Z",
+    "completed": "2026-03-19T12:00:00.000Z"
+  },
+  "mode": "completed",
+  "scan_level": "exhaustive",
+  "project_root": "/home/trambz/git/emuz",
+  "project_knowledge": "/home/trambz/git/emuz/docs",
+  "project_types_detected": ["desktop", "mobile", "library"],
+  "completed_steps": [
+    "step_1_scan_level_selection",
+    "step_2_state_initialization",
+    "step_3_project_type_detection",
+    "step_4_parallel_package_analysis",
+    "step_5_cross_cutting_analysis",
+    "step_6_gap_identification",
+    "step_7_generate_project_overview",
+    "step_8_generate_source_tree",
+    "step_9_generate_domain_docs",
+    "step_10_generate_index"
+  ],
+  "current_step": "complete",
+  "findings": {
+    "packages": 8,
+    "components": 18,
+    "ipc_channels": 40,
+    "database_tables": 9,
+    "domain_models": 7,
+    "test_coverage_target": "80%",
+    "i18n_missing_keys": 570,
+    "known_gaps": [
+      "romType column not yet in games table (ADR-014 approved)",
+      "Android applicationId still placeholder com.anonymous.emuzsource",
+      "Android release keystore not configured",
+      "macOS notarization disabled",
+      "LaunchService still on legacy DatabaseAdapter",
+      "No test files in apps/desktop"
+    ]
+  },
+  "outputs_generated": [
+    "project-scan-report.json",
+    "project-overview.md",
+    "source-tree-analysis.md",
+    "data-models.md",
+    "component-inventory.md",
+    "integration-architecture.md",
+    "development-guide.md",
+    "deployment-guide.md",
+    "index.md"
+  ]
+}

@@ -273,12 +273,18 @@ Error:       #EF4444
 
 **Status**: Accepted | **Source**: clarification #13
 
-| Level       | Tool       | Scope                      |
-| ----------- | ---------- | -------------------------- |
-| Unit        | Vitest     | Core services, utilities   |
-| Component   | RNTL       | React Native components    |
-| E2E Mobile  | Detox      | iOS/Android critical flows |
-| E2E Desktop | Playwright | Electron critical flows    |
+| Level       | Tool       | Version | Scope                      |
+| ----------- | ---------- | ------- | -------------------------- |
+| Unit        | Vitest     | latest  | Core services, utilities   |
+| Component   | RNTL       | latest  | React Native components    |
+| E2E Mobile  | Detox      | 20.47.0 | iOS/Android critical flows |
+| E2E Desktop | Playwright | latest  | Electron critical flows    |
+
+**Detox** (`detox@20.47.0`, MIT license, maintained by Wix): the official E2E
+framework for React Native. Runs on iOS simulators/devices and Android
+emulators/devices. Detox tests live under `apps/mobile/e2e/` and are executed
+via `pnpm nx run mobile:e2e`. They are excluded from the standard unit-test run
+and are triggered separately in CI after a successful build of the mobile app.
 
 Coverage threshold: 80% lines for `libs/core`.
 

@@ -369,14 +369,14 @@ Retro gamers face a fragmented experience:
 
 ## Non-Functional Requirements
 
-| ID    | Category      | Requirement                                                                                  |
-| ----- | ------------- | -------------------------------------------------------------------------------------------- |
-| NFR-1 | Performance   | App launch < 2s; scan < 5s/1000 ROMs; search < 100ms; memory < 500MB                         |
-| NFR-2 | Security      | No ROM distribution; file paths validated; no telemetry; no sensitive path logging           |
-| NFR-3 | Accessibility | Screen reader support; full keyboard navigation; high contrast mode; configurable font sizes |
-| NFR-4 | Localization  | English base; i18n architecture; RTL layout support; 6 languages at launch                   |
-| NFR-5 | Reliability   | > 99% crash-free sessions; > 90% ROM identification accuracy                                 |
-| NFR-6 | Testing       | > 80% line coverage for `libs/core`; all public APIs tested                                  |
+| ID    | Category      | Requirement                                                                                                                                                                |
+| ----- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| NFR-1 | Performance   | App launch < 2s; scan < 5s/1000 ROMs; search < 100ms; memory < 500MB                                                                                                       |
+| NFR-2 | Security      | No ROM distribution; file paths validated; no telemetry; no sensitive path logging                                                                                         |
+| NFR-3 | Accessibility | Screen reader support; full keyboard navigation; high contrast mode; configurable font sizes                                                                               |
+| NFR-4 | Localization  | English base; i18n architecture; RTL layout support; 6 languages at launch                                                                                                 |
+| NFR-5 | Reliability   | > 99% crash-free sessions; > 90% ROM identification accuracy                                                                                                               |
+| NFR-6 | Testing       | > 80% line coverage for `libs/core`; all public APIs tested; E2E mobile flows covered by Detox 20.47.0 (iOS + Android); E2E desktop flows covered by Playwright (Electron) |
 
 ---
 
