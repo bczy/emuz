@@ -1,14 +1,12 @@
 /**
  * MetadataService - Fetches and manages game metadata
  *
- * Refactored to use Drizzle ORM query builder (Story 1.7 / ADR-013).
- * No raw SQL strings.
+ * Migrated to @emuz/storage flat-file engine (Story 1.x / ADR-013 successor).
+ * No Drizzle ORM or raw SQL.
  */
 
-import { eq, and, isNotNull } from 'drizzle-orm';
 import type { Game, GameMetadata } from '../models/Game';
-import type { DrizzleDb } from '@emuz/database/schema';
-import { games } from '@emuz/database/schema';
+import type { FlatDb } from '@emuz/storage';
 import type { FileSystemAdapter } from '@emuz/platform';
 import type { IMetadataService, MetadataProgress } from './types';
 
@@ -28,7 +26,7 @@ export interface MetadataProvider {
 }
 
 /**
- * MetadataService implementation using Drizzle ORM
+ * MetadataService implementation using the FlatDb storage engine
  */
 export class MetadataService implements IMetadataService {
   private providers: MetadataProvider[] = [];
@@ -40,7 +38,7 @@ export class MetadataService implements IMetadataService {
   private readonly searchCache = new Map<string, GameMetadata[]>();
 
   constructor(
-    private readonly db: DrizzleDb,
+    private readonly db: FlatDb,
     private readonly fs: FileSystemAdapter,
     coverCacheDir?: string
   ) {
@@ -133,10 +131,8 @@ export class MetadataService implements IMetadataService {
       const buffer = await response.arrayBuffer();
       await this.fs.writeBinary(coverPath, new Uint8Array(buffer));
 
-      await this.db
-        .update(games)
-        .set({ coverPath, updatedAt: new Date() })
-        .where(eq(games.id, gameId));
+      this.db.games.update(gameId, { cover_path: coverPath, updated_at: new Date() });
+      await this.db.flush();
 
       return coverPath;
     } catch (error) {
@@ -212,28 +208,15 @@ export class MetadataService implements IMetadataService {
   }
 
   private async getExistingMetadata(gameId: string): Promise<GameMetadata | null> {
-    const rows = await this.db
-      .select({
-        title: games.title,
-        description: games.description,
-        developer: games.developer,
-        publisher: games.publisher,
-        releaseDate: games.releaseDate,
-        genre: games.genre,
-        rating: games.rating,
-      })
-      .from(games)
-      .where(and(eq(games.id, gameId), isNotNull(games.description)));
+    const row = this.db.games.findById(gameId);
+    if (!row || row.description === null) return null;
 
-    if (rows.length === 0) return null;
-
-    const row = rows[0];
     return {
       title: row.title,
       description: row.description ?? undefined,
       developer: row.developer ?? undefined,
       publisher: row.publisher ?? undefined,
-      releaseDate: row.releaseDate ?? undefined,
+      releaseDate: row.release_date ?? undefined,
       genre: row.genre ?? undefined,
       rating: row.rating ?? undefined,
     };
@@ -267,50 +250,39 @@ export class MetadataService implements IMetadataService {
   }
 
   private async getGameById(id: string): Promise<Game | null> {
-    const rows = await this.db
-      .select({
-        id: games.id,
-        platformId: games.platformId,
-        title: games.title,
-        filePath: games.filePath,
-        fileName: games.fileName,
-        fileHash: games.fileHash,
-      })
-      .from(games)
-      .where(eq(games.id, id));
+    const row = this.db.games.findById(id);
+    if (!row) return null;
 
-    if (rows.length === 0) return null;
-
-    const row = rows[0];
     return {
       id: row.id,
-      platformId: row.platformId,
+      platformId: row.platform_id,
       title: row.title,
-      filePath: row.filePath,
-      fileName: row.fileName,
-      fileHash: row.fileHash ?? undefined,
-      playCount: 0,
-      playTime: 0,
-      isFavorite: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      filePath: row.file_path,
+      fileName: row.file_name,
+      fileHash: row.file_hash ?? undefined,
+      playCount: row.play_count,
+      playTime: row.play_time,
+      isFavorite: row.is_favorite,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
     };
   }
 
   private async applyMetadata(gameId: string, metadata: GameMetadata): Promise<void> {
-    const updates: Partial<typeof games.$inferInsert> = { updatedAt: new Date() };
+    const patch: Partial<import('@emuz/storage').GameRow> = { updated_at: new Date() };
 
-    if (metadata.title) updates.title = metadata.title;
-    if (metadata.description) updates.description = metadata.description;
-    if (metadata.developer) updates.developer = metadata.developer;
-    if (metadata.publisher) updates.publisher = metadata.publisher;
-    if (metadata.releaseDate) updates.releaseDate = metadata.releaseDate;
-    if (metadata.genre) updates.genre = metadata.genre;
-    if (metadata.rating !== undefined) updates.rating = metadata.rating;
+    if (metadata.title) patch.title = metadata.title;
+    if (metadata.description) patch.description = metadata.description;
+    if (metadata.developer) patch.developer = metadata.developer;
+    if (metadata.publisher) patch.publisher = metadata.publisher;
+    if (metadata.releaseDate) patch.release_date = metadata.releaseDate;
+    if (metadata.genre) patch.genre = metadata.genre;
+    if (metadata.rating !== undefined) patch.rating = metadata.rating;
 
-    if (Object.keys(updates).length <= 1) return; // only updatedAt
+    if (Object.keys(patch).length <= 1) return; // only updated_at
 
-    await this.db.update(games).set(updates).where(eq(games.id, gameId));
+    this.db.games.update(gameId, patch);
+    await this.db.flush();
   }
 }
 
@@ -318,7 +290,7 @@ export class MetadataService implements IMetadataService {
  * Create a new MetadataService instance
  */
 export function createMetadataService(
-  db: DrizzleDb,
+  db: FlatDb,
   fs: FileSystemAdapter,
   coverCacheDir?: string
 ): IMetadataService {

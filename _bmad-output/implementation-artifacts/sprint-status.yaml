@@ -1,0 +1,117 @@
+# generated: 2026-03-19
+# last_updated: 2026-03-19
+# project: emuz
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-03-19
+last_updated: 2026-03-19
+project: emuz
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # ── Epic 1: Foundation ──────────────────────────────────────────────────────
+  epic-1: in-progress
+  1-1-monorepo-init: done
+  1-2-database-package: done
+  1-3-database-adapters: done
+  1-4-core-models: done
+  1-5-platform-filesystem: done
+  1-6-platform-launcher: done
+  1-7-drizzle-orm-migration: ready-for-dev
+  epic-1-retrospective: optional
+
+  # ── Epic 2: Core Services ────────────────────────────────────────────────────
+  epic-2: done
+  2-1-library-service: done
+  2-2-scanner-service: done
+  2-3-metadata-service: done
+  2-4-launch-service: done
+  2-5-emulators-package: done
+  2-6-state-management: done
+  2-7-widget-service: done
+  2-8-genre-service: done
+  epic-2-retrospective: optional
+
+  # ── Epic 3: UI Components ─────────────────────────────────────────────────────
+  epic-3: done
+  3-1-ui-package-setup: done
+  3-2-core-ui-components: done
+  3-3-game-card: done
+  3-4-game-grid: done
+  3-5-search-bar: done
+  3-6-sidebar: done
+  3-7-game-detail: done
+  3-8-widget-components: done
+  3-9-platform-card: done
+  3-10-genre-list: done
+  3-11-bottom-tab-bar: done
+  epic-3-retrospective: optional
+
+  # ── Epic 4: Desktop App ───────────────────────────────────────────────────────
+  epic-4: done
+  4-1-electron-setup: done
+  4-2-electron-main: done
+  4-3-desktop-shell: done
+  4-4-desktop-screens: done
+  4-5-desktop-build: done
+  epic-4-retrospective: optional
+
+  # ── Epic 5: Mobile App ────────────────────────────────────────────────────────
+  epic-5: done
+  5-1-rn-setup: done
+  5-2-rn-navigation: done
+  5-3-mobile-shell: done
+  5-4-mobile-screens: done
+  5-5-mobile-platform-services: done
+  5-6-mobile-build: done
+  epic-5-retrospective: optional
+
+  # ── Epic 6: Polish ────────────────────────────────────────────────────────────
+  epic-6: in-progress
+  6-1-unit-tests: in-progress
+  6-2-component-tests: ready-for-dev
+  6-3-e2e-tests: ready-for-dev
+  6-4-performance: ready-for-dev
+  6-5-documentation: done
+  epic-6-retrospective: optional
+
+  # ── Epic 7: ROM Categorization ────────────────────────────────────────────────
+  epic-7: in-progress
+  7-1-rom-type-model-migration: ready-for-dev
+  7-2-library-service-rom-filter: ready-for-dev
+  7-3-ui-rom-type-badge-filter: ready-for-dev
+  7-4-rom-type-tests: ready-for-dev
+  epic-7-retrospective: optional

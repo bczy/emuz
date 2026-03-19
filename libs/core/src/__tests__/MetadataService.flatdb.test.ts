@@ -1,74 +1,90 @@
 /**
- * MetadataService — Drizzle in-memory tests.
- * RED until: schema exports Drizzle tables AND MetadataService accepts DrizzleDb.
+ * MetadataService — FlatDb in-memory tests.
+ * Mirrors MetadataService.drizzle.test.ts but uses the @emuz/storage flat-file engine.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { sql } from 'drizzle-orm';
-import * as schema from '@emuz/database/schema';
-import type { DrizzleDb } from '@emuz/database/schema';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { createFlatDb } from '@emuz/storage';
+import type { FlatDb, FileIO, GameRow } from '@emuz/storage';
 import { MetadataService } from '../services/MetadataService';
 import type { MetadataProvider } from '../services/MetadataService';
 
 const GAME_ID = 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa';
 
-let sqlite: InstanceType<typeof Database>;
-let db: DrizzleDb;
-let svc: MetadataService;
+// ---------------------------------------------------------------------------
+// In-memory FileIO
+// ---------------------------------------------------------------------------
+function createMemoryIO(): FileIO {
+  const files = new Map<string, string>();
+  return {
+    async readText(p: string) {
+      return files.get(p) ?? '';
+    },
+    async writeText(p: string, c: string) {
+      files.set(p, c);
+    },
+    async rename(f: string, t: string) {
+      const c = files.get(f);
+      if (c !== undefined) {
+        files.set(t, c);
+        files.delete(f);
+      }
+    },
+    async exists(p: string) {
+      return files.has(p);
+    },
+    async mkdir(p: string) {
+      files.set(p, '');
+    },
+    joinPath: (...parts: string[]) => parts.join('/'),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+const BASE_GAME_ROW: GameRow = {
+  id: GAME_ID,
+  platform_id: 'nes',
+  title: 'Mega Man',
+  file_path: '/f.nes',
+  file_name: 'f.nes',
+  file_size: null,
+  file_hash: null,
+  cover_path: null,
+  description: null,
+  developer: null,
+  publisher: null,
+  release_date: null,
+  genre: null,
+  rating: null,
+  play_count: 0,
+  play_time: 0,
+  last_played_at: null,
+  is_favorite: false,
+  created_at: new Date(),
+  updated_at: new Date(),
+};
 
 const mockFs = {
   mkdir: vi.fn().mockResolvedValue(undefined),
   writeBinary: vi.fn().mockResolvedValue(undefined),
 };
 
-function setupTables(d: DrizzleDb): void {
-  d.run(
-    sql`CREATE TABLE IF NOT EXISTS platforms (id TEXT PRIMARY KEY, name TEXT NOT NULL, short_name TEXT, manufacturer TEXT, generation INTEGER, release_year INTEGER, icon_path TEXT, wallpaper_path TEXT, color TEXT, rom_extensions TEXT NOT NULL DEFAULT '[]', created_at INTEGER, updated_at INTEGER)`
-  );
-  d.run(
-    sql`CREATE TABLE IF NOT EXISTS games (id TEXT PRIMARY KEY, platform_id TEXT NOT NULL, title TEXT NOT NULL, file_path TEXT NOT NULL, file_name TEXT NOT NULL, file_size INTEGER, file_hash TEXT, cover_path TEXT, description TEXT, developer TEXT, publisher TEXT, release_date TEXT, genre TEXT, rating REAL, play_count INTEGER DEFAULT 0, play_time INTEGER DEFAULT 0, last_played_at INTEGER, is_favorite INTEGER DEFAULT 0, created_at INTEGER, updated_at INTEGER)`
-  );
-}
+let db: FlatDb;
+let svc: MetadataService;
 
-function seedGame(d: DrizzleDb): void {
-  d.insert(schema.platforms)
-    .values({
-      id: 'nes',
-      name: 'NES',
-      romExtensions: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .run();
-  d.insert(schema.games)
-    .values({
-      id: GAME_ID,
-      platformId: 'nes',
-      title: 'Mega Man',
-      filePath: '/f.nes',
-      fileName: 'f.nes',
-      playCount: 0,
-      playTime: 0,
-      isFavorite: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .run();
-}
-
-beforeEach(() => {
-  sqlite = new Database(':memory:');
-  db = drizzle(sqlite, { schema });
-  setupTables(db);
+beforeEach(async () => {
+  db = createFlatDb('/test', createMemoryIO());
+  await db.open();
   svc = new MetadataService(db, mockFs as any);
   vi.clearAllMocks();
 });
 
-afterEach(() => sqlite.close());
-
-describe('MetadataService (Drizzle)', () => {
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+describe('MetadataService (FlatDb)', () => {
   it('searchMetadata returns empty without providers', async () => {
     const results = await svc.searchMetadata('Mega Man');
     expect(results).toHaveLength(0);
@@ -99,7 +115,7 @@ describe('MetadataService (Drizzle)', () => {
   });
 
   it('identifyGame returns null if no metadata found', async () => {
-    seedGame(db);
+    db.games.insert({ ...BASE_GAME_ROW });
     const game = {
       id: GAME_ID,
       platformId: 'nes',
@@ -117,8 +133,7 @@ describe('MetadataService (Drizzle)', () => {
   });
 
   it('identifyGame returns cached DB metadata', async () => {
-    seedGame(db);
-    db.update(schema.games).set({ description: 'Classic action game' }).run();
+    db.games.insert({ ...BASE_GAME_ROW, description: 'Classic action game' });
     const game = {
       id: GAME_ID,
       platformId: 'nes',
@@ -170,8 +185,8 @@ describe('MetadataService (Drizzle)', () => {
     expect(path).toContain('game-1');
   });
 
-  it('downloadCover writes file and updates DB cover path', async () => {
-    seedGame(db);
+  it('downloadCover writes file and updates store cover path', async () => {
+    db.games.insert({ ...BASE_GAME_ROW });
     const fakeBuffer = new ArrayBuffer(8);
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -186,11 +201,15 @@ describe('MetadataService (Drizzle)', () => {
     );
     expect(coverPath).toContain(GAME_ID);
 
+    // Verify the store was updated
+    const row = db.games.findById(GAME_ID);
+    expect(row?.cover_path).toContain(GAME_ID);
+
     vi.unstubAllGlobals();
   });
 
   it('downloadCover throws if fetch fails', async () => {
-    seedGame(db);
+    db.games.insert({ ...BASE_GAME_ROW });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404 }));
     await expect(svc.downloadCover(GAME_ID, 'https://example.com/cover.png')).rejects.toThrow(
       'Failed to download cover'
@@ -199,7 +218,7 @@ describe('MetadataService (Drizzle)', () => {
   });
 
   it('refreshMetadata generator processes games and yields progress', async () => {
-    seedGame(db);
+    db.games.insert({ ...BASE_GAME_ROW });
     const mockProvider: MetadataProvider = {
       name: 'mock',
       search: vi.fn().mockResolvedValue([{ title: 'Mega Man', description: 'Action' }]),
@@ -243,7 +262,7 @@ describe('MetadataService (Drizzle)', () => {
     });
 
     it('accepts a valid UUID in downloadCover', async () => {
-      seedGame(db);
+      db.games.insert({ ...BASE_GAME_ROW });
       const fakeBuffer = new ArrayBuffer(8);
       vi.stubGlobal(
         'fetch',
@@ -261,7 +280,7 @@ describe('MetadataService (Drizzle)', () => {
   });
 
   it('identifyGame uses provider when no DB metadata', async () => {
-    seedGame(db);
+    db.games.insert({ ...BASE_GAME_ROW });
     const mockProvider: MetadataProvider = {
       name: 'mock',
       search: vi.fn().mockResolvedValue([{ title: 'Mega Man', developer: 'Capcom' }]),
@@ -282,5 +301,34 @@ describe('MetadataService (Drizzle)', () => {
     };
     const result = await svc.identifyGame(game);
     expect(result?.developer).toBe('Capcom');
+  });
+
+  it('applyMetadata updates game fields in store', async () => {
+    db.games.insert({ ...BASE_GAME_ROW });
+    const mockProvider: MetadataProvider = {
+      name: 'mock',
+      search: vi.fn().mockResolvedValue([
+        {
+          title: 'Mega Man',
+          description: 'Action platformer',
+          developer: 'Capcom',
+          genre: 'Action',
+          rating: 9,
+        },
+      ]),
+      getById: vi.fn(),
+    };
+    svc.registerProvider(mockProvider);
+
+    const progress = [];
+    for await (const p of svc.refreshMetadata([GAME_ID])) {
+      progress.push(p);
+    }
+
+    const row = db.games.findById(GAME_ID);
+    expect(row?.description).toBe('Action platformer');
+    expect(row?.developer).toBe('Capcom');
+    expect(row?.genre).toBe('Action');
+    expect(row?.rating).toBe(9);
   });
 });

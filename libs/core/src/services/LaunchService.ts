@@ -1,79 +1,46 @@
 /**
  * LaunchService - Handles game launching and emulator integration
+ *
+ * Migrated to use the @emuz/storage flat-file engine (FlatDb).
+ * No raw SQL strings, no legacy DatabaseAdapter.
  */
 
 import { v4 as uuidv4 } from 'uuid';
 import type { Game } from '../models/Game';
 import type { Emulator } from '../models/Emulator';
-import type { DatabaseAdapter } from '@emuz/database';
+import type { FlatDb, EmulatorRow, PlaySessionRow } from '@emuz/storage';
 import type { ILaunchService, CreateEmulatorInput, PlaySession } from './types';
-import { toDate, buildUpdateQuery } from '../utils/db';
 
 /**
- * Database row types
- */
-interface EmulatorRow {
-  id: string;
-  name: string;
-  /** JSON-encoded array of platform IDs - stored as `platforms` in the DB rows from tests */
-  platforms: string;
-  executable_path: string | null;
-  package_name: string | null;
-  url_scheme: string | null;
-  icon_path: string | null;
-  command_template: string | null;
-  core_path: string | null;
-  is_default: number;
-  is_installed: number;
-  created_at: number;
-  updated_at: number;
-}
-
-interface PlaySessionRow {
-  id: string;
-  game_id: string;
-  started_at: number;
-  ended_at: number | null;
-  duration: number;
-}
-
-/**
- * Convert database row to Emulator model
+ * Convert FlatDb EmulatorRow to Emulator model
  */
 function rowToEmulator(row: EmulatorRow): Emulator {
   return {
     id: row.id,
     name: row.name,
-    platforms: (() => {
-      try {
-        const parsed = JSON.parse(row.platforms);
-        return Array.isArray(parsed) ? (parsed as string[]) : [];
-      } catch {
-        return [];
-      }
-    })(),
+    platforms: row.platform_ids,
     executablePath: row.executable_path ?? undefined,
     packageName: row.package_name ?? undefined,
     urlScheme: row.url_scheme ?? undefined,
     iconPath: row.icon_path ?? undefined,
     commandTemplate: row.command_template ?? undefined,
     corePath: row.core_path ?? undefined,
-    isDefault: Boolean(row.is_default),
-    isInstalled: Boolean(row.is_installed),
-    createdAt: toDate(row.created_at),
-    updatedAt: toDate(row.updated_at),
+    isDefault: row.is_default,
+    isInstalled: row.is_installed,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
 /**
- * Convert database row to PlaySession model
+ * Convert FlatDb PlaySessionRow to PlaySession model
  */
 function rowToPlaySession(row: PlaySessionRow): PlaySession {
   return {
     id: row.id,
     gameId: row.game_id,
-    startedAt: new Date(row.started_at * 1000),
-    endedAt: row.ended_at ? new Date(row.ended_at * 1000) : undefined,
+    startedAt: row.started_at,
+    endedAt: row.ended_at ?? undefined,
     duration: row.duration,
   };
 }
@@ -92,11 +59,11 @@ interface LauncherInterface {
 }
 
 /**
- * LaunchService implementation
+ * LaunchService implementation using the @emuz/storage FlatDb engine
  */
 export class LaunchService implements ILaunchService {
   constructor(
-    private readonly db: DatabaseAdapter,
+    private readonly db: FlatDb,
     private readonly launcher: LauncherInterface
   ) {}
 
@@ -104,24 +71,25 @@ export class LaunchService implements ILaunchService {
    * Get all emulators, optionally filtered by platform
    */
   async getEmulators(options?: { platformId?: string }): Promise<Emulator[]> {
+    const all = this.db.emulators.all();
+
     if (options?.platformId) {
-      const rows = await this.db.query<EmulatorRow>(
-        `SELECT * FROM emulators WHERE platforms LIKE ? ORDER BY name ASC`,
-        [`%"${options.platformId}"%`]
-      );
-      return rows.map(rowToEmulator);
+      const { platformId } = options;
+      return all
+        .filter((e) => e.platform_ids.includes(platformId))
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map(rowToEmulator);
     }
 
-    const rows = await this.db.query<EmulatorRow>('SELECT * FROM emulators ORDER BY name ASC');
-    return rows.map(rowToEmulator);
+    return all.sort((a, b) => a.name.localeCompare(b.name)).map(rowToEmulator);
   }
 
   /**
    * Get an emulator by ID
    */
   async getEmulatorById(id: string): Promise<Emulator | null> {
-    const rows = await this.db.query<EmulatorRow>('SELECT * FROM emulators WHERE id = ?', [id]);
-    return rows.length > 0 ? rowToEmulator(rows[0]) : null;
+    const row = this.db.emulators.findById(id);
+    return row ? rowToEmulator(row) : null;
   }
 
   /**
@@ -141,129 +109,80 @@ export class LaunchService implements ILaunchService {
     }
 
     const id = uuidv4();
-    const now = Math.floor(Date.now() / 1000);
-    const platforms = data.platforms;
+    const now = new Date();
 
-    await this.db.execute(
-      `INSERT INTO emulators (id, name, platforms, executable_path, package_name, url_scheme, icon_path, command_template, core_path, is_default, is_installed, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        id,
-        data.name,
-        JSON.stringify(platforms),
-        data.executablePath ?? null,
-        data.packageName ?? null,
-        data.urlScheme ?? null,
-        data.iconPath ?? null,
-        data.commandTemplate ?? null,
-        data.corePath ?? null,
-        0,
-        1,
-        now,
-        now,
-      ]
-    );
-
-    // Fetch the newly created emulator from DB
-    const rows = await this.db.query<EmulatorRow>('SELECT * FROM emulators WHERE id = ?', [id]);
-
-    if (rows.length > 0) {
-      return rowToEmulator(rows[0]);
-    }
-
-    return {
+    const newRow: EmulatorRow = {
       id,
       name: data.name,
-      platforms,
-      executablePath: data.executablePath,
-      packageName: data.packageName,
-      urlScheme: data.urlScheme,
-      iconPath: data.iconPath,
-      commandTemplate: data.commandTemplate,
-      corePath: data.corePath,
-      isDefault: false,
-      isInstalled: true,
-      createdAt: new Date(now * 1000),
-      updatedAt: new Date(now * 1000),
+      platform_ids: data.platforms,
+      executable_path: data.executablePath ?? null,
+      package_name: data.packageName ?? null,
+      url_scheme: data.urlScheme ?? null,
+      icon_path: data.iconPath ?? null,
+      command_template: data.commandTemplate ?? null,
+      core_path: data.corePath ?? null,
+      is_default: false,
+      is_installed: true,
+      created_at: now,
+      updated_at: now,
     };
+
+    this.db.emulators.insert(newRow);
+    await this.db.flush();
+
+    return rowToEmulator(newRow);
   }
 
   /**
    * Update an emulator
    */
   async updateEmulator(id: string, data: Partial<Emulator>): Promise<void> {
-    const fields: Array<[string, string | number | null]> = [
-      ...(data.name !== undefined ? [['name', data.name] as [string, string]] : []),
-      ...(data.platforms !== undefined
-        ? [['platforms', JSON.stringify(data.platforms)] as [string, string]]
-        : []),
-      ...(data.executablePath !== undefined
-        ? [['executable_path', data.executablePath ?? null] as [string, string | null]]
-        : []),
-      ...(data.packageName !== undefined
-        ? [['package_name', data.packageName ?? null] as [string, string | null]]
-        : []),
-      ...(data.urlScheme !== undefined
-        ? [['url_scheme', data.urlScheme ?? null] as [string, string | null]]
-        : []),
-      ...(data.commandTemplate !== undefined
-        ? [['command_template', data.commandTemplate ?? null] as [string, string | null]]
-        : []),
-      ...(data.corePath !== undefined
-        ? [['core_path', data.corePath ?? null] as [string, string | null]]
-        : []),
-    ];
+    const patch: Partial<EmulatorRow> = { updated_at: new Date() };
 
-    const query = buildUpdateQuery(fields);
-    if (!query) return;
+    if (data.name !== undefined) patch.name = data.name;
+    if (data.platforms !== undefined) patch.platform_ids = data.platforms;
+    if (data.executablePath !== undefined) patch.executable_path = data.executablePath ?? null;
+    if (data.packageName !== undefined) patch.package_name = data.packageName ?? null;
+    if (data.urlScheme !== undefined) patch.url_scheme = data.urlScheme ?? null;
+    if (data.commandTemplate !== undefined) patch.command_template = data.commandTemplate ?? null;
+    if (data.corePath !== undefined) patch.core_path = data.corePath ?? null;
 
-    await this.db.execute(`UPDATE emulators SET ${query.setClauses} WHERE id = ?`, [
-      ...query.params,
-      id,
-    ]);
+    this.db.emulators.update(id, patch);
+    await this.db.flush();
   }
 
   /**
    * Delete an emulator
    */
   async deleteEmulator(id: string): Promise<void> {
-    await this.db.execute('DELETE FROM emulators WHERE id = ?', [id]);
+    this.db.emulators.delete(id);
+    await this.db.flush();
   }
 
   /**
    * Set the default emulator for a platform
    */
   async setDefaultEmulator(emulatorId: string, platformId: string): Promise<void> {
-    const now = Math.floor(Date.now() / 1000);
+    const now = new Date();
 
-    await this.db.transaction(async () => {
-      // Unset all defaults for this platform in one query
-      await this.db.execute(
-        `UPDATE emulators SET is_default = 0, updated_at = ? WHERE platforms LIKE ?`,
-        [now, `%"${platformId}"%`]
-      );
-      // Set the new default
-      await this.db.execute('UPDATE emulators SET is_default = 1, updated_at = ? WHERE id = ?', [
-        now,
-        emulatorId,
-      ]);
-    });
+    // Unset all defaults for this platform
+    this.db.emulators
+      .find((e) => e.platform_ids.includes(platformId))
+      .forEach((e) => this.db.emulators.update(e.id, { is_default: false, updated_at: now }));
+
+    // Set the new default
+    this.db.emulators.update(emulatorId, { is_default: true, updated_at: now });
+    await this.db.flush();
   }
 
   /**
    * Get the default emulator for a platform
    */
   async getDefaultEmulator(platformId: string): Promise<Emulator | null> {
-    const rows = await this.db.query<EmulatorRow>(
-      `SELECT * FROM emulators WHERE platforms LIKE ? AND is_default = 1 LIMIT 1`,
-      [`%"${platformId}"%`]
+    const row = this.db.emulators.findOne(
+      (e) => e.platform_ids.includes(platformId) && e.is_default
     );
-
-    if (rows.length > 0) {
-      return rowToEmulator(rows[0]);
-    }
-
-    return null;
+    return row ? rowToEmulator(row) : null;
   }
 
   /**
@@ -273,10 +192,7 @@ export class LaunchService implements ILaunchService {
     let emulator: Emulator | null = null;
 
     if (emulatorId) {
-      const rows = await this.db.query<EmulatorRow>('SELECT * FROM emulators WHERE id = ?', [
-        emulatorId,
-      ]);
-      emulator = rows.length > 0 ? rowToEmulator(rows[0]) : null;
+      emulator = await this.getEmulatorById(emulatorId);
     } else {
       emulator = await this.getDefaultEmulator(game.platformId);
     }
@@ -298,11 +214,14 @@ export class LaunchService implements ILaunchService {
 
     // Record play session start
     const sessionId = uuidv4();
-    const now = Math.floor(Date.now() / 1000);
-    await this.db.execute(
-      `INSERT INTO play_sessions (id, game_id, started_at, duration) VALUES (?, ?, ?, ?)`,
-      [sessionId, game.id, now, 0]
-    );
+    this.db.playSessions.insert({
+      id: sessionId,
+      game_id: game.id,
+      started_at: new Date(),
+      ended_at: null,
+      duration: 0,
+    });
+    await this.db.flush();
 
     return result;
   }
@@ -372,32 +291,35 @@ export class LaunchService implements ILaunchService {
    * Record a play session (updates game stats)
    */
   async recordPlaySession(gameId: string, duration: number): Promise<void> {
-    const now = Math.floor(Date.now() / 1000);
-
-    await this.db.execute(
-      'UPDATE games SET play_time = play_time + ?, last_played_at = ?, updated_at = ? WHERE id = ?',
-      [duration, now, now, gameId]
-    );
+    const game = this.db.games.findById(gameId);
+    if (game) {
+      this.db.games.update(gameId, {
+        play_time: game.play_time + duration,
+        last_played_at: new Date(),
+        updated_at: new Date(),
+      });
+      await this.db.flush();
+    }
   }
 
   /**
    * End a play session and update game play time
    */
   async endPlaySession(sessionId: string, duration: number): Promise<void> {
-    const now = Math.floor(Date.now() / 1000);
-
-    // Update the session record
-    await this.db.execute('UPDATE play_sessions SET ended_at = ?, duration = ? WHERE id = ?', [
-      now,
-      duration,
-      sessionId,
-    ]);
-
-    // Update game play time
-    await this.db.execute(
-      `UPDATE games SET play_time = play_time + ? WHERE id = (SELECT game_id FROM play_sessions WHERE id = ?)`,
-      [duration, sessionId]
-    );
+    const session = this.db.playSessions.findById(sessionId);
+    if (session) {
+      const game = this.db.games.findById(session.game_id);
+      if (game) {
+        this.db.games.update(game.id, {
+          play_time: game.play_time + duration,
+          play_count: game.play_count + 1,
+          last_played_at: new Date(),
+          updated_at: new Date(),
+        });
+      }
+      this.db.playSessions.update(sessionId, { ended_at: new Date(), duration });
+      await this.db.flush();
+    }
   }
 
   /**
@@ -406,21 +328,18 @@ export class LaunchService implements ILaunchService {
   async getPlayHistory(gameId: string, options?: { limit?: number }): Promise<PlaySession[]> {
     const limit = options?.limit ?? 50;
 
-    const rows = await this.db.query<PlaySessionRow>(
-      `SELECT * FROM play_sessions WHERE game_id = ? ORDER BY started_at DESC LIMIT ?`,
-      [gameId, limit]
-    );
-
-    return rows.map(rowToPlaySession);
+    return this.db.playSessions
+      .all()
+      .filter((s) => s.game_id === gameId)
+      .sort((a, b) => b.started_at.getTime() - a.started_at.getTime())
+      .slice(0, limit)
+      .map(rowToPlaySession);
   }
 }
 
 /**
  * Create a new LaunchService instance
  */
-export function createLaunchService(
-  db: DatabaseAdapter,
-  launcher: LauncherInterface
-): ILaunchService {
+export function createLaunchService(db: FlatDb, launcher: LauncherInterface): ILaunchService {
   return new LaunchService(db, launcher);
 }

@@ -27,7 +27,8 @@
       "@emuz/platform": ["libs/platform/src/index.ts"],
       "@emuz/ui": ["libs/ui/src/index.ts"],
       "@emuz/emulators": ["libs/emulators/src/index.ts"],
-      "@emuz/i18n": ["libs/i18n/src/index.ts"]
+      "@emuz/i18n": ["libs/i18n/src/index.ts"],
+      "@emuz/storage": ["libs/storage/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "dist", "build", "tmp"]
