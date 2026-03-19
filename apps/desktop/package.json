@@ -6,18 +6,14 @@
   "main": "dist/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
-    "dev:web": "vite",
     "build": "electron-vite build",
-    "build:web": "vite build",
     "preview": "electron-vite preview",
-    "preview:web": "vite preview",
     "start": "electron .",
     "package": "pnpm build && electron-builder",
     "package:mac": "pnpm build && electron-builder --mac",
     "package:win": "pnpm build && electron-builder --win",
     "package:linux": "pnpm build && electron-builder --linux",
     "package:all": "pnpm build && electron-builder -mwl",
-    "lint": "eslint . --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
     "postinstall": "electron-builder install-app-deps || true"
   },

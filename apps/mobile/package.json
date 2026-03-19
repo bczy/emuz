@@ -11,9 +11,7 @@
     "bundle:ios": "expo export --platform ios",
     "bundle:android": "expo export --platform android",
     "lint": "eslint .",
-    "test": "jest",
-    "clean": "npx react-native-clean-project",
-    "pod-install": "cd ios && pod install && cd .."
+    "clean": "npx react-native-clean-project"
   },
   "dependencies": {
     "@emuz/core": "workspace:*",
