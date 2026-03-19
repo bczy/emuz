@@ -258,13 +258,44 @@ describe('LibraryService', () => {
 });
 ```
 
+### Test Pyramid
+
+EmuZ follows the classic testing pyramid. Respect the ratio — each layer has a distinct cost and
+confidence trade-off:
+
+```
+        /\
+       /E2E\          ← few, slow, high confidence (Detox / Playwright)
+      /──────\
+     / Integr.\       ← some, medium speed (service + DB adapter in-process)
+    /──────────\
+   /  Unit tests \    ← many, fast, isolated (Vitest + mocks)
+  /──────────────\
+```
+
+| Layer       | Tool              | Scope                               | Target         |
+| ----------- | ----------------- | ----------------------------------- | -------------- |
+| Unit        | Vitest            | Single function / component         | >80% coverage  |
+| Integration | Vitest            | Service ↔ real SQLite adapter      | Critical paths |
+| E2E         | Detox (mobile)    | Full user flows on simulator/device | Happy paths    |
+| E2E         | Playwright (desk) | Full user flows in Electron         | Happy paths    |
+
+**Rules:**
+
+- **Unit first**: every public API in `libs/core` needs a unit test before integration or E2E.
+- **No upward substitution**: do not write an E2E test where an integration test would suffice, and
+  never write an integration test where a unit test is enough.
+- **Mocks stay at the unit layer**: integration tests must hit a real (in-memory) SQLite database —
+  never mock the DB adapter at this layer.
+- **E2E covers happy paths only**: edge cases belong in unit/integration tests, not in simulators.
+
 ### Test Coverage
 
 We aim for:
 
 - **Unit tests**: >80% coverage for services
 - **Component tests**: Key UI components
-- **E2E tests**: Critical user flows
+- **E2E tests**: Critical user flows (Detox for mobile, Playwright for desktop)
 
 ## Adding New Features
 
