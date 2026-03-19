@@ -18,4 +18,5 @@ module.exports = {
   },
   coverageDirectory: '../../coverage/apps/mobile',
   testMatch: ['**/__tests__/**/*.[jt]s?(x)', '**/?(*.)+(spec|test).[jt]s?(x)'],
+  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/e2e/'],
 };
