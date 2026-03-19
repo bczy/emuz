@@ -1,49 +1,44 @@
 /**
  * ScannerService - Handles ROM discovery and library scanning
  *
- * Refactored to use Drizzle ORM query builder (Story 1.7 / ADR-013).
- * No raw SQL strings.
+ * Migrated to use @emuz/storage flat-file engine (FlatDb) instead of Drizzle ORM.
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { eq, asc } from 'drizzle-orm';
 import type { Platform } from '../models/Platform';
-import type { DrizzleDb } from '@emuz/database/schema';
-import { games, scanDirectories, platforms as platformsTable } from '@emuz/database/schema';
+import type { FlatDb } from '@emuz/storage';
+import type { PlatformRow, ScanDirectoryRow } from '@emuz/storage';
 import type { IScannerService, ScanOptions, ScanProgress, ScanStatus, RomDirectory } from './types';
-
-type ScanDirRow = typeof scanDirectories.$inferSelect;
-type PlatformRow = typeof platformsTable.$inferSelect;
 
 function rowToPlatform(row: PlatformRow): Platform {
   return {
     id: row.id,
     name: row.name,
-    shortName: row.shortName ?? undefined,
+    shortName: row.short_name ?? undefined,
     manufacturer: row.manufacturer ?? undefined,
     generation: row.generation ?? undefined,
-    releaseYear: row.releaseYear ?? undefined,
-    iconPath: row.iconPath ?? undefined,
-    wallpaperPath: row.wallpaperPath ?? undefined,
+    releaseYear: row.release_year ?? undefined,
+    iconPath: row.icon_path ?? undefined,
+    wallpaperPath: row.wallpaper_path ?? undefined,
     color: row.color ?? undefined,
-    romExtensions: row.romExtensions ?? [],
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
+    romExtensions: row.rom_extensions ?? [],
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
 /**
- * Convert Drizzle row to RomDirectory model
+ * Convert ScanDirectoryRow to RomDirectory model
  */
-function rowToRomDirectory(row: ScanDirRow): RomDirectory {
+function rowToRomDirectory(row: ScanDirectoryRow): RomDirectory {
   return {
     id: row.id,
     path: row.path,
-    platformId: row.platformId ?? undefined,
-    recursive: row.isRecursive,
-    enabled: true, // scan_directories are enabled by default in schema
-    lastScanned: row.lastScannedAt ?? undefined,
-    createdAt: row.createdAt,
+    platformId: row.platform_id ?? undefined,
+    recursive: row.is_recursive,
+    enabled: true, // scan_directories are enabled by default
+    lastScanned: row.last_scanned_at ?? undefined,
+    createdAt: row.created_at,
   };
 }
 
@@ -118,7 +113,7 @@ async function sha256Hex(data: ArrayBuffer | Uint8Array | Buffer): Promise<strin
 }
 
 /**
- * ScannerService implementation using Drizzle ORM
+ * ScannerService implementation using @emuz/storage FlatDb
  */
 export class ScannerService implements IScannerService {
   private cancelled = false;
@@ -128,18 +123,14 @@ export class ScannerService implements IScannerService {
   private gamesFound = 0;
 
   constructor(
-    private readonly db: DrizzleDb,
+    private readonly db: FlatDb,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private readonly fs: any
   ) {}
 
   async addDirectory(path: string, options?: ScanOptions): Promise<RomDirectory> {
-    const existing = await this.db
-      .select({ path: scanDirectories.path })
-      .from(scanDirectories)
-      .where(eq(scanDirectories.path, path));
-
-    if (existing.length > 0) {
+    const existing = this.db.scanDirectories.findOne((d) => d.path === path);
+    if (existing) {
       throw new Error('Directory already exists');
     }
 
@@ -153,13 +144,15 @@ export class ScannerService implements IScannerService {
     const id = uuidv4();
     const now = new Date();
 
-    await this.db.insert(scanDirectories).values({
+    this.db.scanDirectories.insert({
       id,
       path,
-      platformId: options?.platformId ?? null,
-      isRecursive: options?.recursive !== false,
-      createdAt: now,
+      platform_id: options?.platformId ?? null,
+      is_recursive: options?.recursive !== false,
+      last_scanned_at: null,
+      created_at: now,
     });
+    await this.db.flush();
 
     return {
       id,
@@ -175,29 +168,36 @@ export class ScannerService implements IScannerService {
     if (!path) throw new Error('Path must not be empty');
 
     if (options?.removeGames) {
-      // Use Drizzle's sql helper for LIKE with a safe prefix pattern
-      const { like } = await import('drizzle-orm');
-      await this.db.delete(games).where(like(games.filePath, `${path}%`));
+      const toDelete = this.db.games.find((g) => g.file_path.startsWith(path));
+      for (const g of toDelete) {
+        this.db.games.delete(g.id);
+      }
     }
 
-    await this.db.delete(scanDirectories).where(eq(scanDirectories.path, path));
+    const dir = this.db.scanDirectories.findOne((d) => d.path === path);
+    if (dir) {
+      this.db.scanDirectories.delete(dir.id);
+      await this.db.flush();
+    }
   }
 
   async getDirectories(): Promise<RomDirectory[]> {
-    const rows = await this.db.select().from(scanDirectories).orderBy(asc(scanDirectories.path));
+    const rows = this.db.scanDirectories.all();
+    rows.sort((a, b) => a.path.localeCompare(b.path));
     return rows.map(rowToRomDirectory);
   }
 
   async updateDirectory(id: string, data: Partial<RomDirectory>): Promise<void> {
-    const updates: Partial<typeof scanDirectories.$inferInsert> = {};
+    const patch: Partial<ScanDirectoryRow> = {};
 
-    if (data.path !== undefined) updates.path = data.path;
-    if (data.platformId !== undefined) updates.platformId = data.platformId ?? null;
-    if (data.recursive !== undefined) updates.isRecursive = data.recursive;
+    if (data.path !== undefined) patch.path = data.path;
+    if (data.platformId !== undefined) patch.platform_id = data.platformId ?? null;
+    if (data.recursive !== undefined) patch.is_recursive = data.recursive;
 
-    if (Object.keys(updates).length === 0) return;
+    if (Object.keys(patch).length === 0) return;
 
-    await this.db.update(scanDirectories).set(updates).where(eq(scanDirectories.id, id));
+    this.db.scanDirectories.update(id, patch);
+    await this.db.flush();
   }
 
   detectPlatformByExtension(ext: string): string | null {
@@ -209,12 +209,7 @@ export class ScannerService implements IScannerService {
     const platformId = this.detectPlatformByExtension(this.getFileExtension(filePath));
     if (!platformId) return null;
 
-    const [row] = await this.db
-      .select()
-      .from(platformsTable)
-      .where(eq(platformsTable.id, platformId))
-      .limit(1);
-
+    const row = this.db.platforms.findById(platformId);
     return row ? rowToPlatform(row) : null;
   }
 
@@ -279,12 +274,8 @@ export class ScannerService implements IScannerService {
         const file = romFiles[i];
 
         if (options?.skipExisting) {
-          const { eq: deq } = await import('drizzle-orm');
-          const existingRows = await this.db
-            .select({ filePath: games.filePath })
-            .from(games)
-            .where(deq(games.filePath, file.path));
-          if (existingRows.length > 0) {
+          const existingGame = this.db.games.findOne((g) => g.file_path === file.path);
+          if (existingGame) {
             this.filesScanned++;
             continue;
           }
@@ -307,12 +298,8 @@ export class ScannerService implements IScannerService {
           continue;
         }
 
-        // Verify platform exists in DB to avoid FK violations
-        const [platformRow] = await this.db
-          .select({ id: platformsTable.id })
-          .from(platformsTable)
-          .where(eq(platformsTable.id, rawPlatformId))
-          .limit(1);
+        // Verify platform exists in DB to avoid orphaned records
+        const platformRow = this.db.platforms.findById(rawPlatformId);
         if (!platformRow) {
           this.filesScanned++;
           continue;
@@ -323,19 +310,29 @@ export class ScannerService implements IScannerService {
 
         const id = uuidv4();
         const now = new Date();
-        await this.db.insert(games).values({
+        this.db.games.insert({
           id,
-          platformId,
+          platform_id: platformId,
           title,
-          filePath: file.path,
-          fileName: file.name,
-          fileSize,
-          playCount: 0,
-          playTime: 0,
-          isFavorite: false,
-          createdAt: now,
-          updatedAt: now,
+          file_path: file.path,
+          file_name: file.name,
+          file_size: fileSize,
+          file_hash: null,
+          cover_path: null,
+          description: null,
+          developer: null,
+          publisher: null,
+          release_date: null,
+          genre: null,
+          rating: null,
+          play_count: 0,
+          play_time: 0,
+          last_played_at: null,
+          is_favorite: false,
+          created_at: now,
+          updated_at: now,
         });
+        await this.db.flush();
 
         this.filesScanned++;
         this.gamesFound++;
@@ -431,6 +428,6 @@ export class ScannerService implements IScannerService {
  * Create a new ScannerService instance
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function createScannerService(db: DrizzleDb, fs: any): IScannerService {
+export function createScannerService(db: FlatDb, fs: any): IScannerService {
   return new ScannerService(db, fs);
 }

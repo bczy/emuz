@@ -1,14 +1,13 @@
 /**
  * GenreService - Manages game genres (Daijishou-inspired)
  *
- * Refactored to use Drizzle ORM query builder (Story 1.7 / ADR-013).
- * No raw SQL strings.
+ * Migrated to use the @emuz/storage flat-file engine (FlatDb).
+ * No raw SQL strings, no Drizzle ORM.
  */
 
-import { eq, asc, count, sum, avg, isNotNull } from 'drizzle-orm';
 import type { Game } from '../models/Game';
-import type { DrizzleDb } from '@emuz/database/schema';
-import { games } from '@emuz/database/schema';
+import type { FlatDb } from '@emuz/storage';
+import type { GameRow } from '@emuz/storage';
 import type { IGenreService, PaginationOptions } from './types';
 
 /**
@@ -20,26 +19,24 @@ export interface GenreInfo {
   gameCount: number;
 }
 
-type GameRow = typeof games.$inferSelect;
-
 /**
- * Convert Drizzle row to Game model
+ * Convert a FlatDb GameRow to Game model
  */
 function rowToGame(row: GameRow): Game {
   return {
     id: row.id,
-    platformId: row.platformId,
+    platformId: row.platform_id,
     title: row.title,
-    filePath: row.filePath,
-    fileName: row.fileName,
-    coverPath: row.coverPath ?? undefined,
+    filePath: row.file_path,
+    fileName: row.file_name,
+    coverPath: row.cover_path ?? undefined,
     genre: row.genre ?? undefined,
-    playCount: row.playCount,
-    playTime: row.playTime,
-    lastPlayedAt: row.lastPlayedAt ?? undefined,
-    isFavorite: row.isFavorite,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
+    playCount: row.play_count,
+    playTime: row.play_time,
+    lastPlayedAt: row.last_played_at ?? undefined,
+    isFavorite: row.is_favorite,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -74,26 +71,29 @@ function normalizeGenreName(raw: string): string {
 }
 
 /**
- * GenreService implementation using Drizzle ORM
+ * GenreService implementation using the @emuz/storage FlatDb engine
  */
 export class GenreService implements IGenreService {
-  constructor(private readonly db: DrizzleDb) {}
+  constructor(private readonly db: FlatDb) {}
 
   async getGenres(): Promise<GenreInfo[]> {
-    const rows = await this.db
-      .select({ genre: games.genre, count: count() })
-      .from(games)
-      .where(isNotNull(games.genre))
-      .groupBy(games.genre)
-      .orderBy(asc(games.genre));
+    // Count games per genre
+    const genreCount = new Map<string, number>();
+    for (const g of this.db.games.all()) {
+      if (g.genre) {
+        genreCount.set(g.genre, (genreCount.get(g.genre) ?? 0) + 1);
+      }
+    }
 
-    return rows
-      .filter((row) => row.genre !== null && row.genre !== '')
-      .map((row) => ({
-        id: (row.genre as string).toLowerCase().replace(/\s+/g, '-'),
-        name: row.genre as string,
-        gameCount: row.count,
-      }));
+    // Load genre records from the genres store, merge with counts
+    return this.db.genres
+      .all()
+      .map((genre) => ({
+        id: genre.id,
+        name: genre.name,
+        gameCount: genreCount.get(genre.name) ?? 0,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
   }
 
   async getGamesByGenre(genre: string, options?: PaginationOptions): Promise<Game[]> {
@@ -101,29 +101,21 @@ export class GenreService implements IGenreService {
     const offset =
       options?.page !== undefined ? (options.page - 1) * limit : (options?.offset ?? 0);
 
-    const rows = await this.db
-      .select()
-      .from(games)
-      .where(eq(games.genre, genre))
-      .orderBy(asc(games.title))
-      .limit(limit)
-      .offset(offset);
+    const matching = this.db.games
+      .find((g) => g.genre === genre)
+      .sort((a, b) => a.title.localeCompare(b.title));
 
-    return rows.map(rowToGame);
+    return matching.slice(offset, offset + limit).map(rowToGame);
   }
 
   async assignGenre(gameId: string, genreId: string | null): Promise<void> {
-    await this.db
-      .update(games)
-      .set({ genre: genreId, updatedAt: new Date() })
-      .where(eq(games.id, gameId));
+    this.db.games.update(gameId, { genre: genreId, updated_at: new Date() });
+    await this.db.flush();
   }
 
   async removeGenre(gameId: string, _genreId: string): Promise<void> {
-    await this.db
-      .update(games)
-      .set({ genre: null, updatedAt: new Date() })
-      .where(eq(games.id, gameId));
+    this.db.games.update(gameId, { genre: null, updated_at: new Date() });
+    await this.db.flush();
   }
 
   async getGenreStats(genre: string): Promise<{
@@ -131,20 +123,14 @@ export class GenreService implements IGenreService {
     totalPlayTime: number;
     averageRating: number;
   }> {
-    const rows = await this.db
-      .select({
-        totalGames: count(),
-        totalPlayTime: sum(games.playTime),
-        avgRating: avg(games.rating),
-      })
-      .from(games)
-      .where(eq(games.genre, genre));
+    const matching = this.db.games.find((g) => g.genre === genre);
+    const rated = matching.filter((g) => g.rating != null);
 
-    const row = rows[0];
     return {
-      totalGames: row?.totalGames ?? 0,
-      totalPlayTime: Number(row?.totalPlayTime ?? 0),
-      averageRating: Number(row?.avgRating ?? 0),
+      totalGames: matching.length,
+      totalPlayTime: matching.reduce((s, g) => s + g.play_time, 0),
+      averageRating:
+        rated.length > 0 ? rated.reduce((s, g) => s + (g.rating ?? 0), 0) / rated.length : 0,
     };
   }
 
@@ -164,6 +150,6 @@ export class GenreService implements IGenreService {
 /**
  * Create a new GenreService instance
  */
-export function createGenreService(db: DrizzleDb): IGenreService {
+export function createGenreService(db: FlatDb): IGenreService {
   return new GenreService(db);
 }

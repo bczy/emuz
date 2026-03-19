@@ -1,20 +1,47 @@
 /**
- * ScannerService — Drizzle in-memory tests.
- * RED until: schema/index.ts exports Drizzle tables AND ScannerService accepts DrizzleDb.
+ * ScannerService — FlatDb (flat-file storage engine) tests.
+ * Mirrors ScannerService.drizzle.test.ts but uses @emuz/storage instead of Drizzle ORM.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { sql } from 'drizzle-orm';
-import * as schema from '@emuz/database/schema';
-import type { DrizzleDb } from '@emuz/database/schema';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { FlatDb } from '@emuz/storage';
+import { createFlatDb } from '@emuz/storage';
+import type { FileIO } from '@emuz/storage';
 import { ScannerService } from '../services/ScannerService';
 
-let sqlite: InstanceType<typeof Database>;
-let db: DrizzleDb;
-let svc: ScannerService;
+// ---------------------------------------------------------------------------
+// In-memory FileIO mock for createFlatDb
+// ---------------------------------------------------------------------------
+function createMemoryIO(): FileIO {
+  const files = new Map<string, string>();
+  return {
+    files,
+    async readText(p: string) {
+      return files.get(p) ?? '';
+    },
+    async writeText(p: string, c: string) {
+      files.set(p, c);
+    },
+    async rename(f: string, t: string) {
+      const c = files.get(f);
+      if (c !== undefined) {
+        files.set(t, c);
+        files.delete(f);
+      }
+    },
+    async exists(p: string) {
+      return files.has(p);
+    },
+    async mkdir(p: string) {
+      files.set(p, '');
+    },
+    joinPath: (...parts: string[]) => parts.join('/'),
+  } as unknown as FileIO;
+}
 
+// ---------------------------------------------------------------------------
+// Mock filesystem adapter (used by ScannerService for ROM scanning)
+// ---------------------------------------------------------------------------
 const mockFs = {
   exists: vi.fn().mockResolvedValue(true),
   readDir: vi.fn().mockResolvedValue([]),
@@ -23,60 +50,27 @@ const mockFs = {
   readBinary: vi.fn(),
 };
 
-function seedPlatforms(d: DrizzleDb): void {
-  d.insert(schema.platforms)
-    .values({
-      id: 'nes',
-      name: 'Nintendo Entertainment System',
-      romExtensions: ['.nes'],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .run();
-  d.insert(schema.platforms)
-    .values({
-      id: 'snes',
-      name: 'Super Nintendo',
-      romExtensions: ['.sfc', '.smc'],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .run();
-  d.insert(schema.platforms)
-    .values({
-      id: 'gba',
-      name: 'Game Boy Advance',
-      romExtensions: ['.gba'],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .run();
-}
+// ---------------------------------------------------------------------------
+// Setup
+// ---------------------------------------------------------------------------
+let db: FlatDb;
+let svc: ScannerService;
 
-function setupTables(d: DrizzleDb): void {
-  d.run(
-    sql`CREATE TABLE IF NOT EXISTS platforms (id TEXT PRIMARY KEY, name TEXT NOT NULL, short_name TEXT, manufacturer TEXT, generation INTEGER, release_year INTEGER, icon_path TEXT, wallpaper_path TEXT, color TEXT, rom_extensions TEXT NOT NULL DEFAULT '[]', created_at INTEGER, updated_at INTEGER)`
-  );
-  d.run(
-    sql`CREATE TABLE IF NOT EXISTS games (id TEXT PRIMARY KEY, platform_id TEXT NOT NULL, title TEXT NOT NULL, file_path TEXT NOT NULL UNIQUE, file_name TEXT NOT NULL, file_size INTEGER, file_hash TEXT, cover_path TEXT, description TEXT, developer TEXT, publisher TEXT, release_date TEXT, genre TEXT, rating REAL, play_count INTEGER DEFAULT 0, play_time INTEGER DEFAULT 0, last_played_at INTEGER, is_favorite INTEGER DEFAULT 0, created_at INTEGER, updated_at INTEGER)`
-  );
-  d.run(
-    sql`CREATE TABLE IF NOT EXISTS scan_directories (id TEXT PRIMARY KEY, path TEXT NOT NULL UNIQUE, platform_id TEXT, is_recursive INTEGER DEFAULT 1, last_scanned_at INTEGER, created_at INTEGER)`
-  );
-}
-
-beforeEach(() => {
-  sqlite = new Database(':memory:');
-  db = drizzle(sqlite, { schema });
-  setupTables(db);
-  seedPlatforms(db);
+beforeEach(async () => {
+  db = createFlatDb('/test', createMemoryIO());
+  await db.open(); // loads platform seeds (nes, snes, gba, ps1, …)
   svc = new ScannerService(db, mockFs);
   vi.clearAllMocks();
+  // Re-apply default mock values after clearAllMocks()
+  mockFs.exists.mockResolvedValue(true);
+  mockFs.readDir.mockResolvedValue([]);
+  mockFs.stat.mockResolvedValue({ size: 1024 });
 });
 
-afterEach(() => sqlite.close());
-
-describe('ScannerService (Drizzle)', () => {
+// ---------------------------------------------------------------------------
+// Tests (same cases as ScannerService.drizzle.test.ts)
+// ---------------------------------------------------------------------------
+describe('ScannerService (FlatDb)', () => {
   it('addDirectory stores directory in DB', async () => {
     const dir = await svc.addDirectory('/roms/nes');
     expect(dir.path).toBe('/roms/nes');
@@ -174,40 +168,49 @@ describe('ScannerService (Drizzle)', () => {
   });
 
   it('detectPlatform returns null when platform is not in DB (P-20)', async () => {
-    // .ps1 maps to 'ps1' which is not seeded in beforeEach
-    const platform = await svc.detectPlatform('/roms/game.bin');
+    // .xci maps to 'switch' which is NOT in the seed platforms
+    const platform = await svc.detectPlatform('/roms/game.xci');
     expect(platform).toBeNull();
   });
 
   it('scan skips games when platform is not in DB (P-20)', async () => {
-    // .ps1 / .bin maps to 'ps1' — not in seed platforms
+    // .xci maps to 'switch' — not in seed platforms
     mockFs.readDir.mockResolvedValue([
-      { name: 'game.bin', path: '/roms/game.bin', isDirectory: false },
+      { name: 'game.xci', path: '/roms/game.xci', isDirectory: false },
     ]);
     const progress = [];
     for await (const p of svc.scan('/roms', { recursive: false })) {
       progress.push(p);
     }
-    const rows = db.select().from(schema.games).all();
-    expect(rows).toHaveLength(0);
+    expect(db.games.all()).toHaveLength(0);
   });
 
   it('scan skips existing files when skipExisting=true', async () => {
-    // Pre-seed game with the same path
-    db.insert(schema.games)
-      .values({
-        id: 'existing',
-        platformId: 'nes',
-        title: 'Existing',
-        filePath: '/roms/game.nes',
-        fileName: 'game.nes',
-        playCount: 0,
-        playTime: 0,
-        isFavorite: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .run();
+    // Pre-seed a game with the same path directly into the store
+    const now = new Date();
+    db.games.insert({
+      id: 'existing',
+      platform_id: 'nes',
+      title: 'Existing',
+      file_path: '/roms/game.nes',
+      file_name: 'game.nes',
+      file_size: null,
+      file_hash: null,
+      cover_path: null,
+      description: null,
+      developer: null,
+      publisher: null,
+      release_date: null,
+      genre: null,
+      rating: null,
+      play_count: 0,
+      play_time: 0,
+      last_played_at: null,
+      is_favorite: false,
+      created_at: now,
+      updated_at: now,
+    });
+
     mockFs.readDir.mockResolvedValue([
       { name: 'game.nes', path: '/roms/game.nes', isDirectory: false },
     ]);
@@ -216,8 +219,7 @@ describe('ScannerService (Drizzle)', () => {
       progress.push(p);
     }
     // Should not add the game again
-    const rows = db.select().from(schema.games).all();
-    expect(rows).toHaveLength(1);
+    expect(db.games.all()).toHaveLength(1);
   });
 
   it('calculateHash returns hex string using readFile', async () => {

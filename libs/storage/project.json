@@ -1,0 +1,17 @@
+{
+  "name": "storage",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/storage/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project storage --web",
+  "targets": {
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "config": "libs/storage/vite.config.mts"
+      }
+    }
+  }
+}

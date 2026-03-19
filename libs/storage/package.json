@@ -1,0 +1,12 @@
+{
+  "name": "@emuz/storage",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "devDependencies": {
+    "typescript": "~5.7.2",
+    "vitest": "^4.0.0"
+  }
+}
