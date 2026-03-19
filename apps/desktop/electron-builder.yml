@@ -7,7 +7,7 @@ copyright: Copyright © 2024 EmuZ
 
 directories:
   buildResources: build
-  output: dist
+  output: release
 
 # File patterns
 files:
@@ -47,7 +47,7 @@ mac:
 
 # DMG configuration
 dmg:
-  artifactName: ${name}-${version}-${os}-${arch}.${ext}
+  artifactName: ${productName}-${version}-${os}-${arch}.${ext}
   contents:
     - x: 130
       y: 220
@@ -56,7 +56,7 @@ dmg:
       type: link
       path: /Applications
 
-# Windows specific configuration  
+# Windows specific configuration
 win:
   target:
     - target: nsis
@@ -66,7 +66,7 @@ win:
       arch:
         - x64
   icon: build/icon.ico
-  artifactName: ${name}-${version}-${os}-${arch}.${ext}
+  artifactName: ${productName}-${version}-${os}-${arch}.${ext}
 
 # NSIS installer configuration
 nsis:
@@ -87,21 +87,17 @@ linux:
     - target: deb
       arch:
         - x64
-    - target: rpm
-      arch:
-        - x64
   maintainer: emuz@example.com
   category: Game
   icon: build/icons
-  artifactName: ${name}-${version}-${os}-${arch}.${ext}
+  artifactName: ${productName}-${version}-${os}-${arch}.${ext}
   synopsis: Cross-platform emulator frontend
   description: |
     EmuZ is a Daijishou-inspired cross-platform emulator frontend
     for managing and launching your retro game collection.
 
 # AppImage configuration
-appImage:
-  license: LICENSE
+appImage: {}
 
 # Debian package configuration
 deb:
@@ -113,21 +109,12 @@ deb:
     - libxtst6
     - libnss3
 
-# RPM package configuration  
-rpm:
-  depends:
-    - libXScrnSaver
-    - libappindicator
-    - libnotify
-
 # Native dependencies that need rebuilding
-nativeRebuilder:
-  modules:
-    - better-sqlite3
+# "sequential" uses @electron/rebuild to recompile native addons (e.g. better-sqlite3)
+nativeRebuilder: sequential
 
 # Publish configuration (disabled by default)
 publish: null
-
 # Auto update configuration
 # Uncomment and configure for auto-updates
 # publish:
