@@ -20,7 +20,10 @@
       "Bash(find /home/trambz/git/emuz -path */libs/core/src/__tests__/* -name *.test.ts)",
       "Bash(ls -la /home/trambz/git/emuz/libs/database/*.config.ts)",
       "Bash(python3 -c \"import json,sys; j=json.load\\(sys.stdin\\); print\\(j[''''entries''''][0][''''tag'''']\\)\")",
-      "Bash(perl -pi -e 's/\\\\bgame!\\\\.\\(\\\\w\\)/game?.$1/g; s/\\\\bupdated!\\\\.\\(\\\\w\\)/updated?.$1/g; s/\\\\bg!\\\\.\\(\\\\w\\)/g?.$1/g; s/\\\\bfound!\\\\.\\(\\\\w\\)/found?.$1/g; s/\\\\bplatform!\\\\.\\(\\\\w\\)/platform?.$1/g' libs/core/src/__tests__/LibraryService.drizzle.test.ts libs/core/src/__tests__/ScannerService.drizzle.test.ts libs/core/src/__tests__/WidgetService.drizzle.test.ts)"
+      "Bash(perl -pi -e 's/\\\\bgame!\\\\.\\(\\\\w\\)/game?.$1/g; s/\\\\bupdated!\\\\.\\(\\\\w\\)/updated?.$1/g; s/\\\\bg!\\\\.\\(\\\\w\\)/g?.$1/g; s/\\\\bfound!\\\\.\\(\\\\w\\)/found?.$1/g; s/\\\\bplatform!\\\\.\\(\\\\w\\)/platform?.$1/g' libs/core/src/__tests__/LibraryService.drizzle.test.ts libs/core/src/__tests__/ScannerService.drizzle.test.ts libs/core/src/__tests__/WidgetService.drizzle.test.ts)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:wix.github.io)",
+      "WebFetch(domain:registry.npmjs.org)"
     ],
     "additionalDirectories": ["/tmp"]
   }
