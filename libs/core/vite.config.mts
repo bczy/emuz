@@ -28,6 +28,7 @@ export default defineConfig(() => ({
       provider: 'v8' as const,
       reporter: ['text', 'lcov'],
       include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/index.ts', 'src/lib/core.ts', 'src/services/types.ts', 'src/hooks/**'],
     },
   },
   // Uncomment this if you are using workers.
