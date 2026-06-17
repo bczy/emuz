@@ -34,6 +34,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Verify design tokens are in sync
+        run: node scripts/generate-tokens.mjs --check
+
       - name: Restore Nx cache
         uses: actions/cache@v4
         with:
