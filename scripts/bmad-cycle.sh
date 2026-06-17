@@ -75,17 +75,32 @@ printf '\n'
 # --- 1. presence + executability of sibling scripts -------------------------
 check_present_exec() {
   # $1 = path, $2 = description
+  # .sh scripts are invoked directly and must be executable; .mjs scripts are
+  # invoked via `node <file>` (see the package.json npm scripts) and only need
+  # to be present + readable.
   local path="$1" desc="$2"
   if [ ! -e "${path}" ]; then
     red "${desc} missing: ${path}"
     return 1
   fi
-  if [ ! -x "${path}" ]; then
-    red "${desc} present but not executable: ${path}"
-    return 1
-  fi
-  green "${desc} present + executable: ${path}"
-  return 0
+  case "${path}" in
+    *.mjs)
+      if [ ! -r "${path}" ]; then
+        red "${desc} present but not readable: ${path}"
+        return 1
+      fi
+      green "${desc} present + readable (run via node): ${path}"
+      return 0
+      ;;
+    *)
+      if [ ! -x "${path}" ]; then
+        red "${desc} present but not executable: ${path}"
+        return 1
+      fi
+      green "${desc} present + executable: ${path}"
+      return 0
+      ;;
+  esac
 }
 
 GATE="scripts/bmad-gate-check.sh"
@@ -99,7 +114,7 @@ check_present_exec "${TOKENS}"  "token generator (component B, #55)"
 TOKENS_OK=$?
 check_present_exec "${BACKLOG}" "backlog tool (component C, #56)"
 BACKLOG_OK=$?
-check_present_exec "${LABELS}"  "labels tool (component D, #57)"
+check_present_exec "${LABELS}"  "labels tool (component E, #58)"
 # label executability is checked but not used to gate later runs
 printf '\n'
 
