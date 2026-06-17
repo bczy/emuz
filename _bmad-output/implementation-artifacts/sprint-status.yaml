@@ -115,3 +115,10 @@ development_status:
   7-3-ui-rom-type-badge-filter: ready-for-dev
   7-4-rom-type-tests: ready-for-dev
   epic-7-retrospective: optional
+
+  # ── Harness — Hardening ───────────────────────────────────────────────────────
+  STORY-001-structured-logger: ready-for-dev
+  STORY-002-savestate-roundtrip-test: ready-for-dev
+  STORY-003-zod-ipc-contracts: ready-for-dev
+  STORY-004-drizzle-migration-runner: ready-for-dev
+  STORY-005-tech-debt-audit: ready-for-dev
