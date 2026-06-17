@@ -24,7 +24,11 @@
     "affected:test": "nx affected -t test",
     "affected:lint": "nx affected -t lint",
     "android": "pnpm --filter @emuz/mobile android",
-    "ios": "pnpm --filter @emuz/mobile ios"
+    "ios": "pnpm --filter @emuz/mobile ios",
+    "bmad:cycle": "bash scripts/bmad-cycle.sh",
+    "bmad:gate": "bash scripts/bmad-gate-check.sh",
+    "bmad:labels": "bash scripts/bmad-labels.sh",
+    "tokens:generate": "node scripts/generate-tokens.mjs"
   },
   "devDependencies": {
     "@nx/eslint": "^22.3.3",
