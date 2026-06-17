@@ -6,10 +6,8 @@
   "main": "./index.js",
   "types": "./index.d.ts",
   "dependencies": {
-    "@emuz/database": "workspace:*",
     "@emuz/platform": "workspace:*",
     "@emuz/storage": "workspace:*",
-    "drizzle-orm": "^0.45.1",
     "uuid": "^11.1.0",
     "zustand": "^5.0.0"
   },
