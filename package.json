@@ -28,6 +28,7 @@
     "bmad:cycle": "bash scripts/bmad-cycle.sh",
     "bmad:gate": "bash scripts/bmad-gate-check.sh",
     "bmad:labels": "bash scripts/bmad-labels.sh",
+    "ai:compat:test": "node --test scripts/ai-compatibility.test.mjs",
     "tokens:generate": "node scripts/generate-tokens.mjs"
   },
   "devDependencies": {
